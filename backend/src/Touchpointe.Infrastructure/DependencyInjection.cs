@@ -28,6 +28,17 @@ namespace Touchpointe.Infrastructure
             var jwtSettings = new JwtSettings();
             configuration.Bind(JwtSettings.SectionName, jwtSettings);
 
+            // FALLBACK: Read from flat JWT_SECRET env var if not found in nested config
+            if (string.IsNullOrEmpty(jwtSettings.Secret))
+            {
+                jwtSettings.Secret = configuration["JWT_SECRET"] ?? string.Empty;
+            }
+
+            if (string.IsNullOrEmpty(jwtSettings.Secret))
+            {
+                throw new InvalidOperationException("JWT Secret is missing. Please set 'JwtSettings:Secret' or 'JWT_SECRET' environment variable.");
+            }
+
             services.AddSingleton(Microsoft.Extensions.Options.Options.Create(jwtSettings));
 
             services.AddAuthentication(defaultScheme: Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme)
