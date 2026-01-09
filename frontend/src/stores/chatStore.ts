@@ -1,0 +1,238 @@
+import { create } from 'zustand';
+import { apiGet, apiPost } from '@/lib/api';
+
+export interface Channel {
+    id: string;
+    workspaceId: string;
+    name: string;
+    isPrivate: boolean;
+    description: string;
+    memberCount: number;
+}
+
+export interface DmGroup {
+    id: string;
+    workspaceId: string;
+    members: {
+        id: string;
+        fullName: string;
+        email: string;
+        avatarUrl?: string;
+    }[];
+}
+
+export interface Message {
+    id: string;
+    workspaceId: string;
+    channelId?: string;
+    directMessageGroupId?: string;
+    senderId: string;
+    senderName: string;
+    content: string;
+    createdAt: string;
+    isOptimistic?: boolean;
+}
+
+export interface UserDto {
+    id: string;
+    fullName: string;
+    email: string;
+    avatarUrl?: string;
+}
+
+interface ChatState {
+    channels: Channel[];
+    dmGroups: DmGroup[];
+    members: UserDto[]; // For picker
+
+    activeChannelId: string | null;
+    activeDmGroupId: string | null;
+
+    // Messages cache: Key = ID (Channel/DM), Value = Messages[]
+    messages: Record<string, Message[]>;
+
+    isLoading: boolean;
+    error: string | null;
+
+    // Actions
+    fetchChannels: (workspaceId: string) => Promise<void>;
+    fetchDmGroups: (workspaceId: string) => Promise<void>;
+    fetchWorkspaceMembers: (workspaceId: string) => Promise<void>;
+
+    setActiveChannel: (channelId: string) => void;
+    setActiveDmInfo: (dmId: string) => void; // Using different name to avoid conflict if I used setActiveDm
+
+    fetchMessages: (workspaceId: string, id: string, isDm?: boolean) => Promise<void>;
+
+    postMessage: (workspaceId: string, content: string, currentUserId: string, currentUserName: string) => Promise<void>;
+
+    createChannel: (workspaceId: string, name: string, isPrivate: boolean, description: string) => Promise<boolean>;
+    createDmGroup: (workspaceId: string, userIds: string[]) => Promise<string | null>;
+}
+
+export const useChatStore = create<ChatState>()((set, get) => ({
+    channels: [],
+    dmGroups: [],
+    members: [],
+    activeChannelId: null,
+    activeDmGroupId: null,
+    messages: {},
+    isLoading: false,
+    error: null,
+
+    fetchChannels: async (workspaceId) => {
+        set({ isLoading: true, error: null });
+        try {
+            const channels = await apiGet<Channel[]>(`/${workspaceId}/chat/channels`);
+            set({ channels, isLoading: false });
+
+            // Auto-select general if nothing active
+            if (!get().activeChannelId && !get().activeDmGroupId) {
+                const general = channels.find(c => c.name === 'general');
+                if (general) {
+                    set({ activeChannelId: general.id });
+                    // Don't auto-fetch messages yet, let the component do it
+                }
+            }
+        } catch (e: any) {
+            set({ isLoading: false, error: e.message });
+        }
+    },
+
+    fetchDmGroups: async (workspaceId) => {
+        try {
+            const dmGroups = await apiGet<DmGroup[]>(`/${workspaceId}/chat/dm`);
+            set({ dmGroups });
+        } catch (e: any) {
+            console.error("Failed to fetch DMs", e);
+        }
+    },
+
+    fetchWorkspaceMembers: async (workspaceId) => {
+        try {
+            const members = await apiGet<UserDto[]>(`/${workspaceId}/chat/users`);
+            set({ members });
+        } catch (e: any) {
+            console.error("Failed to fetch members", e);
+        }
+    },
+
+    setActiveChannel: (channelId) => {
+        set({ activeChannelId: channelId, activeDmGroupId: null });
+    },
+
+    setActiveDmInfo: (dmId) => {
+        set({ activeDmGroupId: dmId, activeChannelId: null });
+    },
+
+    fetchMessages: async (workspaceId, id, isDm = false) => {
+        // Don't wipe existing messages to avoid flicker, just append/replace
+        try {
+            const endpoint = isDm
+                ? `/${workspaceId}/chat/dm/${id}/messages`
+                : `/${workspaceId}/chat/channels/${id}/messages`;
+
+            const newMessages = await apiGet<Message[]>(endpoint);
+
+            set(state => ({
+                messages: {
+                    ...state.messages,
+                    [id]: newMessages
+                }
+            }));
+        } catch (e: any) {
+            console.error("Failed to fetch messages", e);
+        }
+    },
+
+    postMessage: async (workspaceId, content, currentUserId, currentUserName) => {
+        const { activeChannelId, activeDmGroupId } = get();
+        const targetId = activeChannelId || activeDmGroupId;
+        if (!targetId) return;
+
+        const isDm = !!activeDmGroupId;
+
+        // Optimistic Update
+        const optimisticId = `opt-${Date.now()}`;
+        const optimisticMessage: Message = {
+            id: optimisticId,
+            workspaceId,
+            channelId: activeChannelId || undefined,
+            directMessageGroupId: activeDmGroupId || undefined,
+            senderId: currentUserId,
+            senderName: currentUserName,
+            content,
+            createdAt: new Date().toISOString(),
+            isOptimistic: true
+        };
+
+        set(state => ({
+            messages: {
+                ...state.messages,
+                [targetId]: [...(state.messages[targetId] || []), optimisticMessage]
+            }
+        }));
+
+        try {
+            const endpoint = isDm
+                ? `/${workspaceId}/chat/dm/${targetId}/messages`
+                : `/${workspaceId}/chat/channels/${targetId}/messages`;
+
+            const realMessage = await apiPost<Message>(endpoint, { content });
+
+            // Replace optimistic
+            set(state => {
+                const list = state.messages[targetId] || [];
+                return {
+                    messages: {
+                        ...state.messages,
+                        [targetId]: list.map(m => m.id === optimisticId ? realMessage : m)
+                    }
+                };
+            });
+        } catch (e: any) {
+            // Revert on failure
+            set(state => ({
+                messages: {
+                    ...state.messages,
+                    [targetId]: (state.messages[targetId] || []).filter(m => m.id !== optimisticId)
+                },
+                error: "Failed to send message"
+            }));
+        }
+    },
+
+    createChannel: async (workspaceId, name, isPrivate, description) => {
+        try {
+            const newChannel = await apiPost<Channel>(`/${workspaceId}/chat/channels`, { name, isPrivate, description });
+            set(state => ({
+                channels: [...state.channels, newChannel],
+                activeChannelId: newChannel.id,
+                activeDmGroupId: null
+            }));
+            return true;
+        } catch (e: any) {
+            set({ error: e.message });
+            return false;
+        }
+    },
+
+    createDmGroup: async (workspaceId, userIds) => {
+        try {
+            const group = await apiPost<DmGroup>(`/${workspaceId}/chat/dm`, { userIds });
+            set(state => {
+                // Check if already in list
+                const exists = state.dmGroups.some(g => g.id === group.id);
+                return {
+                    dmGroups: exists ? state.dmGroups : [...state.dmGroups, group],
+                    activeDmGroupId: group.id,
+                    activeChannelId: null
+                };
+            });
+            return group.id;
+        } catch (e: any) {
+            set({ error: e.message });
+            return null;
+        }
+    }
+}));

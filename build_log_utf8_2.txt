@@ -1,0 +1,19 @@
+﻿  Determining projects to restore...
+  All projects are up-to-date for restore.
+  Touchpointe.Domain -> C:\Users\ajmal\Desktop\kravino Innovations\touchpointe\touchpointe_management_tool\backend\src\Touchpointe.Domain\bin\Debug\net9.0\Touchpointe.Domain.dll
+C:\Users\ajmal\Desktop\kravino Innovations\touchpointe\touchpointe_management_tool\backend\src\Touchpointe.Application\Services\AI\AiService.cs(109,33): warning CS8600: Converting null literal or possible null value to non-nullable type. [C:\Users\ajmal\Desktop\kravino Innovations\touchpointe\touchpointe_management_tool\backend\src\Touchpointe.Application\Touchpointe.Application.csproj]
+C:\Users\ajmal\Desktop\kravino Innovations\touchpointe\touchpointe_management_tool\backend\src\Touchpointe.Application\Services\AI\AiService.cs(119,33): warning CS8602: Dereference of a possibly null reference. [C:\Users\ajmal\Desktop\kravino Innovations\touchpointe\touchpointe_management_tool\backend\src\Touchpointe.Application\Touchpointe.Application.csproj]
+C:\Users\ajmal\Desktop\kravino Innovations\touchpointe\touchpointe_management_tool\backend\src\Touchpointe.Application\Services\AI\AiService.cs(122,50): warning CS8602: Dereference of a possibly null reference. [C:\Users\ajmal\Desktop\kravino Innovations\touchpointe\touchpointe_management_tool\backend\src\Touchpointe.Application\Touchpointe.Application.csproj]
+  Touchpointe.Application -> C:\Users\ajmal\Desktop\kravino Innovations\touchpointe\touchpointe_management_tool\backend\src\Touchpointe.Application\bin\Debug\net9.0\Touchpointe.Application.dll
+  Touchpointe.Infrastructure -> C:\Users\ajmal\Desktop\kravino Innovations\touchpointe\touchpointe_management_tool\backend\src\Touchpointe.Infrastructure\bin\Debug\net9.0\Touchpointe.Infrastructure.dll
+  Touchpointe.API -> C:\Users\ajmal\Desktop\kravino Innovations\touchpointe\touchpointe_management_tool\backend\src\Touchpointe.API\bin\Debug\net9.0\Touchpointe.API.dll
+
+Build succeeded.
+
+C:\Users\ajmal\Desktop\kravino Innovations\touchpointe\touchpointe_management_tool\backend\src\Touchpointe.Application\Services\AI\AiService.cs(109,33): warning CS8600: Converting null literal or possible null value to non-nullable type. [C:\Users\ajmal\Desktop\kravino Innovations\touchpointe\touchpointe_management_tool\backend\src\Touchpointe.Application\Touchpointe.Application.csproj]
+C:\Users\ajmal\Desktop\kravino Innovations\touchpointe\touchpointe_management_tool\backend\src\Touchpointe.Application\Services\AI\AiService.cs(119,33): warning CS8602: Dereference of a possibly null reference. [C:\Users\ajmal\Desktop\kravino Innovations\touchpointe\touchpointe_management_tool\backend\src\Touchpointe.Application\Touchpointe.Application.csproj]
+C:\Users\ajmal\Desktop\kravino Innovations\touchpointe\touchpointe_management_tool\backend\src\Touchpointe.Application\Services\AI\AiService.cs(122,50): warning CS8602: Dereference of a possibly null reference. [C:\Users\ajmal\Desktop\kravino Innovations\touchpointe\touchpointe_management_tool\backend\src\Touchpointe.Application\Touchpointe.Application.csproj]
+    3 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:00:02.31

@@ -1,0 +1,39 @@
+{
+    "name": "Touchpointe Stack",
+    "services": [
+        {
+            "name": "backend",
+            "type": "app",
+            "build_pack": "docker",
+            "dockerfile": "backend/Dockerfile",
+            "port": 8080,
+            "health_check_path": "/health",
+            "environment": [
+                "DATABASE_URL",
+                "JWT_SECRET",
+                "FRONTEND_URL",
+                "APP_ENV",
+                "AI_API_KEY",
+                "GROQ_API_KEY",
+                "GROQ_MODEL",
+                "GROQ_API_URL"
+            ]
+        },
+        {
+            "name": "frontend",
+            "type": "static",
+            "build_pack": "docker",
+            "dockerfile": "frontend/Dockerfile",
+            "port": 80,
+            "environment": [
+                "VITE_API_URL"
+            ]
+        },
+        {
+            "name": "postgres",
+            "type": "database",
+            "image": "postgres:15-alpine",
+            "port": 5432
+        }
+    ]
+}

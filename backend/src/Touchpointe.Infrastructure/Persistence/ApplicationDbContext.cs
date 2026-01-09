@@ -1,0 +1,363 @@
+using Microsoft.EntityFrameworkCore;
+using Touchpointe.Domain.Entities;
+
+using Touchpointe.Application.Common.Interfaces;
+
+namespace Touchpointe.Infrastructure.Persistence
+{
+    public class ApplicationDbContext : DbContext, IApplicationDbContext
+    {
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
+            : base(options)
+        {
+        }
+
+        public DbSet<User> Users { get; set; }
+        public DbSet<Workspace> Workspaces { get; set; }
+        public DbSet<WorkspaceMember> WorkspaceMembers { get; set; }
+        public DbSet<WorkspaceInvitation> WorkspaceInvitations { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
+        public DbSet<Space> Spaces { get; set; }
+        public DbSet<Folder> Folders { get; set; }
+        public DbSet<TaskList> TaskLists { get; set; }
+        public DbSet<TaskItem> Tasks { get; set; }
+        public DbSet<TaskActivity> TaskActivities { get; set; }
+        public DbSet<Subtask> Subtasks => Set<Subtask>();
+        public DbSet<TaskComment> TaskComments => Set<TaskComment>();
+        public DbSet<Channel> Channels { get; set; }
+        public DbSet<ChannelMember> ChannelMembers { get; set; }
+        public DbSet<Message> Messages { get; set; }
+        public DbSet<DirectMessageGroup> DirectMessageGroups { get; set; }
+        public DbSet<DirectMessageMember> DirectMessageMembers { get; set; }
+
+        public DbSet<Company> Companies { get; set; }
+        public DbSet<Contact> Contacts { get; set; }
+        public DbSet<Deal> Deals { get; set; }
+        public DbSet<DealContact> DealContacts => Set<DealContact>();
+        public DbSet<CrmActivity> CrmActivities => Set<CrmActivity>();
+        public DbSet<AiChatMessage> AiChatMessages => Set<AiChatMessage>();
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            // User
+            modelBuilder.Entity<User>()
+                .HasIndex(u => u.Email)
+                .IsUnique();
+                
+            modelBuilder.Entity<User>()
+                .HasIndex(u => u.Username)
+                .IsUnique();
+
+            // Workspace
+            modelBuilder.Entity<Workspace>()
+                .HasIndex(w => w.Slug)
+                .IsUnique();
+
+            modelBuilder.Entity<Workspace>()
+                .HasOne(w => w.Owner)
+                .WithMany()
+                .HasForeignKey(w => w.OwnerId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // WorkspaceMember
+            modelBuilder.Entity<WorkspaceMember>()
+                .HasIndex(wm => new { wm.WorkspaceId, wm.UserId })
+                .IsUnique();
+
+            modelBuilder.Entity<WorkspaceMember>()
+                .HasOne(wm => wm.Workspace)
+                .WithMany()
+                .HasForeignKey(wm => wm.WorkspaceId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<WorkspaceMember>()
+                .HasOne(wm => wm.User)
+                .WithMany()
+                .HasForeignKey(wm => wm.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+                
+            // WorkspaceInvitation
+            modelBuilder.Entity<WorkspaceInvitation>()
+                .HasIndex(wi => wi.Token)
+                .IsUnique();
+                
+            modelBuilder.Entity<WorkspaceInvitation>()
+                .HasOne(wi => wi.Workspace)
+                .WithMany()
+                .HasForeignKey(wi => wi.WorkspaceId)
+                .OnDelete(DeleteBehavior.Cascade);
+                
+            modelBuilder.Entity<WorkspaceInvitation>()
+                .HasOne(wi => wi.Inviter)
+                .WithMany()
+                .HasForeignKey(wi => wi.InviterId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Notification
+            modelBuilder.Entity<Notification>()
+                .HasOne(n => n.User)
+                .WithMany()
+                .HasForeignKey(n => n.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Space
+            modelBuilder.Entity<Space>()
+                .HasOne(s => s.Workspace)
+                .WithMany()
+                .HasForeignKey(s => s.WorkspaceId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            modelBuilder.Entity<Space>()
+                .HasIndex(s => s.WorkspaceId);
+
+            // Folder
+            modelBuilder.Entity<Folder>()
+                .HasOne(f => f.Workspace)
+                .WithMany()
+                .HasForeignKey(f => f.WorkspaceId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Folder>()
+                .HasOne(f => f.Space)
+                .WithMany(s => s.Folders)
+                .HasForeignKey(f => f.SpaceId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Folder>()
+                .HasIndex(f => f.SpaceId);
+
+            // TaskList (mapped to table "lists")
+            modelBuilder.Entity<TaskList>()
+                .ToTable("Lists")
+                .HasOne(t => t.Workspace)
+                .WithMany()
+                .HasForeignKey(t => t.WorkspaceId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            modelBuilder.Entity<TaskList>()
+                .HasOne(t => t.Space)
+                .WithMany(s => s.Lists)
+                .HasForeignKey(t => t.SpaceId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<TaskList>()
+                .HasOne(t => t.Folder)
+                .WithMany(f => f.Lists)
+                .HasForeignKey(t => t.FolderId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+             modelBuilder.Entity<TaskList>()
+                .HasIndex(t => t.WorkspaceId);
+
+            // Channel
+            modelBuilder.Entity<Channel>()
+                .HasOne(c => c.Workspace)
+                .WithMany()
+                .HasForeignKey(c => c.WorkspaceId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Channel>()
+                .HasIndex(c => c.WorkspaceId);
+
+            // Task (mapped to table "tasks")
+            modelBuilder.Entity<TaskItem>()
+                .ToTable("Tasks")
+                .HasOne(t => t.Workspace)
+                .WithMany()
+                .HasForeignKey(t => t.WorkspaceId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<TaskItem>()
+                .HasOne(t => t.List)
+                .WithMany()
+                .HasForeignKey(t => t.ListId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<TaskItem>()
+                .HasOne(t => t.Assignee)
+                .WithMany()
+                .HasForeignKey(t => t.AssigneeId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+             modelBuilder.Entity<TaskItem>()
+                .HasOne(t => t.CreatedBy)
+                .WithMany()
+                .HasForeignKey(t => t.CreatedById)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<TaskItem>()
+                .HasIndex(t => t.WorkspaceId);
+
+            modelBuilder.Entity<TaskItem>()
+                .HasIndex(t => t.ListId);
+
+            // TaskActivity
+            modelBuilder.Entity<TaskActivity>()
+                .HasOne(ta => ta.Task)
+                .WithMany(t => t.Activities)
+                .HasForeignKey(ta => ta.TaskId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<TaskActivity>()
+                .HasOne(ta => ta.ChangedBy)
+                .WithMany()
+                .HasForeignKey(ta => ta.ChangedById)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<TaskActivity>()
+                .HasIndex(ta => ta.TaskId);
+
+            // Subtask
+            modelBuilder.Entity<Subtask>()
+                .HasOne(s => s.Task)
+                .WithMany() // No navigation property on TaskItem yet, will add later or keep unidirectional
+                .HasForeignKey(s => s.TaskId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Subtask>()
+                .HasIndex(s => s.TaskId);
+
+            // TaskComment
+            modelBuilder.Entity<TaskComment>()
+                .HasOne(c => c.Task)
+                .WithMany()
+                .HasForeignKey(c => c.TaskId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<TaskComment>()
+                .HasOne(c => c.User)
+                .WithMany()
+                .HasForeignKey(c => c.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<TaskComment>()
+                .HasIndex(c => c.TaskId);
+            modelBuilder.Entity<TaskComment>()
+                .HasIndex(c => c.TaskId);
+
+            // CRM: Company
+            modelBuilder.Entity<Company>()
+                .HasIndex(c => c.WorkspaceId);
+
+            // CRM: Contact
+            modelBuilder.Entity<Contact>()
+                .HasOne(c => c.Company)
+                .WithMany(co => co.Contacts)
+                .HasForeignKey(c => c.CompanyId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<Contact>()
+                .HasIndex(c => c.WorkspaceId);
+
+            // CRM: Deal
+            modelBuilder.Entity<Deal>()
+                .HasOne(d => d.Company)
+                .WithMany(c => c.Deals)
+                .HasForeignKey(d => d.CompanyId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            // CRM: DealContact (Many-to-Many)
+            modelBuilder.Entity<DealContact>()
+                .HasKey(dc => new { dc.DealId, dc.ContactId });
+
+            modelBuilder.Entity<DealContact>()
+                .HasOne(dc => dc.Deal)
+                .WithMany(d => d.DealContacts)
+                .HasForeignKey(dc => dc.DealId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<DealContact>()
+                .HasOne(dc => dc.Contact)
+                .WithMany(c => c.DealContacts)
+                .HasForeignKey(dc => dc.ContactId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Deal>()
+                .HasIndex(d => d.WorkspaceId);
+
+            // CRM: Activity
+            modelBuilder.Entity<CrmActivity>()
+                .HasOne(a => a.User)
+                .WithMany()
+                .HasForeignKey(a => a.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<CrmActivity>()
+                .HasIndex(a => a.WorkspaceId);
+            
+            modelBuilder.Entity<CrmActivity>()
+                .HasIndex(a => new { a.EntityId, a.EntityType });
+                
+            // Chat: Channel (Existing config, enhancing)
+            modelBuilder.Entity<Channel>()
+                .HasOne(c => c.Workspace)
+                .WithMany()
+                .HasForeignKey(c => c.WorkspaceId)
+                .OnDelete(DeleteBehavior.Restrict); // Prevent accidental wipe if not cascaded
+
+            modelBuilder.Entity<ChannelMember>()
+                .HasOne(cm => cm.Channel)
+                .WithMany(c => c.Members)
+                .HasForeignKey(cm => cm.ChannelId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            modelBuilder.Entity<ChannelMember>()
+                .HasOne(cm => cm.User)
+                .WithMany()
+                .HasForeignKey(cm => cm.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<ChannelMember>()
+                .HasIndex(cm => new { cm.ChannelId, cm.UserId })
+                .IsUnique();
+
+            // Chat: Messages
+            modelBuilder.Entity<Message>()
+                .HasOne(m => m.Channel)
+                .WithMany(c => c.Messages)
+                .HasForeignKey(m => m.ChannelId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Message>()
+                .HasOne(m => m.DirectMessageGroup)
+                .WithMany(g => g.Messages)
+                .HasForeignKey(m => m.DirectMessageGroupId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Message>()
+                .HasOne(m => m.Sender)
+                .WithMany()
+                .HasForeignKey(m => m.SenderId)
+                .OnDelete(DeleteBehavior.Restrict);
+            
+            modelBuilder.Entity<Message>()
+                .HasIndex(m => m.ChannelId);
+            modelBuilder.Entity<Message>()
+                .HasIndex(m => m.DirectMessageGroupId);
+            modelBuilder.Entity<Message>()
+                .HasIndex(m => m.CreatedAt);
+
+            // Chat: Direct Messages
+            modelBuilder.Entity<DirectMessageGroup>()
+                .HasIndex(g => g.WorkspaceId);
+
+            modelBuilder.Entity<DirectMessageMember>()
+                .HasOne(dmm => dmm.Group)
+                .WithMany(g => g.Members)
+                .HasForeignKey(dmm => dmm.DirectMessageGroupId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<DirectMessageMember>()
+                .HasOne(dmm => dmm.User)
+                .WithMany()
+                .HasForeignKey(dmm => dmm.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+                
+            modelBuilder.Entity<DirectMessageMember>()
+                .HasIndex(dmm => new { dmm.DirectMessageGroupId, dmm.UserId })
+                .IsUnique();
+        }
+    }
+}

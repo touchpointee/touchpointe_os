@@ -1,0 +1,189 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    /* Premium Light Mode - Layered whites, soft neutrals */
+    --background: 0 0% 98%;
+    --foreground: 240 10% 15%;
+    /* #222326 */
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 15%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 15%;
+    --primary: 240 5% 15%;
+    /* Almost black */
+    --primary-foreground: 0 0% 98%;
+    --secondary: 240 4% 96%;
+    --secondary-foreground: 240 5% 15%;
+    --muted: 240 4% 96%;
+    --muted-foreground: 240 3% 46%;
+    /* #71727a */
+    --accent: 240 4% 94%;
+    --accent-foreground: 240 5% 15%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 5% 90%;
+    /* #e4e4e7 */
+    --input: 240 5% 90%;
+    --ring: 240 5% 15%;
+    --radius: 0.5rem;
+
+    /* Sidebar colors - PREMIUM LIGHT MODE (White/Gray) */
+    --sidebar-bg: 0 0% 98%;
+    /* Match background or slightly different */
+    --sidebar-fg: 240 10% 15%;
+    --sidebar-muted: 240 3% 46%;
+    --sidebar-accent: 240 4% 92%;
+    --sidebar-accent-fg: 240 5% 15%;
+    --sidebar-border: 240 5% 90%;
+  }
+
+  .dark {
+    /* Premium Dark Mode - Pure Black */
+    --background: 0 0% 0%;
+    --foreground: 0 0% 95%;
+    --card: 0 0% 3%;
+    --card-foreground: 0 0% 95%;
+    --popover: 0 0% 3%;
+    --popover-foreground: 0 0% 95%;
+    --primary: 0 0% 95%;
+    --primary-foreground: 0 0% 0%;
+    --secondary: 0 0% 10%;
+    --secondary-foreground: 0 0% 95%;
+    --muted: 0 0% 10%;
+    --muted-foreground: 0 0% 60%;
+    --accent: 0 0% 12%;
+    --accent-foreground: 0 0% 95%;
+    --destructive: 0 62% 30%;
+    --destructive-foreground: 0 0% 95%;
+    --border: 0 0% 12%;
+    --input: 0 0% 12%;
+    --ring: 0 0% 83%;
+
+    /* Sidebar colors - Pure Black */
+    --sidebar-bg: 0 0% 0%;
+    --sidebar-fg: 0 0% 90%;
+    --sidebar-muted: 0 0% 60%;
+    --sidebar-accent: 0 0% 12%;
+    --sidebar-accent-fg: 0 0% 95%;
+    --sidebar-border: 0 0% 12%;
+  }
+}
+
+/* Base styles */
+* {
+  border-color: hsl(var(--border));
+}
+
+body {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Utility classes as regular CSS */
+.bg-background {
+  background-color: hsl(var(--background));
+}
+
+.bg-foreground {
+  background-color: hsl(var(--foreground));
+}
+
+.bg-card {
+  background-color: hsl(var(--card));
+}
+
+.bg-primary {
+  background-color: hsl(var(--primary));
+}
+
+.bg-secondary {
+  background-color: hsl(var(--secondary));
+}
+
+.bg-muted {
+  background-color: hsl(var(--muted));
+}
+
+.bg-accent {
+  background-color: hsl(var(--accent));
+}
+
+.bg-destructive {
+  background-color: hsl(var(--destructive));
+}
+
+.bg-popover {
+  background-color: hsl(var(--popover));
+}
+
+.text-foreground {
+  color: hsl(var(--foreground));
+}
+
+.text-primary {
+  color: hsl(var(--primary));
+}
+
+.text-primary-foreground {
+  color: hsl(var(--primary-foreground));
+}
+
+.text-secondary-foreground {
+  color: hsl(var(--secondary-foreground));
+}
+
+.text-muted-foreground {
+  color: hsl(var(--muted-foreground));
+}
+
+.text-accent-foreground {
+  color: hsl(var(--accent-foreground));
+}
+
+.text-destructive {
+  color: hsl(var(--destructive));
+}
+
+.text-destructive-foreground {
+  color: hsl(var(--destructive-foreground));
+}
+
+.border-border {
+  border-color: hsl(var(--border));
+}
+
+.ring-ring {
+  --tw-ring-color: hsl(var(--ring));
+}
+
+/* Glassmorphism utilities */
+.glass {
+  backdrop-filter: blur(12px);
+  background-color: rgba(255, 255, 255, 0.8);
+}
+
+.dark .glass {
+  background-color: rgba(24, 24, 27, 0.8);
+}
+
+/* Premium surface layers */
+.surface-elevated {
+  background-color: hsl(var(--card));
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+}
+
+/* Sidebar-specific colors */
+.sidebar-bg {
+  background-color: hsl(var(--sidebar-bg));
+}
+
+.sidebar-fg {
+  color: hsl(var(--sidebar-fg));
+}
+
+.hover\:bg-accent:hover {
+  background-color: hsl(var(--accent));
+}
