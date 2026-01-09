@@ -106,7 +106,7 @@ namespace Touchpointe.Application.Services.AI
 
              string userPrompt = "";
              string sysPrompt = "You are the Channel Agent. Analyze conversations and provide summaries. Be concise.";
-             object dataForAi = null;
+             object? dataForAi = null;
              
              // If specific query, fetch messages
              if (!string.IsNullOrEmpty(request.UserQuery))
@@ -116,10 +116,15 @@ namespace Touchpointe.Application.Services.AI
                  var recentMessages = await _context.Messages
                     .Include(m => m.Sender)
                     .Include(m => m.Channel)
-                    .Where(m => m.Channel.WorkspaceId == workspaceId)
+                    .Where(m => m.Channel != null && m.Channel.WorkspaceId == workspaceId)
                     .OrderByDescending(m => m.CreatedAt)
                     .Take(50)
-                    .Select(m => new { Channel = m.Channel.Name, Sender = m.Sender.FullName, Content = m.Content, Time = m.CreatedAt })
+                    .Select(m => new { 
+                        Channel = m.Channel != null ? m.Channel.Name : "Unknown", 
+                        Sender = m.Sender != null ? m.Sender.FullName : "Unknown", 
+                        Content = m.Content ?? "", 
+                        Time = m.CreatedAt 
+                    })
                     .ToListAsync();
 
                  dataForAi = recentMessages;

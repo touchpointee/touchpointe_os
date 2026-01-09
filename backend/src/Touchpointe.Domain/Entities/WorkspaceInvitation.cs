@@ -16,10 +16,10 @@ namespace Touchpointe.Domain.Entities
         public Guid Id { get; set; } = Guid.NewGuid();
         
         public Guid WorkspaceId { get; set; }
-        public Workspace Workspace { get; set; }
+        public Workspace Workspace { get; set; } = null!;
         
         public Guid InviterId { get; set; }
-        public User Inviter { get; set; }
+        public User Inviter { get; set; } = null!;
         
         // For invitations by username - stores resolved user_id
         public Guid? InviteeId { get; set; }

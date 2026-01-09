@@ -14,7 +14,7 @@ namespace Touchpointe.Domain.Entities
         public string Slug { get; set; } = string.Empty; // Unique
         
         public Guid OwnerId { get; set; }
-        public User Owner { get; set; }
+        public User Owner { get; set; } = null!;
         
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }

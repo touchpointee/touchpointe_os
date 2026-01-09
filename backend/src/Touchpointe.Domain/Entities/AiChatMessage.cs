@@ -14,7 +14,7 @@ namespace Touchpointe.Domain.Entities
 
         // Navigation properties if strictly needed, but for loose coupling/performance we might skip them unless required by EF constraints.
         // Keeping it simple for now as requested for persistence.
-        public User User { get; set; }
-        public Workspace Workspace { get; set; }
+        public User User { get; set; } = null!;
+        public Workspace Workspace { get; set; } = null!;
     }
 }
