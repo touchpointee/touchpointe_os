@@ -111,12 +111,9 @@ using (var scope = app.Services.CreateScope())
 app.MapGet("/health", () => Results.Ok(new { status = "healthy", timestamp = DateTime.UtcNow }));
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment() || Environment.GetEnvironmentVariable("APP_ENV") == "qa")
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-    app.MapOpenApi();
-}
+app.UseSwagger();
+app.UseSwaggerUI();
+app.MapOpenApi();
 
 app.UseHttpsRedirection();
 app.UseCors("AllowFrontend");
