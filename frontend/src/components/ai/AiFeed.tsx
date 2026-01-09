@@ -4,7 +4,7 @@ import ReactMarkdown from 'react-markdown';
 import * as React from 'react';
 
 export function AiFeed() {
-    const { activeAgent, messages, isLoading, isLoadingHistory, fetchHistory, sendMessage } = useAiStore();
+    const { activeAgent, messages, isLoadingHistory, fetchHistory, sendMessage } = useAiStore();
     const scrollRef = React.useRef<HTMLDivElement>(null);
 
     React.useEffect(() => {

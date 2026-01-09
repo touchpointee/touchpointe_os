@@ -17,7 +17,7 @@ interface NotificationsPopoverProps {
 
 export function NotificationsPopover({ isOpen, onClose, anchorRef }: NotificationsPopoverProps) {
     const popoverRef = useRef<HTMLDivElement>(null);
-    const [notifications, setNotifications] = useState<Notification[]>([
+    const [notifications] = useState<Notification[]>([
         // Mock data for now
         { id: '1', title: 'Welcome', message: 'Welcome to WorkspaceOS!', createdAt: new Date().toISOString(), isRead: false }
     ]);
