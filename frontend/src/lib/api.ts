@@ -1,6 +1,9 @@
 import { toast } from '@/contexts/ToastContext';
 
-const API_BASE = 'http://localhost:5001';
+const API_BASE = import.meta.env.VITE_API_URL;
+if (!API_BASE) {
+    console.error('VITE_API_URL is not defined');
+}
 
 function getHeaders(): Record<string, string> {
     const headers: Record<string, string> = {
