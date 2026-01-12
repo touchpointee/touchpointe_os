@@ -159,5 +159,73 @@ namespace Touchpointe.API.Controllers
         {
             return Ok(await _chatService.GetWorkspaceMembersAsync(workspaceId));
         }
+
+        // --- Reactions ---
+
+        [HttpPost("messages/{messageId}/reactions")]
+        public async Task<ActionResult> AddReaction(Guid workspaceId, Guid messageId, AddReactionRequest request)
+        {
+            try
+            {
+                await _chatService.AddReactionAsync(workspaceId, messageId, GetUserId(), request.Emoji);
+                return Ok();
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+        [HttpDelete("messages/{messageId}/reactions/{emoji}")]
+        public async Task<ActionResult> RemoveReaction(Guid workspaceId, Guid messageId, string emoji)
+        {
+             try
+            {
+                await _chatService.RemoveReactionAsync(workspaceId, messageId, GetUserId(), emoji);
+                return Ok();
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+        // --- Read Receipts ---
+
+        [HttpPost("channels/{channelId}/read")]
+        public async Task<ActionResult> MarkChannelRead(Guid workspaceId, Guid channelId, [FromBody] MarkReadRequest request)
+        {
+             try
+            {
+                await _chatService.MarkChannelAsReadAsync(workspaceId, channelId, GetUserId(), request.MessageId);
+                return Ok();
+            }
+             catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+        [HttpPost("dm/{dmGroupId}/read")]
+        public async Task<ActionResult> MarkDmRead(Guid workspaceId, Guid dmGroupId, [FromBody] MarkReadRequest request)
+        {
+             try
+            {
+                await _chatService.MarkDmAsReadAsync(workspaceId, dmGroupId, GetUserId(), request.MessageId);
+                return Ok();
+            }
+             catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
     }
 }

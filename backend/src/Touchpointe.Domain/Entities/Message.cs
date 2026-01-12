@@ -18,5 +18,6 @@ namespace Touchpointe.Domain.Entities
         public Channel? Channel { get; set; }
         public DirectMessageGroup? DirectMessageGroup { get; set; }
         public User Sender { get; set; } = null!;
+        public ICollection<MessageReaction> Reactions { get; set; } = new List<MessageReaction>();
     }
 }

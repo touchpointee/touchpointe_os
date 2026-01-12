@@ -100,6 +100,9 @@ namespace Touchpointe.Infrastructure.Migrations
                     b.Property<DateTime>("JoinedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<Guid?>("LastReadMessageId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
@@ -318,6 +321,9 @@ namespace Touchpointe.Infrastructure.Migrations
                     b.Property<Guid>("DirectMessageGroupId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("LastReadMessageId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
@@ -401,6 +407,34 @@ namespace Touchpointe.Infrastructure.Migrations
                     b.HasIndex("SenderId");
 
                     b.ToTable("Messages");
+                });
+
+            modelBuilder.Entity("Touchpointe.Domain.Entities.MessageReaction", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Emoji")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("MessageId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("MessageId", "UserId", "Emoji");
+
+                    b.ToTable("MessageReactions");
                 });
 
             modelBuilder.Entity("Touchpointe.Domain.Entities.Notification", b =>
@@ -975,6 +1009,25 @@ namespace Touchpointe.Infrastructure.Migrations
                     b.Navigation("Sender");
                 });
 
+            modelBuilder.Entity("Touchpointe.Domain.Entities.MessageReaction", b =>
+                {
+                    b.HasOne("Touchpointe.Domain.Entities.Message", "Message")
+                        .WithMany("Reactions")
+                        .HasForeignKey("MessageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Touchpointe.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Message");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Touchpointe.Domain.Entities.Notification", b =>
                 {
                     b.HasOne("Touchpointe.Domain.Entities.User", "User")
@@ -1204,6 +1257,11 @@ namespace Touchpointe.Infrastructure.Migrations
             modelBuilder.Entity("Touchpointe.Domain.Entities.Folder", b =>
                 {
                     b.Navigation("Lists");
+                });
+
+            modelBuilder.Entity("Touchpointe.Domain.Entities.Message", b =>
+                {
+                    b.Navigation("Reactions");
                 });
 
             modelBuilder.Entity("Touchpointe.Domain.Entities.Space", b =>

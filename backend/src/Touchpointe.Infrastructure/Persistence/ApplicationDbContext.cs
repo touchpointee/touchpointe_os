@@ -27,6 +27,7 @@ namespace Touchpointe.Infrastructure.Persistence
         public DbSet<Channel> Channels { get; set; }
         public DbSet<ChannelMember> ChannelMembers { get; set; }
         public DbSet<Message> Messages { get; set; }
+        public DbSet<MessageReaction> MessageReactions { get; set; }
         public DbSet<DirectMessageGroup> DirectMessageGroups { get; set; }
         public DbSet<DirectMessageMember> DirectMessageMembers { get; set; }
 
@@ -358,6 +359,22 @@ namespace Touchpointe.Infrastructure.Persistence
             modelBuilder.Entity<DirectMessageMember>()
                 .HasIndex(dmm => new { dmm.DirectMessageGroupId, dmm.UserId })
                 .IsUnique();
+
+            // Chat: Reactions
+            modelBuilder.Entity<MessageReaction>()
+                .HasOne(r => r.Message)
+                .WithMany(m => m.Reactions)
+                .HasForeignKey(r => r.MessageId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<MessageReaction>()
+                .HasOne(r => r.User)
+                .WithMany()
+                .HasForeignKey(r => r.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<MessageReaction>()
+                .HasIndex(r => new { r.MessageId, r.UserId, r.Emoji }); // Optimization
         }
     }
 }

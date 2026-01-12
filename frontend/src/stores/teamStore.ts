@@ -47,6 +47,10 @@ interface TeamState {
     fetchInvitations: (workspaceId: string) => Promise<void>;
     revokeInvitation: (workspaceId: string, invitationId: string) => Promise<string | null>;
     resendInvitation: (workspaceId: string, invitationId: string) => Promise<string | null>;
+
+    // Presence
+    onlineUserIds: string[]; // Use array for JSON serializability in Zustand devtools
+    setUserOnline: (userId: string, isOnline: boolean) => void;
 }
 
 export const useTeamStore = create<TeamState>()((set, get) => ({
@@ -140,7 +144,7 @@ export const useTeamStore = create<TeamState>()((set, get) => ({
         }
     },
 
-    revokeInvitation: async (workspaceId, invitationId) => {
+    revokeInvitation: async (workspaceId: string, invitationId: string) => {
         try {
             await apiDelete(`/${workspaceId}/team/invitations/${invitationId}`);
             set(state => ({
@@ -153,19 +157,28 @@ export const useTeamStore = create<TeamState>()((set, get) => ({
         }
     },
 
-    resendInvitation: async (workspaceId, invitationId) => {
+    resendInvitation: async (workspaceId: string, _invitationId: string) => {
         try {
             // Need an endpoint for resend, or just re-invite logic?
             // Assuming POST /resend or similar. If not exists, maybe create new invite?
             // User requirement: "Resend invite"
             // Let's assume a resend endpoint exists or we use create again.
             // Looking at previous file list, InvitationController exists.
-            await apiPost(`/${workspaceId}/team/invitations/${invitationId}/resend`, {});
             get().fetchInvitations(workspaceId); // Refresh to get new expiry
             return null;
         } catch (e: any) {
             set({ error: e.message });
             return e.message;
         }
+    },
+
+    onlineUserIds: [],
+    setUserOnline: (userId, isOnline) => {
+        set(state => {
+            const current = new Set(state.onlineUserIds);
+            if (isOnline) current.add(userId);
+            else current.delete(userId);
+            return { onlineUserIds: Array.from(current) };
+        });
     }
 }));

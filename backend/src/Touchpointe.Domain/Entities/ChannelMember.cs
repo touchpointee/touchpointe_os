@@ -9,6 +9,7 @@ namespace Touchpointe.Domain.Entities
         public Guid ChannelId { get; set; }
         public Guid UserId { get; set; }
         public DateTime JoinedAt { get; set; } = DateTime.UtcNow;
+        public Guid? LastReadMessageId { get; set; }
 
         // Navigation properties
         public Channel Channel { get; set; } = null!;

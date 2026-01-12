@@ -15,11 +15,13 @@ namespace Touchpointe.Application.Services.Chat
     {
         private readonly IApplicationDbContext _context;
         private readonly INotificationService _notificationService;
+        private readonly IChatNotificationService _chatNotification;
 
-        public ChatService(IApplicationDbContext context, INotificationService notificationService)
+        public ChatService(IApplicationDbContext context, INotificationService notificationService, IChatNotificationService chatNotification)
         {
             _context = context;
             _notificationService = notificationService;
+            _chatNotification = chatNotification;
         }
 
         // --- Channels ---
@@ -135,7 +137,15 @@ namespace Touchpointe.Application.Services.Chat
                     m.SenderId,
                     m.Sender.FullName,
                     m.Content,
-                    m.CreatedAt
+                    m.CreatedAt,
+                    m.Reactions.Select(r => new MessageReactionDto(
+                        r.Id, 
+                        r.MessageId, 
+                        r.UserId, 
+                        r.User.FullName, 
+                        r.Emoji, 
+                        r.CreatedAt
+                    )).ToList()
                 ))
                 .ToListAsync();
         }
@@ -150,7 +160,6 @@ namespace Touchpointe.Application.Services.Chat
             
             if (channel.IsPrivate && !isMember) throw new UnauthorizedAccessException("Not a member of this private channel");
             
-            // Auto-join public channels on first post? Optional. For now just allow posting.
             if (!channel.IsPrivate && !isMember)
             {
                  _context.ChannelMembers.Add(new ChannelMember
@@ -159,7 +168,6 @@ namespace Touchpointe.Application.Services.Chat
                     ChannelId = channelId,
                     UserId = userId
                 });
-                // We'll save changes when saving message
             }
 
             var message = new Message
@@ -173,7 +181,6 @@ namespace Touchpointe.Application.Services.Chat
             _context.Messages.Add(message);
             await _context.SaveChangesAsync(CancellationToken.None);
 
-            // Fetch sender info
             var sender = await _context.Users.FindAsync(userId);
 
             // Process Mentions
@@ -181,7 +188,7 @@ namespace Touchpointe.Application.Services.Chat
                 $"mentioned you in #{channel.Name}", 
                 new { ChannelId = channelId, MessageId = message.Id });
             
-            return new MessageDto(
+            var messageDto = new MessageDto(
                 message.Id,
                 message.WorkspaceId,
                 message.ChannelId,
@@ -189,8 +196,14 @@ namespace Touchpointe.Application.Services.Chat
                 message.SenderId,
                 sender?.FullName ?? "Unknown",
                 message.Content,
-                message.CreatedAt
+                message.CreatedAt,
+                new List<MessageReactionDto>()
             );
+
+            // Real-time broadcast
+            await _chatNotification.NotifyMessageAsync(channelId.ToString(), messageDto);
+
+            return messageDto;
         }
 
         // --- Direct Messages ---
@@ -198,7 +211,7 @@ namespace Touchpointe.Application.Services.Chat
         public async Task<List<DmGroupDto>> GetUserDmGroupsAsync(Guid workspaceId, Guid userId)
         {
             var groupIds = await _context.DirectMessageMembers
-                .Where(m => m.UserId == userId) // WorkspaceId is not on Member directly, but on Group. Filter by Group later? No, Member is child of Group.
+                .Where(m => m.UserId == userId) 
                 .Select(m => m.DirectMessageGroupId)
                 .ToListAsync();
 
@@ -224,8 +237,6 @@ namespace Touchpointe.Application.Services.Chat
             if (userIds.Count < 2) throw new Exception("DM must have at least 2 members");
 
             // Look for existing group with exact same members
-            // This is complex in EF. Simplification: Find groups I am in, then check members.
-            
             var myGroups = await _context.DirectMessageGroups
                 .Include(g => g.Members)
                 .ThenInclude(m => m.User)
@@ -280,7 +291,7 @@ namespace Touchpointe.Application.Services.Chat
         public async Task<List<MessageDto>> GetDmMessagesAsync(Guid workspaceId, Guid dmGroupId, Guid userId, int take = 50)
         {
             var isMember = await _context.DirectMessageMembers
-                .AnyAsync(m => m.DirectMessageGroupId == dmGroupId && m.UserId == userId); // And check group workspace?
+                .AnyAsync(m => m.DirectMessageGroupId == dmGroupId && m.UserId == userId);
             
             // Safer: include Group check
              var group = await _context.DirectMessageGroups
@@ -307,7 +318,15 @@ namespace Touchpointe.Application.Services.Chat
                     m.SenderId,
                     m.Sender.FullName,
                     m.Content,
-                    m.CreatedAt
+                    m.CreatedAt,
+                    m.Reactions.Select(r => new MessageReactionDto(
+                        r.Id, 
+                        r.MessageId, 
+                        r.UserId, 
+                        r.User.FullName, 
+                        r.Emoji, 
+                        r.CreatedAt
+                    )).ToList()
                 ))
                 .ToListAsync();
         }
@@ -341,7 +360,7 @@ namespace Touchpointe.Application.Services.Chat
                 "mentioned you in a Direct Message", 
                 new { DmGroupId = dmGroupId, MessageId = message.Id });
 
-            return new MessageDto(
+            var messageDto = new MessageDto(
                 message.Id,
                 message.WorkspaceId,
                 null,
@@ -349,8 +368,14 @@ namespace Touchpointe.Application.Services.Chat
                 message.SenderId,
                 sender?.FullName ?? "Unknown",
                 message.Content,
-                message.CreatedAt
+                message.CreatedAt,
+                new List<MessageReactionDto>()
             );
+
+            // Real-time broadcast
+            await _chatNotification.NotifyMessageAsync(dmGroupId.ToString(), messageDto);
+
+            return messageDto;
         }
 
         public async Task<List<UserDto>> GetWorkspaceMembersAsync(Guid workspaceId)
@@ -399,6 +424,104 @@ namespace Touchpointe.Application.Services.Chat
                     );
                 }
             }
+        }
+
+        public async Task AddReactionAsync(Guid workspaceId, Guid messageId, Guid userId, string emoji)
+        {
+            var message = await _context.Messages
+                .Include(m => m.Channel)
+                .Include(m => m.DirectMessageGroup)
+                .ThenInclude(dm => dm.Members)
+                .FirstOrDefaultAsync(m => m.Id == messageId && m.WorkspaceId == workspaceId);
+
+            if (message == null) throw new Exception("Message not found");
+
+            // Verify access
+            bool hasAccess = false;
+            if (message.ChannelId.HasValue)
+            {
+                hasAccess = !message.Channel.IsPrivate || await _context.ChannelMembers.AnyAsync(cm => cm.ChannelId == message.ChannelId && cm.UserId == userId);
+            }
+            else if (message.DirectMessageGroupId.HasValue)
+            {
+                hasAccess = message.DirectMessageGroup.Members.Any(mm => mm.UserId == userId);
+            }
+
+            if (!hasAccess) throw new UnauthorizedAccessException("Cannot react to this message");
+
+            // Check existing
+            var existing = await _context.MessageReactions
+                .FirstOrDefaultAsync(r => r.MessageId == messageId && r.UserId == userId && r.Emoji == emoji);
+            
+            if (existing != null) return; // Idempotent
+
+            var reaction = new MessageReaction
+            {
+                MessageId = messageId,
+                UserId = userId,
+                Emoji = emoji,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _context.MessageReactions.Add(reaction);
+            await _context.SaveChangesAsync(CancellationToken.None);
+
+            var user = await _context.Users.FindAsync(userId);
+
+            // Broadcast
+            var reactionDto = new MessageReactionDto(reaction.Id, messageId, userId, user?.FullName ?? "Unknown", emoji, reaction.CreatedAt);
+            string channelKey = message.ChannelId.HasValue ? message.ChannelId.Value.ToString() : message.DirectMessageGroupId.Value.ToString();
+            
+            await _chatNotification.NotifyReactionAddedAsync(channelKey, reactionDto);
+        }
+
+        public async Task RemoveReactionAsync(Guid workspaceId, Guid messageId, Guid userId, string emoji)
+        {
+            var reaction = await _context.MessageReactions
+                .Include(r => r.Message)
+                .FirstOrDefaultAsync(r => r.MessageId == messageId && r.UserId == userId && r.Emoji == emoji);
+            
+            if (reaction == null) return;
+            if (reaction.Message.WorkspaceId != workspaceId) throw new UnauthorizedAccessException();
+
+            _context.MessageReactions.Remove(reaction);
+            await _context.SaveChangesAsync(CancellationToken.None);
+
+            string channelKey = reaction.Message.ChannelId.HasValue ? reaction.Message.ChannelId.Value.ToString() : reaction.Message.DirectMessageGroupId.Value.ToString();
+            await _chatNotification.NotifyReactionRemovedAsync(channelKey, messageId, userId, emoji);
+        }
+
+        public async Task MarkChannelAsReadAsync(Guid workspaceId, Guid channelId, Guid userId, Guid messageId)
+        {
+            var member = await _context.ChannelMembers
+                .FirstOrDefaultAsync(m => m.WorkspaceId == workspaceId && m.ChannelId == channelId && m.UserId == userId);
+            
+            if (member == null) return; // Or throw
+
+            // Only update if newer (optional, but good practice)
+            // Ideally we check if messageId exists and its CreatedAt is > current LastRead
+            // For now, trust the client or just update.
+            member.LastReadMessageId = messageId;
+            await _context.SaveChangesAsync(CancellationToken.None);
+
+            await _chatNotification.NotifyReadReceiptAsync(channelId.ToString(), userId, messageId);
+        }
+
+        public async Task MarkDmAsReadAsync(Guid workspaceId, Guid dmGroupId, Guid userId, Guid messageId)
+        {
+             var member = await _context.DirectMessageMembers
+                .FirstOrDefaultAsync(m => m.DirectMessageGroupId == dmGroupId && m.UserId == userId);
+            
+            if (member == null) return;
+
+             // Verify workspace via Group
+             var group = await _context.DirectMessageGroups.FindAsync(dmGroupId);
+             if (group == null || group.WorkspaceId != workspaceId) return;
+
+             member.LastReadMessageId = messageId;
+             await _context.SaveChangesAsync(CancellationToken.None);
+
+             await _chatNotification.NotifyReadReceiptAsync(dmGroupId.ToString(), userId, messageId);
         }
     }
 }

@@ -7,6 +7,7 @@ import { GlobalHeader } from './GlobalHeader';
 import { ContextSidebar } from './ContextSidebar';
 import { MobileSidebar } from './MobileSidebar';
 import { InvitationHandler } from '@/components/auth/InvitationHandler';
+import { RealtimeManager } from '@/components/shared/RealtimeManager';
 
 interface AppLayoutProps {
     children: ReactNode;
@@ -29,6 +30,7 @@ export function AppLayout({ children, hideContextSidebar = false }: AppLayoutPro
             />
 
             <InvitationHandler />
+            <RealtimeManager />
 
             {/* Main Content Area */}
             <main className={cn(

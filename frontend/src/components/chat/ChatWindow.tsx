@@ -2,6 +2,7 @@ import { useEffect, useState, useRef, useMemo } from 'react';
 import type { KeyboardEvent } from 'react';
 import { useChatStore } from '@/stores/chatStore';
 import { useWorkspaces } from '@/stores/workspaceStore';
+import { useRealtimeStore } from '@/stores/realtimeStore';
 import { getCurrentUser } from '@/lib/auth';
 import { Hash, User } from 'lucide-react';
 import { MentionSuggestion } from '../shared/MentionSuggestion';
@@ -14,6 +15,13 @@ export function ChatWindow() {
         fetchMessages, postMessage, fetchWorkspaceMembers,
         isLoading, error
     } = useChatStore();
+    const {
+        emitTyping,
+        emitStopTyping,
+        typingUsers,
+        joinChannel,
+        leaveChannel
+    } = useRealtimeStore();
     const { activeWorkspace } = useWorkspaces();
     const currentUser = getCurrentUser();
 
@@ -24,6 +32,7 @@ export function ChatWindow() {
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLDivElement>(null);
+    const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const activeId = activeChannelId || activeDmGroupId;
     const isDm = !!activeDmGroupId;
@@ -32,6 +41,9 @@ export function ChatWindow() {
 
     const activeChannel = activeChannelId ? channels.find(c => c.id === activeChannelId) : null;
     const activeDm = activeDmGroupId ? dmGroups.find(d => d.id === activeDmGroupId) : null;
+
+    // Get typing users for current channel, excluding specific user if needed (though backend filters sender usually)
+    const currentTypingUsers = activeId ? (typingUsers[activeId] || []) : [];
 
     const filteredMembers = useMemo(() => {
         if (mentionQuery === null) return [];
@@ -46,12 +58,14 @@ export function ChatWindow() {
             fetchMessages(activeWorkspace.id, activeId, isDm);
             fetchWorkspaceMembers(activeWorkspace.id);
 
-            const interval = setInterval(() => {
-                fetchMessages(activeWorkspace.id, activeId, isDm);
-            }, 5000);
-            return () => clearInterval(interval);
+            // Join SignalR Group
+            joinChannel(activeId);
+
+            return () => {
+                leaveChannel(activeId);
+            };
         }
-    }, [activeWorkspace, activeId, isDm, fetchMessages, fetchWorkspaceMembers]);
+    }, [activeWorkspace, activeId, isDm, fetchMessages, fetchWorkspaceMembers, joinChannel, leaveChannel]);
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -61,6 +75,22 @@ export function ChatWindow() {
         if (!inputRef.current) return;
         const text = inputRef.current.textContent || '';
         setHasContent(text.trim().length > 0);
+
+        // Typing logic
+        if (activeId) {
+            if (text.trim().length > 0) {
+                if (typingTimeoutRef.current) {
+                    clearTimeout(typingTimeoutRef.current);
+                } else {
+                    emitTyping(activeId);
+                }
+
+                typingTimeoutRef.current = setTimeout(() => {
+                    emitStopTyping(activeId);
+                    typingTimeoutRef.current = null;
+                }, 2000);
+            }
+        }
 
         const selection = window.getSelection();
         if (!selection || selection.rangeCount === 0) return;
@@ -158,6 +188,13 @@ export function ChatWindow() {
     const handleSend = async () => {
         if (!inputRef.current || !activeWorkspace || !currentUser) return;
 
+        // Clear typing
+        if (activeId && typingTimeoutRef.current) {
+            clearTimeout(typingTimeoutRef.current);
+            emitStopTyping(activeId);
+            typingTimeoutRef.current = null;
+        }
+
         let content = '';
         inputRef.current.childNodes.forEach(node => {
             if (node.nodeType === Node.TEXT_NODE) {
@@ -243,7 +280,7 @@ export function ChatWindow() {
                         const showHeader = idx === 0 || currentMessages[idx - 1].senderId !== msg.senderId || (new Date(msg.createdAt).getTime() - new Date(currentMessages[idx - 1].createdAt).getTime() > 60000 * 5);
 
                         return (
-                            <div key={msg.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
+                            <div key={msg.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} ${msg.isOptimistic ? 'animate-pulse' : ''}`}> {/* Add Animation */}
                                 {showHeader && (
                                     <div className="flex items-center gap-2 mb-1 mt-2">
                                         <span className="text-xs font-semibold text-foreground/80">{msg.senderName}</span>
@@ -251,10 +288,10 @@ export function ChatWindow() {
                                     </div>
                                 )}
                                 <div
-                                    className={`px-3 py-2 rounded-2xl max-w-[70%] text-sm ${isMe
+                                    className={`px-3 py-2 rounded-2xl max-w-[70%] text-sm shadow-sm transition-all duration-200 hover:shadow-md ${isMe // Add Styles
                                         ? 'bg-primary text-primary-foreground rounded-tr-sm'
                                         : 'bg-muted text-foreground rounded-tl-sm'
-                                        } ${msg.isOptimistic ? 'opacity-70' : ''}`}
+                                        }`}
                                 >
                                     <MentionRenderer content={msg.content} />
                                 </div>
@@ -267,6 +304,16 @@ export function ChatWindow() {
 
             {/* Input Area */}
             <div className="p-4 bg-card border-t border-border shrink-0 relative z-10">
+                {/* Typing Indicator */}
+                {currentTypingUsers.length > 0 && (
+                    <div className="absolute top-[-25px] left-4 text-xs text-muted-foreground animate-pulse">
+                        {currentTypingUsers.length === 1
+                            ? `${currentTypingUsers[0].userName} is typing...`
+                            : `${currentTypingUsers.length} people are typing...`
+                        }
+                    </div>
+                )}
+
                 <div className="relative bg-muted/30 rounded-lg border border-border focus-within:ring-1 focus-within:ring-primary focus-within:border-primary transition-all">
                     <div
                         ref={inputRef}

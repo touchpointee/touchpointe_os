@@ -19,6 +19,7 @@ namespace Touchpointe.Domain.Entities
         public Guid Id { get; set; }
         public Guid DirectMessageGroupId { get; set; }
         public Guid UserId { get; set; }
+        public Guid? LastReadMessageId { get; set; }
         
         // Navigation
         public DirectMessageGroup Group { get; set; } = null!;

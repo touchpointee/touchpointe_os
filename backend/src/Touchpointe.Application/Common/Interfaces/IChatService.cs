@@ -25,5 +25,12 @@ namespace Touchpointe.Application.Common.Interfaces
         
         // Members (for DM picker)
         Task<List<UserDto>> GetWorkspaceMembersAsync(Guid workspaceId);
+
+        // Reactions
+        Task MarkChannelAsReadAsync(Guid workspaceId, Guid channelId, Guid userId, Guid messageId);
+        Task MarkDmAsReadAsync(Guid workspaceId, Guid dmGroupId, Guid userId, Guid messageId);
+
+        Task AddReactionAsync(Guid workspaceId, Guid messageId, Guid userId, string emoji);
+        Task RemoveReactionAsync(Guid workspaceId, Guid messageId, Guid userId, string emoji);
     }
 }

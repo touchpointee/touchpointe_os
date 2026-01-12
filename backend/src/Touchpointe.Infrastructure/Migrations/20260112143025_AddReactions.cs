@@ -1,0 +1,69 @@
+﻿using System;
+using Microsoft.EntityFrameworkCore.Migrations;
+
+#nullable disable
+
+namespace Touchpointe.Infrastructure.Migrations
+{
+    /// <inheritdoc />
+    public partial class AddReactions : Migration
+    {
+        /// <inheritdoc />
+        protected override void Up(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.AddColumn<Guid>(
+                name: "LastReadMessageId",
+                table: "ChannelMembers",
+                type: "uuid",
+                nullable: true);
+
+            migrationBuilder.CreateTable(
+                name: "MessageReactions",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    MessageId = table.Column<Guid>(type: "uuid", nullable: false),
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Emoji = table.Column<string>(type: "text", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_MessageReactions", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_MessageReactions_Messages_MessageId",
+                        column: x => x.MessageId,
+                        principalTable: "Messages",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_MessageReactions_Users_UserId",
+                        column: x => x.UserId,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_MessageReactions_MessageId_UserId_Emoji",
+                table: "MessageReactions",
+                columns: new[] { "MessageId", "UserId", "Emoji" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_MessageReactions_UserId",
+                table: "MessageReactions",
+                column: "UserId");
+        }
+
+        /// <inheritdoc />
+        protected override void Down(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.DropTable(
+                name: "MessageReactions");
+
+            migrationBuilder.DropColumn(
+                name: "LastReadMessageId",
+                table: "ChannelMembers");
+        }
+    }
+}

@@ -65,6 +65,7 @@ interface ChatState {
     fetchMessages: (workspaceId: string, id: string, isDm?: boolean) => Promise<void>;
 
     postMessage: (workspaceId: string, content: string, currentUserId: string, currentUserName: string) => Promise<void>;
+    addMessage: (message: Message) => void;
 
     createChannel: (workspaceId: string, name: string, isPrivate: boolean, description: string) => Promise<boolean>;
     createDmGroup: (workspaceId: string, userIds: string[]) => Promise<string | null>;
@@ -202,7 +203,49 @@ export const useChatStore = create<ChatState>()((set, get) => ({
         }
     },
 
+    addMessage: (message: Message) => {
+        const targetId = message.channelId || message.directMessageGroupId;
+        if (!targetId) return;
+
+        set(state => {
+            const currentMessages = state.messages[targetId] || [];
+
+            // 1. Check if we already have this exact message ID (Dedupe)
+            if (currentMessages.some(m => m.id === message.id)) return state;
+
+            // 2. Check if we have an OPTIMISTIC message that matches this one (Sender + Content)
+            // This handles the race condition where SignalR broadcast arrives before API POST returns.
+            // We replace the optimistic one with the real one.
+            const optimisticMatchIndex = currentMessages.findIndex(m =>
+                m.isOptimistic &&
+                m.senderId === message.senderId &&
+                m.content === message.content
+            );
+
+            if (optimisticMatchIndex !== -1) {
+                // Replace optimistic with real
+                const updated = [...currentMessages];
+                updated[optimisticMatchIndex] = message;
+                return {
+                    messages: {
+                        ...state.messages,
+                        [targetId]: updated
+                    }
+                };
+            }
+
+            // 3. Otherwise, just append
+            return {
+                messages: {
+                    ...state.messages,
+                    [targetId]: [...currentMessages, message]
+                }
+            };
+        });
+    },
+
     createChannel: async (workspaceId, name, isPrivate, description) => {
+        // ...
         try {
             const newChannel = await apiPost<Channel>(`/${workspaceId}/chat/channels`, { name, isPrivate, description });
             set(state => ({

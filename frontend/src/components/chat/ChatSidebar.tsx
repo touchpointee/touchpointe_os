@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useChatStore } from '@/stores/chatStore';
 import { useWorkspaces } from '@/stores/workspaceStore';
+import { useTeamStore } from '@/stores/teamStore';
 import { Hash, Plus, Lock, User, Users } from 'lucide-react';
 import { getCurrentUser } from '@/lib/auth';
 
@@ -12,6 +13,8 @@ export function ChatSidebar() {
         createChannel, createDmGroup,
         fetchChannels, fetchDmGroups, fetchWorkspaceMembers
     } = useChatStore();
+
+    const { onlineUserIds } = useTeamStore();
 
     const { activeWorkspace } = useWorkspaces();
     const currentUser = getCurrentUser();
@@ -54,6 +57,13 @@ export function ChatSidebar() {
         const otherMembers = group.members.filter((m: any) => m.id !== currentUser?.id);
         if (otherMembers.length === 0) return "Me";
         return otherMembers.map((m: any) => m.fullName.split(' ')[0]).join(', ');
+    };
+
+    const isGroupOnline = (group: any) => {
+        const otherMembers = group.members.filter((m: any) => m.id !== currentUser?.id);
+        if (otherMembers.length === 0) return false;
+        // If any member is online? Or all? Usually any.
+        return otherMembers.some((m: any) => onlineUserIds.includes(m.id));
     };
 
     return (
@@ -131,20 +141,25 @@ export function ChatSidebar() {
                 )}
 
                 <div className="space-y-0.5">
-                    {dmGroups.map(group => (
-                        <button
-                            key={group.id}
-                            onClick={() => setActiveDmInfo(group.id)}
-                            className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm transition-colors ${activeDmGroupId === group.id ? 'bg-accent/50 text-foreground' : 'text-muted-foreground hover:bg-accent/25'
-                                }`}
-                        >
-                            <div className="relative">
-                                {group.members.length > 2 ? <Users className="w-3.5 h-3.5" /> : <User className="w-3.5 h-3.5" />}
-                                <span className="absolute -bottom-0.5 -right-0.5 w-1.5 h-1.5 bg-green-500 rounded-full border border-background"></span>
-                            </div>
-                            <span className="truncate">{getDmName(group)}</span>
-                        </button>
-                    ))}
+                    {dmGroups.map(group => {
+                        const isOnline = isGroupOnline(group);
+                        return (
+                            <button
+                                key={group.id}
+                                onClick={() => setActiveDmInfo(group.id)}
+                                className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm transition-colors ${activeDmGroupId === group.id ? 'bg-accent/50 text-foreground' : 'text-muted-foreground hover:bg-accent/25'
+                                    }`}
+                            >
+                                <div className="relative">
+                                    {group.members.length > 2 ? <Users className="w-3.5 h-3.5" /> : <User className="w-3.5 h-3.5" />}
+                                    {isOnline && (
+                                        <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 bg-green-500 rounded-full border-2 border-background"></span>
+                                    )}
+                                </div>
+                                <span className="truncate">{getDmName(group)}</span>
+                            </button>
+                        );
+                    })}
                 </div>
             </div>
         </div>
