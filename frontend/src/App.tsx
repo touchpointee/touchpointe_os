@@ -52,6 +52,13 @@ function App() {
                                 </AppLayout>
                             </AuthGuard>
                         } />
+                        <Route path="/workspace/:workspaceId/home" element={
+                            <AuthGuard>
+                                <AppLayout hideContextSidebar={true}>
+                                    <HomePage />
+                                </AppLayout>
+                            </AuthGuard>
+                        } />
                         <Route path="/tasks" element={
                             <AuthGuard>
                                 <AppLayout>

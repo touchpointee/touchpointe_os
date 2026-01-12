@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
+import { Navigate, useLocation, useParams } from 'react-router-dom';
 import { useUserStore } from '@/stores/userStore';
 import { useWorkspaces } from '@/stores/workspaceStore';
 import { Loader2 } from 'lucide-react';
@@ -12,6 +12,7 @@ interface AuthGuardProps {
 
 export function AuthGuard({ children, requireWorkspace = true }: AuthGuardProps) {
     const location = useLocation();
+    const { workspaceId } = useParams();
     const { user, fetchUser, isLoading: isUserLoading } = useUserStore();
     const {
         workspaces,
@@ -75,7 +76,23 @@ export function AuthGuard({ children, requireWorkspace = true }: AuthGuardProps)
 
         init();
         // eslint-disable-next-line react-hooks/exhaustive-deps
+        init();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []); // Run once on mount
+
+    // SYNC URL PARAMS TO STORE
+    const { setActiveWorkspace, activeWorkspace: currentActive } = useWorkspaces();
+    useEffect(() => {
+        if (workspaceId && workspaces.length > 0) {
+            if (currentActive?.id !== workspaceId) {
+                // Validate it exists
+                const exists = workspaces.find(w => w.id === workspaceId);
+                if (exists) {
+                    setActiveWorkspace(workspaceId);
+                }
+            }
+        }
+    }, [workspaceId, workspaces, currentActive, setActiveWorkspace]);
 
     // LOADING STATE
     if (isInitializing || isUserLoading || (isWorkspaceLoading && !isBootstrapped && workspaces.length === 0)) {

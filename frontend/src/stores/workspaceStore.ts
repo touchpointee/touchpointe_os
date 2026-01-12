@@ -130,7 +130,6 @@ export const useWorkspaces = create<WorkspaceState>()(
 
             setActiveWorkspace: (workspaceId: string) => {
                 if (!isValidUUID(workspaceId)) {
-                    console.error('Invalid workspace ID:', workspaceId);
                     return;
                 }
                 const workspace = get().workspaces.find(w => w.id === workspaceId);
@@ -139,6 +138,12 @@ export const useWorkspaces = create<WorkspaceState>()(
                         activeWorkspace: workspace,
                         lastActiveWorkspaceId: workspace.id
                     });
+
+                    // Fire and forget - notify backend
+                    apiPost(`/workspaces/${workspaceId}/visit`, {})
+                        .catch(() => {
+                            // Silent failure for analytics/preferences
+                        });
                 }
             },
 

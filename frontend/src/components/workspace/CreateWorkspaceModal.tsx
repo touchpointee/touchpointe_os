@@ -26,7 +26,7 @@ export function CreateWorkspaceModal({ isOpen, onClose }: CreateWorkspaceModalPr
     };
 
     return createPortal(
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in p-4">
             <div className="bg-background border border-border rounded-lg shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in-95">
                 <div className="flex items-center justify-between px-4 py-3 border-b border-border">
                     <h2 className="text-lg font-semibold">Create Workspace</h2>

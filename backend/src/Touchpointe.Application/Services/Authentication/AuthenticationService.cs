@@ -96,7 +96,10 @@ namespace Touchpointe.Application.Services.Authentication
                 user.Id,
                 user.FullName,
                 user.Email,
-                token);
+                token)
+            {
+                LastActiveWorkspaceId = workspace.Id
+            };
         }
 
         public async Task<AuthenticationResult> Login(LoginCommand command)
@@ -119,7 +122,10 @@ namespace Touchpointe.Application.Services.Authentication
                 user.Id,
                 user.FullName,
                 user.Email,
-                token);
+                token)
+            {
+                LastActiveWorkspaceId = user.LastActiveWorkspaceId
+            };
         }
     }
 }

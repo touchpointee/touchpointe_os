@@ -96,5 +96,20 @@ namespace Touchpointe.Application.Services.Workspaces
                 ))
                 .ToListAsync();
         }
+
+        public async Task SetLastActiveWorkspaceAsync(Guid userId, Guid workspaceId)
+        {
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null) throw new Exception("User not found");
+
+            // Verify membership
+            var isMember = await _context.WorkspaceMembers
+                .AnyAsync(m => m.UserId == userId && m.WorkspaceId == workspaceId);
+
+            if (!isMember) throw new Exception("User is not a member of this workspace");
+
+            user.LastActiveWorkspaceId = workspaceId;
+            await _context.SaveChangesAsync(CancellationToken.None);
+        }
     }
 }

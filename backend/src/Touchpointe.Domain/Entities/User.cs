@@ -19,6 +19,8 @@ namespace Touchpointe.Domain.Entities
         public string FullName { get; set; } = string.Empty;
         public string AvatarUrl { get; set; } = string.Empty;
         
+        public Guid? LastActiveWorkspaceId { get; set; }
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 }

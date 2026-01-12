@@ -70,7 +70,7 @@ export function RegisterPage() {
 
     return (
         <AuthLayout>
-            <div className="bg-white p-8 rounded-[8px] shadow-[0_4px_12px_rgba(0,0,0,0.08)] w-full transition-all duration-500 ease-out animate-in fade-in slide-in-from-bottom-4">
+            <div className="bg-white p-6 sm:p-8 rounded-[8px] shadow-[0_4px_12px_rgba(0,0,0,0.08)] w-full max-w-md mx-auto transition-all duration-500 ease-out animate-in fade-in slide-in-from-bottom-4">
                 <div className="mb-8">
                     <h2 className="text-2xl font-semibold tracking-tight text-slate-900 text-left">Create your account</h2>
                     <p className="text-slate-500 mt-2 text-sm text-left">

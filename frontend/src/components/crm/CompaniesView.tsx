@@ -65,71 +65,84 @@ export function CompaniesView() {
                 company={selectedCompany}
             />
 
-            <div className="border rounded-md overflow-visible">
-                <table className="w-full text-sm">
-                    <thead>
-                        <tr className="border-b bg-muted/50 text-left">
-                            <th className="p-3 font-medium text-muted-foreground">Name</th>
-                            <th className="p-3 font-medium text-muted-foreground">Domain</th>
-                            <th className="p-3 font-medium text-muted-foreground">Industry</th>
-                            <th className="p-3 font-medium text-muted-foreground">Added</th>
-                            <th className="w-[50px]"></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {isLoading ? (
-                            <tr><td colSpan={5} className="p-4 text-center">Loading...</td></tr>
-                        ) : companies.length === 0 ? (
-                            <tr><td colSpan={5} className="p-8 text-center text-muted-foreground">No companies found</td></tr>
-                        ) : (
-                            companies.map(company => (
-                                <tr key={company.id} className="border-b last:border-0 hover:bg-muted/50 transition-colors group">
-                                    <td className="p-3 font-medium flex items-center gap-2">
-                                        <div className="w-8 h-8 rounded bg-primary/10 flex items-center justify-center text-primary">
-                                            <Building2 size={16} />
-                                        </div>
-                                        {company.name}
-                                    </td>
-                                    <td className="p-3 text-muted-foreground">{company.domain}</td>
-                                    <td className="p-3">
-                                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-secondary text-secondary-foreground">
-                                            {company.industry}
-                                        </span>
-                                    </td>
-                                    <td className="p-3 text-muted-foreground">{format(new Date(company.createdAt), 'MMM d, yyyy')}</td>
-                                    <td className="p-3 text-right relative">
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                setMenuOpenId(menuOpenId === company.id ? null : company.id);
-                                            }}
-                                            className="p-2 hover:bg-muted rounded-md text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity"
-                                        >
-                                            <MoreHorizontal size={16} />
-                                        </button>
+            <div className="border rounded-md overflow-hidden">
+                {/* Header - Hidden on Mobile */}
+                <div className="hidden md:grid grid-cols-[1.5fr_1.5fr_1fr_1fr_50px] bg-muted/50 text-left text-sm font-medium text-muted-foreground border-b">
+                    <div className="p-3">Name</div>
+                    <div className="p-3">Domain</div>
+                    <div className="p-3">Industry</div>
+                    <div className="p-3">Added</div>
+                    <div className="p-3"></div>
+                </div>
 
-                                        {menuOpenId === company.id && (
-                                            <div className="absolute right-8 top-0 mt-2 w-32 bg-background border border-border rounded-lg shadow-xl z-50 py-1">
-                                                <button
-                                                    onClick={(e) => { e.stopPropagation(); handleEdit(company); }}
-                                                    className="flex items-center gap-2 w-full px-3 py-2 hover:bg-muted transition-colors text-sm"
-                                                >
-                                                    <Pencil size={14} /> Edit
-                                                </button>
-                                                <button
-                                                    onClick={(e) => { e.stopPropagation(); handleDelete(company.id); }}
-                                                    className="flex items-center gap-2 w-full px-3 py-2 hover:bg-red-50 text-red-600 transition-colors text-sm"
-                                                >
-                                                    <Trash size={14} /> Delete
-                                                </button>
-                                            </div>
-                                        )}
-                                    </td>
-                                </tr>
-                            ))
-                        )}
-                    </tbody>
-                </table>
+                {/* Body */}
+                <div className="divide-y divide-border">
+                    {isLoading ? (
+                        <div className="p-4 text-center text-sm">Loading...</div>
+                    ) : companies.length === 0 ? (
+                        <div className="p-8 text-center text-muted-foreground text-sm">No companies found</div>
+                    ) : (
+                        companies.map(company => (
+                            <div key={company.id} className="grid grid-cols-1 md:grid-cols-[1.5fr_1.5fr_1fr_1fr_50px] hover:bg-muted/50 transition-colors group text-sm relative">
+                                {/* Name */}
+                                <div className="p-3 font-medium flex items-center gap-2">
+                                    <div className="w-8 h-8 rounded bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                                        <Building2 size={16} />
+                                    </div>
+                                    <span className="truncate">{company.name}</span>
+                                </div>
+
+                                {/* Domain */}
+                                <div className="px-3 pb-1 md:p-3 text-muted-foreground truncate">
+                                    {company.domain}
+                                </div>
+
+                                {/* Industry */}
+                                <div className="px-3 pb-1 md:p-3">
+                                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-secondary text-secondary-foreground">
+                                        {company.industry}
+                                    </span>
+                                </div>
+
+                                {/* Added Date */}
+                                <div className="px-3 pb-3 md:p-3 flex items-center text-muted-foreground text-xs md:text-sm">
+                                    <span className="md:hidden mr-2">Added:</span>
+                                    {format(new Date(company.createdAt), 'MMM d, yyyy')}
+                                </div>
+
+                                {/* Actions */}
+                                <div className="absolute top-2 right-2 md:static md:p-3 md:text-right">
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setMenuOpenId(menuOpenId === company.id ? null : company.id);
+                                        }}
+                                        className="p-2 hover:bg-muted rounded-md text-muted-foreground md:opacity-0 md:group-hover:opacity-100 transition-opacity"
+                                    >
+                                        <MoreHorizontal size={16} />
+                                    </button>
+
+                                    {menuOpenId === company.id && (
+                                        <div className="absolute right-0 top-full mt-1 w-32 bg-background border border-border rounded-lg shadow-xl z-50 py-1">
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); handleEdit(company); }}
+                                                className="flex items-center gap-2 w-full px-3 py-2 hover:bg-muted transition-colors text-sm"
+                                            >
+                                                <Pencil size={14} /> Edit
+                                            </button>
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); handleDelete(company.id); }}
+                                                className="flex items-center gap-2 w-full px-3 py-2 hover:bg-red-50 text-red-600 transition-colors text-sm"
+                                            >
+                                                <Trash size={14} /> Delete
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        ))
+                    )}
+                </div>
             </div>
         </div>
     );

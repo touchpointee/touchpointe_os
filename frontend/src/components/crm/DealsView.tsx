@@ -150,9 +150,9 @@ export function DealsView() {
                     onDragStart={handleDragStart}
                     onDragEnd={handleDragEnd}
                 >
-                    <div className="flex h-full gap-4 min-w-max">
+                    <div className="flex h-full gap-4 min-w-max snap-x snap-mandatory md:snap-none">
                         {DEAL_STAGES.map(stage => (
-                            <div key={stage.id} className="flex flex-col w-80 h-full bg-muted/30 border border-border/50 rounded-lg overflow-hidden shrink-0">
+                            <div key={stage.id} className="flex flex-col w-[85vw] md:w-80 h-full bg-muted/30 border border-border/50 rounded-lg overflow-hidden shrink-0 snap-center">
                                 {/* Column Header */}
                                 <div className="p-3 border-b border-border/50 bg-background flex items-center justify-between">
                                     <div className="flex items-center gap-2">

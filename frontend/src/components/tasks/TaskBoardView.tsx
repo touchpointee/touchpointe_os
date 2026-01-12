@@ -153,7 +153,7 @@ export function TaskBoardView() {
     return (
         <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
             {/* FULL HEIGHT container - columns fill width equally */}
-            <div className="flex h-full gap-4 p-4 items-stretch min-h-0 min-w-0">
+            <div className="flex h-full gap-4 p-4 items-stretch min-h-0 min-w-0 overflow-x-auto snap-x snap-mandatory md:snap-none">
                 {statuses.map(status => (
                     <BoardColumn
                         key={status}
@@ -186,7 +186,7 @@ function BoardColumn({ status, tasks, onTaskClick, onAddTask }: {
             ref={setNodeRef}
             className={cn(
                 // FULL HEIGHT column, WITH BORDER AND BACKGROUND
-                "flex flex-col flex-1 min-w-[200px] h-full transition-colors group/col",
+                "flex flex-col flex-1 min-w-[85vw] md:min-w-[280px] h-full transition-colors group/col snap-center",
                 "border border-border/40 bg-card/30 rounded-xl overflow-hidden", // Added overflow-hidden for border radius
                 isOver && "bg-card/60 ring-1 ring-primary/10"
             )}

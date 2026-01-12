@@ -7,5 +7,6 @@ namespace Touchpointe.Application.Common.Interfaces
     {
         Task<WorkspaceDto> CreateWorkspaceAsync(Guid userId, string name);
         Task<List<WorkspaceDto>> GetUserWorkspacesAsync(Guid userId);
+        Task SetLastActiveWorkspaceAsync(Guid userId, Guid workspaceId);
     }
 }

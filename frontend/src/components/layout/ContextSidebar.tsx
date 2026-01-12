@@ -95,7 +95,7 @@ function getModuleFromPath(pathname: string): ModuleType {
     return ['home', 'tasks', 'crm', 'chat', 'team', 'settings'].includes(module) ? module : 'home';
 }
 
-export function ContextSidebar() {
+export function ContextSidebar({ className }: { className?: string }) {
     const location = useLocation();
     const { activeWorkspace } = useWorkspaces();
     const currentModule = getModuleFromPath(location.pathname);
@@ -107,10 +107,17 @@ export function ContextSidebar() {
         { icon: Users, label: 'Contacts', path: `/workspace/${activeWorkspace.id}/crm/contacts` },
     ] : [];
 
+    // Base classes for the sidebar container
+    const sidebarClasses = cn(
+        "bg-card border-r border-border/50 overflow-y-auto",
+        // If className is provided, use it. Otherwise default to desktop fixed positioning
+        className || "hidden lg:block fixed left-[72px] top-14 bottom-0 w-[260px]"
+    );
+
     // For Tasks module, render the dynamic TasksSidebar
     if (currentModule === 'tasks') {
         return (
-            <aside className="fixed left-[72px] top-14 bottom-0 w-[260px] bg-card border-r border-border/50 overflow-y-auto">
+            <aside className={sidebarClasses}>
                 <TasksSidebarWrapper />
             </aside>
         );
@@ -118,7 +125,7 @@ export function ContextSidebar() {
 
     if (currentModule === 'chat') {
         return (
-            <aside className="fixed left-[72px] top-14 bottom-0 w-[260px] bg-card border-r border-border/50 overflow-y-auto">
+            <aside className={sidebarClasses}>
                 <ChatSidebar />
             </aside>
         );
@@ -126,7 +133,7 @@ export function ContextSidebar() {
 
     if (currentModule === 'ai') {
         return (
-            <aside className="fixed left-[72px] top-14 bottom-0 w-[260px] bg-card border-r border-border/50 overflow-y-auto">
+            <aside className={sidebarClasses}>
                 <AiSidebar />
             </aside>
         );
@@ -146,7 +153,7 @@ export function ContextSidebar() {
     }
 
     return (
-        <aside className="fixed left-[72px] top-14 bottom-0 w-[260px] bg-card border-r border-border/50 overflow-y-auto">
+        <aside className={sidebarClasses}>
             <div className="p-4">
                 <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-4">
                     {title}

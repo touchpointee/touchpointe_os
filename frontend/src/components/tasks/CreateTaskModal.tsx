@@ -117,7 +117,7 @@ export function CreateTaskModal({ isOpen, onClose, onSubmit, workspaceId }: Crea
             />
 
             {/* Modal */}
-            <div className="relative bg-background border border-border rounded-xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden">
+            <div className="relative bg-background border border-border rounded-xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden max-h-[90vh] flex flex-col">
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 py-4 border-b border-border">
                     <h2 className="text-lg font-semibold">Create New Task</h2>
@@ -130,7 +130,7 @@ export function CreateTaskModal({ isOpen, onClose, onSubmit, workspaceId }: Crea
                 </div>
 
                 {/* Form */}
-                <form onSubmit={handleSubmit} className="p-6 space-y-5">
+                <form onSubmit={handleSubmit} className="p-6 space-y-5 overflow-y-auto">
                     {/* Error */}
                     {error && (
                         <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-600 text-sm">

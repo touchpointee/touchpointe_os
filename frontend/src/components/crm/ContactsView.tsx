@@ -66,88 +66,101 @@ export function ContactsView() {
                 contact={selectedContact}
             />
 
-            <div className="border rounded-md overflow-visible">
-                <table className="w-full text-sm">
-                    <thead>
-                        <tr className="border-b bg-muted/50 text-left">
-                            <th className="p-3 font-medium text-muted-foreground">Name</th>
-                            <th className="p-3 font-medium text-muted-foreground">Email</th>
-                            <th className="p-3 font-medium text-muted-foreground">Phone</th>
-                            <th className="p-3 font-medium text-muted-foreground">Company</th>
-                            <th className="p-3 font-medium text-muted-foreground">Added</th>
-                            <th className="w-[50px]"></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {isLoading ? (
-                            <tr><td colSpan={6} className="p-4 text-center">Loading...</td></tr>
-                        ) : contacts.length === 0 ? (
-                            <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">No contacts found</td></tr>
-                        ) : (
-                            contacts.map(contact => (
-                                <tr key={contact.id} className="border-b last:border-0 hover:bg-muted/50 transition-colors group">
-                                    <td className="p-3 font-medium flex items-center gap-2">
-                                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                                            <User2 size={16} />
-                                        </div>
-                                        {contact.firstName} {contact.lastName}
-                                    </td>
-                                    <td className="p-3">
-                                        <div className="flex items-center gap-2 text-muted-foreground">
-                                            <Mail size={14} />
-                                            {contact.email}
-                                        </div>
-                                    </td>
-                                    <td className="p-3">
-                                        {contact.phone && (
-                                            <div className="flex items-center gap-2 text-muted-foreground">
-                                                <Phone size={14} />
-                                                {contact.phone}
-                                            </div>
-                                        )}
-                                    </td>
-                                    <td className="p-3">
-                                        {contact.companyName && (
-                                            <div className="flex items-center gap-2 text-muted-foreground">
-                                                <Building2 size={14} />
-                                                {contact.companyName}
-                                            </div>
-                                        )}
-                                    </td>
-                                    <td className="p-3 text-muted-foreground">{format(new Date(contact.createdAt), 'MMM d, yyyy')}</td>
-                                    <td className="p-3 text-right relative">
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                setMenuOpenId(menuOpenId === contact.id ? null : contact.id);
-                                            }}
-                                            className="p-2 hover:bg-muted rounded-md text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity"
-                                        >
-                                            <MoreHorizontal size={16} />
-                                        </button>
+            <div className="border rounded-md overflow-hidden">
+                {/* Header - Hidden on Mobile */}
+                <div className="hidden md:grid grid-cols-[1.5fr_1.5fr_1fr_1fr_1fr_50px] bg-muted/50 text-left text-sm font-medium text-muted-foreground border-b">
+                    <div className="p-3">Name</div>
+                    <div className="p-3">Email</div>
+                    <div className="p-3">Phone</div>
+                    <div className="p-3">Company</div>
+                    <div className="p-3">Added</div>
+                    <div className="p-3"></div>
+                </div>
 
-                                        {menuOpenId === contact.id && (
-                                            <div className="absolute right-8 top-0 mt-2 w-32 bg-background border border-border rounded-lg shadow-xl z-50 py-1">
-                                                <button
-                                                    onClick={(e) => { e.stopPropagation(); handleEdit(contact); }}
-                                                    className="flex items-center gap-2 w-full px-3 py-2 hover:bg-muted transition-colors text-sm"
-                                                >
-                                                    <Pencil size={14} /> Edit
-                                                </button>
-                                                <button
-                                                    onClick={(e) => { e.stopPropagation(); handleDelete(contact.id); }}
-                                                    className="flex items-center gap-2 w-full px-3 py-2 hover:bg-red-50 text-red-600 transition-colors text-sm"
-                                                >
-                                                    <Trash size={14} /> Delete
-                                                </button>
-                                            </div>
-                                        )}
-                                    </td>
-                                </tr>
-                            ))
-                        )}
-                    </tbody>
-                </table>
+                {/* Body */}
+                <div className="divide-y divide-border">
+                    {isLoading ? (
+                        <div className="p-4 text-center text-sm">Loading...</div>
+                    ) : contacts.length === 0 ? (
+                        <div className="p-8 text-center text-muted-foreground text-sm">No contacts found</div>
+                    ) : (
+                        contacts.map(contact => (
+                            <div key={contact.id} className="grid grid-cols-1 md:grid-cols-[1.5fr_1.5fr_1fr_1fr_1fr_50px] hover:bg-muted/50 transition-colors group text-sm relative">
+                                {/* Name */}
+                                <div className="p-3 font-medium flex items-center gap-2">
+                                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                                        <User2 size={16} />
+                                    </div>
+                                    <span className="truncate">{contact.firstName} {contact.lastName}</span>
+                                </div>
+
+                                {/* Email */}
+                                <div className="p-3 flex items-center md:items-start text-muted-foreground">
+                                    <div className="flex items-center gap-2 max-w-full">
+                                        <Mail size={14} className="shrink-0 md:hidden" />
+                                        <span className="truncate">{contact.email}</span>
+                                    </div>
+                                </div>
+
+                                {/* Phone */}
+                                <div className="px-3 pb-2 md:p-3 md:flex items-center">
+                                    {contact.phone && (
+                                        <div className="flex items-center gap-2 text-muted-foreground">
+                                            <Phone size={14} className="shrink-0 md:hidden" />
+                                            <span>{contact.phone}</span>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Company */}
+                                <div className="px-3 pb-2 md:p-3 md:flex items-center">
+                                    {contact.companyName && (
+                                        <div className="flex items-center gap-2 text-muted-foreground">
+                                            <Building2 size={14} className="shrink-0 md:hidden" />
+                                            <span>{contact.companyName}</span>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Added Date */}
+                                <div className="px-3 pb-3 md:p-3 flex items-center text-muted-foreground text-xs md:text-sm">
+                                    <span className="md:hidden mr-2">Added:</span>
+                                    {format(new Date(contact.createdAt), 'MMM d, yyyy')}
+                                </div>
+
+                                {/* Actions */}
+                                <div className="absolute top-2 right-2 md:static md:p-3 md:text-right">
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setMenuOpenId(menuOpenId === contact.id ? null : contact.id);
+                                        }}
+                                        className="p-2 hover:bg-muted rounded-md text-muted-foreground md:opacity-0 md:group-hover:opacity-100 transition-opacity"
+                                    >
+                                        <MoreHorizontal size={16} />
+                                    </button>
+
+                                    {menuOpenId === contact.id && (
+                                        <div className="absolute right-0 top-full mt-1 w-32 bg-background border border-border rounded-lg shadow-xl z-50 py-1">
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); handleEdit(contact); }}
+                                                className="flex items-center gap-2 w-full px-3 py-2 hover:bg-muted transition-colors text-sm"
+                                            >
+                                                <Pencil size={14} /> Edit
+                                            </button>
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); handleDelete(contact.id); }}
+                                                className="flex items-center gap-2 w-full px-3 py-2 hover:bg-red-50 text-red-600 transition-colors text-sm"
+                                            >
+                                                <Trash size={14} /> Delete
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        ))
+                    )}
+                </div>
             </div>
         </div>
     );

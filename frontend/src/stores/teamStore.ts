@@ -57,7 +57,6 @@ export const useTeamStore = create<TeamState>()((set, get) => ({
     fetchMembers: async (workspaceId) => {
         set({ isLoading: true, error: null });
         try {
-            console.log('[TeamStore] Fetching members for workspace:', workspaceId);
             const members = await apiGet<TeamMember[]>(`/${workspaceId}/team/members`);
 
             // Parse roles ensure they are numbers
@@ -66,7 +65,6 @@ export const useTeamStore = create<TeamState>()((set, get) => ({
                 role: parseRole(m.role)
             }));
 
-            console.log('[TeamStore] Members fetched:', parsedMembers);
             set({ members: parsedMembers, isLoading: false });
         } catch (e: any) {
             console.error('[TeamStore] Failed to fetch members:', e);

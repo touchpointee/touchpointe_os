@@ -135,7 +135,7 @@ export function TaskDetailPanel() {
             <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40" onClick={closeTaskDetail} />
 
             {/* Panel */}
-            <div className="fixed inset-y-0 right-0 w-[60%] min-w-[600px] bg-background border-l border-border shadow-2xl z-50 flex flex-col animate-in slide-in-from-right duration-300">
+            <div className="fixed inset-y-0 right-0 w-full md:w-[60%] md:min-w-[600px] bg-background border-l border-border shadow-2xl z-50 flex flex-col animate-in slide-in-from-right duration-300">
 
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 py-4 border-b border-border">
@@ -188,9 +188,9 @@ export function TaskDetailPanel() {
                                 }}
                             />
 
-                            <div className="flex gap-4 text-sm">
+                            <div className="flex flex-col md:flex-row gap-4 text-sm">
                                 {/* STATUS - Dropdown */}
-                                <div className="space-y-1 w-1/4 relative">
+                                <div className="space-y-1 w-full md:w-1/4 relative">
                                     <div className="text-muted-foreground text-xs uppercase font-semibold">Status</div>
                                     <button
                                         onClick={(e) => { e.stopPropagation(); setStatusOpen(!statusOpen); setPriorityOpen(false); setAssigneeOpen(false); }}
@@ -218,7 +218,7 @@ export function TaskDetailPanel() {
                                 </div>
 
                                 {/* ASSIGNEE - Dropdown */}
-                                <div className="space-y-1 w-1/4 relative">
+                                <div className="space-y-1 w-full md:w-1/4 relative">
                                     <div className="text-muted-foreground text-xs uppercase font-semibold">Assignee</div>
                                     <button
                                         onClick={(e) => { e.stopPropagation(); setAssigneeOpen(!assigneeOpen); setStatusOpen(false); setPriorityOpen(false); }}
@@ -250,7 +250,7 @@ export function TaskDetailPanel() {
                                 </div>
 
                                 {/* PRIORITY - Dropdown */}
-                                <div className="space-y-1 w-1/4 relative">
+                                <div className="space-y-1 w-full md:w-1/4 relative">
                                     <div className="text-muted-foreground text-xs uppercase font-semibold">Priority</div>
                                     <button
                                         onClick={(e) => { e.stopPropagation(); setPriorityOpen(!priorityOpen); setStatusOpen(false); setAssigneeOpen(false); }}
@@ -278,7 +278,7 @@ export function TaskDetailPanel() {
                                 </div>
 
                                 {/* DUE DATE - Input */}
-                                <div className="space-y-1 w-1/4">
+                                <div className="space-y-1 w-full md:w-1/4">
                                     <div className="text-muted-foreground text-xs uppercase font-semibold">Due Date</div>
                                     <div className="flex items-center gap-2 px-2 py-1 rounded hover:bg-muted transition-colors">
                                         <CalendarIcon className="w-4 h-4 text-muted-foreground shrink-0" />
@@ -316,7 +316,7 @@ export function TaskDetailPanel() {
                         />
 
                         {/* Split View: Activity & Comments */}
-                        <div className="grid grid-cols-2 gap-8 pt-8 border-t border-border">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8 border-t border-border">
                             <TaskActivityTimeline activities={activities} />
                             <TaskComments
                                 comments={comments}

@@ -22,7 +22,7 @@ const navItems = [
 
 export function PrimarySidebar() {
     return (
-        <aside className="fixed left-0 top-0 h-screen w-[72px] bg-[hsl(var(--sidebar-bg))] border-r border-[hsl(var(--sidebar-border))] flex flex-col items-center py-4 z-50 transition-colors duration-300">
+        <aside className="hidden md:flex fixed left-0 top-0 h-screen w-[72px] bg-[hsl(var(--sidebar-bg))] border-r border-[hsl(var(--sidebar-border))] flex flex-col items-center py-4 z-50 transition-colors duration-300">
             {/* Logo */}
             <div className="w-10 h-10 rounded-lg bg-[hsl(var(--sidebar-accent))] flex items-center justify-center mb-6">
                 <span className="text-[hsl(var(--sidebar-fg))] font-bold text-lg">T</span>

@@ -29,27 +29,39 @@ export function LoginPage() {
 
         try {
             // Login Request
-            const response = await apiPost<{ token: string }>('/auth/login', {
+            const response = await apiPost<{ token: string; lastActiveWorkspaceId?: string }>('/auth/login', {
                 email: formData.email,
                 password: formData.password
             });
 
-            const { token } = response;
+            const { token, lastActiveWorkspaceId } = response;
+
             localStorage.setItem('token', token);
             toast.success('Welcome back', 'Successfully signed in to your account.');
 
+            // Fetch Data
             // Fetch Data
             await fetchUser();
             const workspaces = await fetchWorkspaces();
 
             // Navigation Logic
-            if (workspaces.length === 0) {
-                // Should not happen ideally due to zero data policy but safe fallback
-                navigate('/home');
+            if (lastActiveWorkspaceId) {
+                // Verify user is still a member of this workspace
+                const targetWorkspace = workspaces.find(w => {
+                    const match = w.id.toLowerCase() === lastActiveWorkspaceId.toLowerCase();
+                    return match;
+                });
+
+                if (targetWorkspace) {
+                    navigate(`/workspace/${targetWorkspace.id}/home`);
+                    return;
+                }
+            }
+
+            if (workspaces.length > 0) {
+                navigate(`/workspace/${workspaces[0].id}/home`);
             } else {
-                // Workspace store handles active selection logic in fetchWorkspaces
-                // We'll just go to home and let AuthGuard/App enforce the rest
-                navigate('/home');
+                navigate('/create-workspace');
             }
         } catch (err: any) {
             setError(err.message || 'Invalid email or password');
@@ -59,7 +71,7 @@ export function LoginPage() {
 
     return (
         <AuthLayout>
-            <div className="bg-white p-8 rounded-[8px] shadow-[0_4px_12px_rgba(0,0,0,0.08)] w-full transition-all duration-500 ease-out animate-in fade-in slide-in-from-bottom-4">
+            <div className="bg-white p-6 sm:p-8 rounded-[8px] shadow-[0_4px_12px_rgba(0,0,0,0.08)] w-full max-w-md mx-auto transition-all duration-500 ease-out animate-in fade-in slide-in-from-bottom-4">
                 <div className="mb-8">
                     <h2 className="text-2xl font-semibold tracking-tight text-slate-900 text-left">Sign in to your workspace</h2>
                     <p className="text-slate-500 mt-2 text-sm text-left">

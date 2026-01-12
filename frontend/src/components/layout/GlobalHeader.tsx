@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Bell, Sparkles, ChevronDown, Moon, Sun, User, LogOut, Plus, Check } from 'lucide-react';
+import { Search, Bell, Sparkles, ChevronDown, Moon, Sun, User, LogOut, Plus, Check, Menu } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { logout } from '@/lib/auth';
 import { useWorkspaces } from '@/stores/workspaceStore';
@@ -12,9 +12,10 @@ import { NotificationsPopover } from '@/components/layout/NotificationsPopover';
 interface GlobalHeaderProps {
     workspaceName?: string;
     userName?: string;
+    onOpenMobileMenu?: () => void;
 }
 
-export function GlobalHeader({ workspaceName = 'My Workspace', userName = 'User' }: GlobalHeaderProps) {
+export function GlobalHeader({ workspaceName = 'My Workspace', userName = 'User', onOpenMobileMenu }: GlobalHeaderProps) {
     const navigate = useNavigate();
     const { theme, toggleTheme } = useTheme();
     const { workspaces, activeWorkspace, setActiveWorkspace, clear: resetWorkspaces } = useWorkspaces();
@@ -56,76 +57,86 @@ export function GlobalHeader({ workspaceName = 'My Workspace', userName = 'User'
     const handleSwitchWorkspace = (id: string) => {
         setActiveWorkspace(id);
         setIsWorkspaceOpen(false);
-        // Navigate to dashboard home
-        navigate('/home');
+        // Navigate to dashboard home with explicit workspace ID
+        navigate(`/workspace/${id}/home`);
     };
 
     const currentWorkspaceName = activeWorkspace?.name || workspaceName;
     const currentWorkspaceInitial = currentWorkspaceName.charAt(0).toUpperCase();
 
     return (
-        <header className="fixed top-0 left-[72px] right-0 h-14 glass border-b border-border/50 flex items-center justify-between px-4 z-40">
-            {/* Left: Workspace Selector */}
-            <div className="relative" ref={workspaceRef}>
+        <header className="fixed top-0 left-0 right-0 h-14 glass border-b border-border/50 flex items-center justify-between px-4 z-40 md:left-[72px]">
+            {/* Left: Hamburger & Workspace Selector */}
+            <div className="flex items-center gap-2">
+                {/* Mobile Menu Button */}
                 <button
-                    onClick={() => setIsWorkspaceOpen(!isWorkspaceOpen)}
-                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-accent transition-colors"
+                    onClick={onOpenMobileMenu}
+                    className="md:hidden p-2 -ml-2 text-muted-foreground hover:text-foreground"
                 >
-                    <div className="w-6 h-6 rounded bg-primary flex items-center justify-center">
-                        <span className="text-primary-foreground text-xs font-medium">
-                            {currentWorkspaceInitial}
-                        </span>
-                    </div>
-                    <span className="font-medium text-sm">{currentWorkspaceName}</span>
-                    <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                    <Menu className="w-5 h-5" />
                 </button>
 
-                {/* Workspace Dropdown */}
-                {isWorkspaceOpen && (
-                    <div className="absolute left-0 top-full mt-2 w-64 bg-background border border-border rounded-lg shadow-xl overflow-hidden animate-in fade-in zoom-in-95">
-                        <div className="max-h-[300px] overflow-y-auto py-1">
-                            <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                                Switch Workspace
+                <div className="relative" ref={workspaceRef}>
+                    <button
+                        onClick={() => setIsWorkspaceOpen(!isWorkspaceOpen)}
+                        className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-accent transition-colors"
+                    >
+                        <div className="w-6 h-6 rounded bg-primary flex items-center justify-center">
+                            <span className="text-primary-foreground text-xs font-medium">
+                                {currentWorkspaceInitial}
+                            </span>
+                        </div>
+                        <span className="font-medium text-sm hidden sm:inline-block">{currentWorkspaceName}</span>
+                        <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                    </button>
+
+                    {/* Workspace Dropdown */}
+                    {isWorkspaceOpen && (
+                        <div className="absolute left-0 top-full mt-2 w-64 bg-background border border-border rounded-lg shadow-xl overflow-hidden animate-in fade-in zoom-in-95">
+                            <div className="max-h-[300px] overflow-y-auto py-1">
+                                <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                                    Switch Workspace
+                                </div>
+                                {workspaces.map((ws) => (
+                                    <button
+                                        key={ws.id}
+                                        onClick={() => handleSwitchWorkspace(ws.id)}
+                                        className="w-full flex items-center justify-between px-3 py-2 text-sm hover:bg-accent transition-colors group"
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                                                <span className="text-primary font-medium">{ws.name.charAt(0).toUpperCase()}</span>
+                                            </div>
+                                            <div className="flex flex-col items-start">
+                                                <span className="font-medium truncate max-w-[140px]">{ws.name}</span>
+                                                {/* <span className="text-xs text-muted-foreground hidden">Members: </span> */}
+                                            </div>
+                                        </div>
+                                        {activeWorkspace?.id === ws.id && (
+                                            <Check className="w-4 h-4 text-primary" />
+                                        )}
+                                    </button>
+                                ))}
                             </div>
-                            {workspaces.map((ws) => (
+                            <div className="border-t border-border p-1">
                                 <button
-                                    key={ws.id}
-                                    onClick={() => handleSwitchWorkspace(ws.id)}
-                                    className="w-full flex items-center justify-between px-3 py-2 text-sm hover:bg-accent transition-colors group"
+                                    onClick={() => {
+                                        setIsWorkspaceOpen(false);
+                                        setIsCreateModalOpen(true);
+                                    }}
+                                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent rounded-md transition-colors"
                                 >
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                                            <span className="text-primary font-medium">{ws.name.charAt(0).toUpperCase()}</span>
-                                        </div>
-                                        <div className="flex flex-col items-start">
-                                            <span className="font-medium truncate max-w-[140px]">{ws.name}</span>
-                                            {/* <span className="text-xs text-muted-foreground hidden">Members: </span> */}
-                                        </div>
-                                    </div>
-                                    {activeWorkspace?.id === ws.id && (
-                                        <Check className="w-4 h-4 text-primary" />
-                                    )}
+                                    <Plus className="w-4 h-4" />
+                                    Create Workspace
                                 </button>
-                            ))}
+                            </div>
                         </div>
-                        <div className="border-t border-border p-1">
-                            <button
-                                onClick={() => {
-                                    setIsWorkspaceOpen(false);
-                                    setIsCreateModalOpen(true);
-                                }}
-                                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent rounded-md transition-colors"
-                            >
-                                <Plus className="w-4 h-4" />
-                                Create Workspace
-                            </button>
-                        </div>
-                    </div>
-                )}
+                    )}
+                </div>
             </div>
 
             {/* Center: Search */}
-            <div className="flex-1 max-w-md mx-8">
+            <div className="flex-1 max-w-md mx-8 hidden sm:block">
                 <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <input

@@ -77,7 +77,8 @@ namespace Touchpointe.API.Controllers
                     email = user.Email,
                     fullName = user.FullName,
                     username = user.Email, 
-                    avatarUrl = user.AvatarUrl ?? ""
+                    avatarUrl = user.AvatarUrl ?? "",
+                    lastActiveWorkspaceId = user.LastActiveWorkspaceId
                 });
             }
             catch

@@ -7,8 +7,9 @@ export interface User {
     email: string;
     fullName: string;
     username: string;
-    avatarUrl?: string; // Optional
+    avatarUrl?: string;
     role?: string;
+    lastActiveWorkspaceId?: string;
 }
 
 interface UserState {

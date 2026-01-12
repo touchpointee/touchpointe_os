@@ -4,5 +4,8 @@ namespace Touchpointe.Application.Common.Authentication
         Guid Id,
         string FullName,
         string Email,
-        string Token);
+        string Token)
+    {
+        public Guid? LastActiveWorkspaceId { get; init; }
+    }
 }
