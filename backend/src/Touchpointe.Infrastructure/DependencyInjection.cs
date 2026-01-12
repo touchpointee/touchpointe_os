@@ -15,8 +15,35 @@ namespace Touchpointe.Infrastructure
 
             services.AddSingleton<IJwtTokenGenerator, JwtTokenGenerator>();
 
-            // Direct Environment Variable Read (Bypassing Configuration Providers)
-            var connectionString = Environment.GetEnvironmentVariable("DATABASE_URL") ?? configuration.GetConnectionString("DefaultConnection");
+            // Custom parsing for Coolify/Postgres URL format
+            var dbUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
+            string connectionString;
+
+            if (!string.IsNullOrEmpty(dbUrl) && dbUrl.StartsWith("postgres://"))
+            {
+                try 
+                {
+                    var uri = new Uri(dbUrl);
+                    var userInfo = uri.UserInfo.Split(new[] { ':' }, 2);
+                    var builder = new Npgsql.NpgsqlConnectionStringBuilder
+                    {
+                        Host = uri.Host,
+                        Port = uri.Port,
+                        Database = uri.AbsolutePath.TrimStart('/'),
+                        Username = userInfo[0],
+                        Password = userInfo.Length > 1 ? userInfo[1] : null
+                    };
+                    connectionString = builder.ToString();
+                }
+                catch 
+                {
+                    connectionString = dbUrl; // Fallback to raw string if parsing fails
+                }
+            }
+            else
+            {
+                connectionString = dbUrl ?? configuration.GetConnectionString("DefaultConnection");
+            }
 
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseNpgsql(connectionString,
