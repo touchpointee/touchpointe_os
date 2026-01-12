@@ -54,6 +54,7 @@ export function TasksPage() {
     // Handle task creation from modal
     const handleCreateTask = async (data: {
         title: string;
+        subDescription?: string;
         assigneeId: string;
         dueDate: string;
         priority: 'NONE' | 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
@@ -62,6 +63,7 @@ export function TasksPage() {
 
         await createTask(workspaceId, {
             title: data.title,
+            subDescription: data.subDescription,
             listId: listId,
             assigneeId: data.assigneeId,
             dueDate: data.dueDate,
