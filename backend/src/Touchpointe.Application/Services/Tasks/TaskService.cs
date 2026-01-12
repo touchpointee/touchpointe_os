@@ -4,16 +4,20 @@ using Touchpointe.Application.DTOs;
 using Touchpointe.Domain.Entities;
 using TaskStatus = Touchpointe.Domain.Entities.TaskStatus;
 using TaskPriority = Touchpointe.Domain.Entities.TaskPriority;
+using System.Text.Json;
+using System.Text.RegularExpressions;
 
 namespace Touchpointe.Application.Services.Tasks
 {
     public class TaskService : ITaskService
     {
         private readonly IApplicationDbContext _context;
+        private readonly INotificationService _notificationService;
 
-        public TaskService(IApplicationDbContext context)
+        public TaskService(IApplicationDbContext context, INotificationService notificationService)
         {
             _context = context;
+            _notificationService = notificationService;
         }
 
         public async Task<List<TaskDto>> GetTasksByListAsync(Guid workspaceId, Guid listId)
@@ -385,6 +389,11 @@ namespace Touchpointe.Application.Services.Tasks
             var createdComment = await _context.TaskComments
                 .Include(c => c.User)
                 .FirstAsync(c => c.Id == comment.Id);
+            
+            // Notification logic
+            await ProcessMentions(request.Content, userId, createdComment.User.FullName, workspaceId, 
+                $"mentioned you in a comment on task '{task.Title}'", 
+                new { TaskId = taskId, CommentId = comment.Id });
 
             return new TaskCommentDto(createdComment.Id, createdComment.UserId, createdComment.User.FullName, "", createdComment.Content, createdComment.CreatedAt);
         }
@@ -410,6 +419,40 @@ namespace Touchpointe.Application.Services.Tasks
                 t.UpdatedAt,
                 t.SubDescription
             );
+        }
+
+        private async Task ProcessMentions(string content, Guid senderId, string senderName, Guid workspaceId, string baseMessage, object dataObj)
+        {
+            var mentionRegex = new Regex(@"<@([a-fA-F0-9-]+)\|([^>]+)>");
+            var matches = mentionRegex.Matches(content);
+
+            var mentionedUserIds = new HashSet<Guid>();
+            foreach (Match match in matches)
+            {
+                if (Guid.TryParse(match.Groups[1].Value, out Guid uid))
+                {
+                    if (uid != senderId) // Don't notify self
+                    {
+                        mentionedUserIds.Add(uid);
+                    }
+                }
+            }
+
+            foreach (var uid in mentionedUserIds)
+            {
+                // Verify user is in workspace (optional)
+                var isInWorkspace = await _context.WorkspaceMembers.AnyAsync(wm => wm.WorkspaceId == workspaceId && wm.UserId == uid);
+                if (isInWorkspace)
+                {
+                    await _notificationService.NotifyUserAsync(
+                        uid,
+                        "New Mention",
+                        $"{senderName} {baseMessage}",
+                        2, // Type 2 = Mention
+                        JsonSerializer.Serialize(dataObj)
+                    );
+                }
+            }
         }
     }
 }

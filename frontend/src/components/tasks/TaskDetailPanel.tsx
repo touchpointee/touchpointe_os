@@ -34,8 +34,7 @@ export function TaskDetailPanel() {
         fetchTaskDetails,
         updateTask,
         addSubtask,
-        toggleSubtask,
-        addComment
+        toggleSubtask
     } = useTaskStore();
     const { activeWorkspace } = useWorkspaces();
     const { members, fetchMembers } = useTeamStore();
@@ -79,7 +78,7 @@ export function TaskDetailPanel() {
         </div>
     );
 
-    const { task, subtasks, comments, activities } = detail;
+    const { task, subtasks, activities } = detail;
 
     // Permission Check
     const canEdit = user && task && (user.id === task.assigneeId || user.id === task.createdById);
@@ -319,8 +318,8 @@ export function TaskDetailPanel() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8 border-t border-border">
                             <TaskActivityTimeline activities={activities} />
                             <TaskComments
-                                comments={comments}
-                                onAdd={(content) => addComment(workspaceId, task.id, content)}
+                                taskId={task.id}
+                                workspaceId={workspaceId}
                             />
                         </div>
                     </div>

@@ -7,16 +7,19 @@ using Microsoft.EntityFrameworkCore;
 using Touchpointe.Application.Common.Interfaces;
 using Touchpointe.Application.DTOs;
 using Touchpointe.Domain.Entities;
+using System.Text.RegularExpressions;
 
 namespace Touchpointe.Application.Services.Chat
 {
     public class ChatService : IChatService
     {
         private readonly IApplicationDbContext _context;
+        private readonly INotificationService _notificationService;
 
-        public ChatService(IApplicationDbContext context)
+        public ChatService(IApplicationDbContext context, INotificationService notificationService)
         {
             _context = context;
+            _notificationService = notificationService;
         }
 
         // --- Channels ---
@@ -172,6 +175,11 @@ namespace Touchpointe.Application.Services.Chat
 
             // Fetch sender info
             var sender = await _context.Users.FindAsync(userId);
+
+            // Process Mentions
+            await ProcessMentions(request.Content, userId, sender?.FullName ?? "Someone", workspaceId, 
+                $"mentioned you in #{channel.Name}", 
+                new { ChannelId = channelId, MessageId = message.Id });
             
             return new MessageDto(
                 message.Id,
@@ -328,6 +336,11 @@ namespace Touchpointe.Application.Services.Chat
 
             var sender = await _context.Users.FindAsync(userId);
 
+            // Process Mentions
+            await ProcessMentions(request.Content, userId, sender?.FullName ?? "Someone", workspaceId, 
+                "mentioned you in a Direct Message", 
+                new { DmGroupId = dmGroupId, MessageId = message.Id });
+
             return new MessageDto(
                 message.Id,
                 message.WorkspaceId,
@@ -352,6 +365,40 @@ namespace Touchpointe.Application.Services.Chat
                     wm.User.AvatarUrl
                 ))
                 .ToListAsync();
+        }
+
+        private async Task ProcessMentions(string content, Guid senderId, string senderName, Guid workspaceId, string baseMessage, object dataObj)
+        {
+            var mentionRegex = new Regex(@"<@([a-fA-F0-9-]+)\|([^>]+)>");
+            var matches = mentionRegex.Matches(content);
+
+            var mentionedUserIds = new HashSet<Guid>();
+            foreach (Match match in matches)
+            {
+                if (Guid.TryParse(match.Groups[1].Value, out Guid uid))
+                {
+                    if (uid != senderId) // Don't notify self
+                    {
+                        mentionedUserIds.Add(uid);
+                    }
+                }
+            }
+
+            foreach (var uid in mentionedUserIds)
+            {
+                // Verify user is in workspace (optional but safe)
+                var isInWorkspace = await _context.WorkspaceMembers.AnyAsync(wm => wm.WorkspaceId == workspaceId && wm.UserId == uid);
+                if (isInWorkspace)
+                {
+                    await _notificationService.NotifyUserAsync(
+                        uid,
+                        "New Mention",
+                        $"{senderName} {baseMessage}",
+                        2, // Type 2 = Mention
+                        System.Text.Json.JsonSerializer.Serialize(dataObj)
+                    );
+                }
+            }
         }
     }
 }

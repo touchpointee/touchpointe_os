@@ -54,5 +54,22 @@ namespace Touchpointe.Application.Services.Notifications
             _context.Notifications.Add(notification);
             await _context.SaveChangesAsync(CancellationToken.None);
         }
+
+        public async Task NotifyUserAsync(Guid userId, string title, string message, int type, string data)
+        {
+            var notification = new Domain.Entities.Notification
+            {
+                UserId = userId,
+                Type = type,
+                Title = title,
+                Message = message,
+                Data = data,
+                IsRead = false,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _context.Notifications.Add(notification);
+            await _context.SaveChangesAsync(CancellationToken.None);
+        }
     }
 }

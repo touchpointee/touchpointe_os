@@ -7,5 +7,6 @@ namespace Touchpointe.Application.Common.Interfaces
         Task<List<Touchpointe.Domain.Entities.Notification>> GetUserNotificationsAsync(Guid userId);
         Task MarkAsReadAsync(Guid notificationId, Guid userId);
         Task CreateInvitationNotificationAsync(Guid userId, WorkspaceInvitation invitation);
+        Task NotifyUserAsync(Guid userId, string title, string message, int type, string data);
     }
 }
