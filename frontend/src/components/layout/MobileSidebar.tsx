@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { PrimarySidebar } from './PrimarySidebar';
+
 import { ContextSidebar } from './ContextSidebar';
 import {
     Home,
