@@ -30,7 +30,7 @@ public class DebugController : ControllerBase
             FrontendUrlEnvVar = frontendUrl,
             ParsedOrigins = origins,
             Environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Unknown",
-            AllEnvKeys = _configuration.AsEnumerable().Select(k => k.Key).Where(k => k.Contains("FRONTEND")).ToList()
+            AllEnvKeys = _configuration.AsEnumerable().Select(k => k.Key).OrderBy(k => k).ToList()
         });
     }
 }
