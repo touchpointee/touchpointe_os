@@ -33,7 +33,11 @@ public class DebugController : ControllerBase
             ParsedOrigins = origins,
             Environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Unknown",
             AllEnvKeys = _configuration.AsEnumerable().Select(k => k.Key).OrderBy(k => k).ToList(),
-            RawSystemKeys = Environment.GetEnvironmentVariables().Keys.Cast<string>().OrderBy(k => k).ToList()
+            RawSystemKeys = Environment.GetEnvironmentVariables().Keys.Cast<string>().OrderBy(k => k).ToList(),
+            
+            // Database Debugging
+            DatabaseUrlEnvVar = Environment.GetEnvironmentVariable("DATABASE_URL"),
+            ConfigDefaultConnection = _configuration.GetConnectionString("DefaultConnection")
         });
     }
 }
