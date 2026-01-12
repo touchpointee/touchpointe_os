@@ -20,7 +20,9 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        var frontendUrls = builder.Configuration["FRONTEND_URL"];
+        // Direct Environment Variable Read (Bypassing Configuration Providers for reliability)
+        var frontendUrls = Environment.GetEnvironmentVariable("FRONTEND_URL") 
+                        ?? Environment.GetEnvironmentVariable("APP_FRONTEND_URL");
         var origins = !string.IsNullOrEmpty(frontendUrls)
             ? frontendUrls.Split(',', StringSplitOptions.RemoveEmptyEntries)
                           .Select(o => o.Trim().TrimEnd('/'))

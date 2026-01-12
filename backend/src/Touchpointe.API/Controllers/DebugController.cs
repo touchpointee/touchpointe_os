@@ -16,8 +16,10 @@ public class DebugController : ControllerBase
     [HttpGet("cors")]
     public IActionResult GetCorsConfig()
     {
-        // Replicate logic from Program.cs to see exactly what the server sees
-        var frontendUrl = _configuration["FRONTEND_URL"];
+        // Replicate logic from Program.cs EXACTLY
+        var frontendUrl = Environment.GetEnvironmentVariable("FRONTEND_URL") 
+                       ?? Environment.GetEnvironmentVariable("APP_FRONTEND_URL");
+                       
         var origins = !string.IsNullOrEmpty(frontendUrl)
             ? frontendUrl.Split(',', StringSplitOptions.RemoveEmptyEntries)
                          .Select(o => o.Trim().TrimEnd('/'))
