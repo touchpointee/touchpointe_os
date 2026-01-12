@@ -21,7 +21,7 @@ builder.Services.AddCors(options =>
         var frontendUrls = builder.Configuration["FRONTEND_URL"];
         var origins = !string.IsNullOrEmpty(frontendUrls)
             ? frontendUrls.Split(',', StringSplitOptions.RemoveEmptyEntries)
-                          .Select(o => o.Trim())
+                          .Select(o => o.Trim().TrimEnd('/'))
                           .ToArray()
             : Array.Empty<string>();
 
