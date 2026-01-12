@@ -21,12 +21,24 @@ builder.Services.AddCors(options =>
         var frontendUrls = builder.Configuration["FRONTEND_URL"];
         var origins = !string.IsNullOrEmpty(frontendUrls)
             ? frontendUrls.Split(',', StringSplitOptions.RemoveEmptyEntries)
-            : new[] { "http://localhost:5173", "http://localhost:3000" };
+                          .Select(o => o.Trim())
+                          .ToArray()
+            : Array.Empty<string>();
 
-        policy.WithOrigins(origins)
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials();
+        Console.WriteLine($"[CORS CONFIG] Loaded FRONTEND_URL: '{frontendUrls}'");
+        Console.WriteLine($"[CORS CONFIG] Parsed Origins: {string.Join(", ", origins)}");
+
+        if (origins.Length > 0)
+        {
+            policy.WithOrigins(origins)
+                  .AllowAnyHeader()
+                  .AllowAnyMethod()
+                  .AllowCredentials();
+        }
+        else 
+        {
+             Console.WriteLine("[CORS CONFIG] WARNING: No origins configured! CORS requests will likely fail.");
+        }
     });
 });
 builder.Services.AddSignalR(); // Add SignalR Service
