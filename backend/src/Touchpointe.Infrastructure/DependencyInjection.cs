@@ -15,7 +15,8 @@ namespace Touchpointe.Infrastructure
 
             services.AddSingleton<IJwtTokenGenerator, JwtTokenGenerator>();
 
-            var connectionString = configuration["DATABASE_URL"] ?? configuration.GetConnectionString("DefaultConnection");
+            // Direct Environment Variable Read (Bypassing Configuration Providers)
+            var connectionString = Environment.GetEnvironmentVariable("DATABASE_URL") ?? configuration.GetConnectionString("DefaultConnection");
 
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseNpgsql(connectionString,

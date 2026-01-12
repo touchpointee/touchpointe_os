@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Touchpointe.Application;
 using Touchpointe.Infrastructure;
 using Touchpointe.Infrastructure.Middleware;
+using Microsoft.EntityFrameworkCore;
+using Touchpointe.Infrastructure.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -65,6 +67,26 @@ builder.Services.AddAuthentication(); // Ensure Auth is configured
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
+
+// Apply any pending migrations on startup
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var context = services.GetRequiredService<ApplicationDbContext>();
+        if (context.Database.GetPendingMigrations().Any())
+        {
+            Console.WriteLine("[DB MIGRATION] Applying pending migrations...");
+            context.Database.Migrate();
+            Console.WriteLine("[DB MIGRATION] Migrations applied successfully.");
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[DB MIGRATION] ERROR: Could not apply migrations. {ex.Message}");
+    }
+}
 
 app.UseSwagger();
 app.UseSwaggerUI();
