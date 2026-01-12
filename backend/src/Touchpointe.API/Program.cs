@@ -8,6 +8,8 @@ using Touchpointe.Infrastructure.Middleware;
 var builder = WebApplication.CreateBuilder(args);
 
 // 13. Add services to the container.
+builder.Configuration.AddEnvironmentVariables(); // Ensure all env vars are loaded (e.g. FRONTEND_URL)
+
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
