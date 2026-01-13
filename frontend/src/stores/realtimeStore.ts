@@ -32,8 +32,17 @@ export const useRealtimeStore = create<RealtimeState>()((set, get) => ({
 
         set({ isConnecting: true });
 
+        // Use environment variable for API URL
+        const apiBaseUrl = import.meta.env.VITE_API_URL;
+
+        if (!apiBaseUrl) {
+            console.error('VITE_API_URL is not defined');
+            set({ isConnecting: false });
+            return;
+        }
+
         const connection = new HubConnectionBuilder()
-            .withUrl(`http://localhost:5001/hubs/chat?workspaceId=${workspaceId}`, {
+            .withUrl(`${apiBaseUrl}/hubs/chat?workspaceId=${workspaceId}`, {
                 accessTokenFactory: () => token
             })
             .withAutomaticReconnect()
