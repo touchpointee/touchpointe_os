@@ -115,7 +115,7 @@ app.UseAuthorization();
 app.UseMiddleware<WorkspaceAuthorizationMiddleware>();
 
 app.MapControllers();
-app.MapHub<Touchpointe.Api.Hubs.ChatHub>("/hubs/chat");
-app.MapHub<Touchpointe.API.Hubs.MeetHub>("/hubs/meet");
+app.MapHub<Touchpointe.Api.Hubs.ChatHub>("/api/hubs/chat");
+app.MapHub<Touchpointe.API.Hubs.MeetHub>("/api/hubs/meet");
 
 app.Run();
