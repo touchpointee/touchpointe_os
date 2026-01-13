@@ -8,7 +8,7 @@ using Touchpointe.Domain.Entities;
 namespace Touchpointe.API.Controllers
 {
     [ApiController]
-    [Route("invitations")]
+    [Route("api/invitations")]
     [Authorize]
     public class InvitationController : ControllerBase
     {

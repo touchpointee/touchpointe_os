@@ -12,7 +12,8 @@ import {
     CreditCard,
     Settings as SettingsIcon,
     ChevronRight,
-    DollarSign
+    DollarSign,
+    Video
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MyTasksSidebar } from '@/components/tasks/MyTasksSidebar';
@@ -49,6 +50,7 @@ const moduleContent: Record<Exclude<ModuleType, 'crm' | 'ai' | 'tasks' | 'my-tas
             { icon: Home, label: 'Dashboard', path: '/home' },
             { icon: Inbox, label: 'Inbox', path: '/home/inbox' },
             { icon: Star, label: 'Favorites', path: '/home/favorites' },
+            { icon: Video, label: 'Meet', path: '/meet' },
         ],
     },
     // CRM is handled dynamically

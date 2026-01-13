@@ -15,9 +15,5 @@ appsettings.Development.json
 appsettings.Local.json
 *.local.json
 
-# Logs
-logs/
-*.log
-
 # Debug
 *.pdb

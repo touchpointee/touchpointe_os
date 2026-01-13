@@ -9,7 +9,7 @@ using Touchpointe.Domain.Entities;
 namespace Touchpointe.API.Controllers
 {
     [ApiController]
-    [Route("{workspaceId}/ai")]
+    [Route("api/{workspaceId}/ai")]
     [Authorize]
     public class AiController : ControllerBase
     {

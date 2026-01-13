@@ -1168,6 +1168,8 @@
         "dependencies": {
           "Microsoft.EntityFrameworkCore": "9.0.0",
           "Microsoft.Extensions.Configuration.Abstractions": "10.0.1",
+          "Microsoft.IdentityModel.Tokens": "7.6.0",
+          "System.IdentityModel.Tokens.Jwt": "7.6.0",
           "Touchpointe.Domain": "1.0.0"
         },
         "compile": {
@@ -3677,11 +3679,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\ajmal\\Desktop\\kravino Innovations\\touchpointe\\touchpointe_management_tool\\backend\\src\\touchpointe.api\\Touchpointe.API.csproj",
+      "projectUniqueName": "C:\\Users\\ajmal\\Desktop\\kravino Innovations\\touchpointe\\touchpointe_management_tool\\backend\\src\\Touchpointe.API\\Touchpointe.API.csproj",
       "projectName": "Touchpointe.API",
-      "projectPath": "C:\\Users\\ajmal\\Desktop\\kravino Innovations\\touchpointe\\touchpointe_management_tool\\backend\\src\\touchpointe.api\\Touchpointe.API.csproj",
+      "projectPath": "C:\\Users\\ajmal\\Desktop\\kravino Innovations\\touchpointe\\touchpointe_management_tool\\backend\\src\\Touchpointe.API\\Touchpointe.API.csproj",
       "packagesPath": "C:\\Users\\ajmal\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\ajmal\\Desktop\\kravino Innovations\\touchpointe\\touchpointe_management_tool\\backend\\src\\touchpointe.api\\obj\\",
+      "outputPath": "C:\\Users\\ajmal\\Desktop\\kravino Innovations\\touchpointe\\touchpointe_management_tool\\backend\\src\\Touchpointe.API\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

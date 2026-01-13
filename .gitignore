@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Build results
+dist/
+build/
+bin/
+obj/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# IDEs
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln.docstates
+
+# OS
+.DS_Store
+Thumbs.db
