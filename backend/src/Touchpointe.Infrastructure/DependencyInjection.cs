@@ -93,7 +93,7 @@ namespace Touchpointe.Infrastructure
                             var accessToken = context.Request.Query["access_token"];
                             var path = context.HttpContext.Request.Path;
                             if (!string.IsNullOrEmpty(accessToken) &&
-                                (path.StartsWithSegments("/hubs/chat")))
+                                (path.StartsWithSegments("/api/hubs/chat") || path.StartsWithSegments("/api/hubs/meet")))
                             {
                                 context.Token = accessToken.FirstOrDefault();
                             }
