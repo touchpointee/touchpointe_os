@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Touchpointe.Domain")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+d1f74dfd7031da8519a9eee7276894e2fce89ba2")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4b5f962a98a40b2388118aa08a54689b2c4e271c")]
 [assembly: System.Reflection.AssemblyProductAttribute("Touchpointe.Domain")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Touchpointe.Domain")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

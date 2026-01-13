@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { apiPost, apiGet } from '@/lib/api';
 import { useWorkspaces } from './workspaceStore';
 
-export type AgentType = 'workspace' | 'task' | 'crm' | 'team' | 'channel';
+export type AgentType = 'workspace' | 'task' | 'crm' | 'channel';
 
 export interface AgentCard {
     id: string;
@@ -28,7 +28,7 @@ interface AiState {
     setActiveAgent: (agent: AgentType) => void;
 
     // Core Actions
-    sendMessage: (query: string) => Promise<void>;
+    sendMessage: (query: string, contextEntities?: { type: string; id: string; name: string }[]) => Promise<void>;
     fetchHistory: () => Promise<void>;
     clearHistory: () => void; // Clear current view
     clearState: () => void;   // Full reset (logout)
@@ -45,8 +45,7 @@ export const useAiStore = create<AiState>((set, get) => ({
     toggleOpen: () => set(state => ({ isOpen: !state.isOpen })),
 
     setActiveAgent: (agent) => {
-        set({ activeAgent: agent, messages: [] }); // Clear old messages immediately on switch
-        get().fetchHistory(); // Fetch new history
+        set({ activeAgent: agent, messages: [] }); // Clear old messages - ClickUp style
     },
 
     clearHistory: () => set({ messages: [] }),
@@ -88,7 +87,7 @@ export const useAiStore = create<AiState>((set, get) => ({
         }
     },
 
-    sendMessage: async (query: string) => {
+    sendMessage: async (query: string, contextEntities?: { type: string; id: string; name: string }[]) => {
         const { activeWorkspace } = useWorkspaces.getState();
         const { activeAgent, messages } = get();
 
@@ -115,10 +114,21 @@ export const useAiStore = create<AiState>((set, get) => ({
         set({ messages: [...messages, userCard, loadingCard], isLoading: true, isProcessing: true });
 
         try {
+            // Build conversation history from existing messages (for multi-turn context)
+            const conversationHistory = messages
+                .filter(msg => !msg.isLoading && (msg.content || msg.markdown))
+                .slice(-6) // Last 6 messages for context
+                .map(msg => ({
+                    role: msg.role === 'user' ? 'user' : 'assistant',
+                    content: msg.content || msg.markdown || ''
+                }));
+
             const response = await apiPost<any>(`/${activeWorkspace.id}/ai/agent`, {
                 agentType: activeAgent,
                 userQuery: query,
-                intent: 'query'
+                intent: 'query',
+                contextEntities: contextEntities || [],
+                conversationHistory: conversationHistory
             });
 
             const aiCard: AgentCard = {

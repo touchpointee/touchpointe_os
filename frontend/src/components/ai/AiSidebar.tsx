@@ -21,7 +21,6 @@ export function AiSidebar() {
         { id: 'workspace', label: 'Overview', icon: Globe },
         { id: 'task', label: 'Tasks', icon: CheckSquare },
         { id: 'crm', label: 'CRM', icon: Users },
-        { id: 'team', label: 'Team', icon: Briefcase },
         { id: 'channel', label: 'Channels', icon: Zap },
     ];
 
@@ -44,11 +43,7 @@ export function AiSidebar() {
             { label: "Show top opportunities", intent: "high_value", desc: "High value active", icon: IndianRupee },
             { label: "Forecast revenue", intent: "forecast", desc: "Projected earnings", icon: Globe }
         ],
-        team: [
-            { label: "Who is overloaded?", intent: "overloaded", desc: "Capacity analysis", icon: AlertTriangle },
-            { label: "Check team availability", intent: "availability", desc: "Who is free?", icon: Users },
-            { label: "Who is on leave?", intent: "leaves", desc: "Capacity planning", icon: CalendarClock }
-        ],
+
         channel: [
             { label: "Summarize active channels", intent: "summarize_channels", desc: "What's happening?", icon: Zap },
             { label: "What was discussed in #general?", intent: "general_summary", desc: "Recent topics", icon: Globe }

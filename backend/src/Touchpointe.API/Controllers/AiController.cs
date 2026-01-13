@@ -35,6 +35,8 @@ namespace Touchpointe.API.Controllers
         [HttpPost("agent")]
         public async Task<ActionResult<AgentResponse>> Agent(Guid workspaceId, [FromBody] AgentRequest request)
         {
+            if (request == null) return BadRequest("Request body cannot be null");
+
             var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (userIdClaim == null || !Guid.TryParse(userIdClaim, out var userId))
                 return Unauthorized();
@@ -52,6 +54,17 @@ namespace Touchpointe.API.Controllers
 
             var history = await _aiService.GetChatHistoryAsync(workspaceId, userId, agentType ?? "workspace");
             return Ok(history);
+        }
+
+        [HttpDelete("history")]
+        public async Task<ActionResult> ClearHistory(Guid workspaceId, [FromQuery] string agentType)
+        {
+            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null || !Guid.TryParse(userIdClaim, out var userId))
+                return Unauthorized();
+
+            await _aiService.ClearChatHistoryAsync(workspaceId, userId, agentType ?? "workspace");
+            return Ok(new { message = "Chat history cleared" });
         }
     }
 

@@ -2,9 +2,12 @@ import { useState, useRef, useEffect } from 'react';
 import { useAiStore } from '@/stores/aiStore';
 import { Bot, X, Send, Trash2, Loader2, Sparkles } from 'lucide-react';
 
+import { AgentInput } from './AgentInput';
+
 export function AiAssistant() {
     const { isOpen, toggleOpen, messages, sendMessage, isLoading, isLoadingHistory, fetchHistory, clearHistory, activeAgent } = useAiStore();
     const [input, setInput] = useState('');
+    const [contextContexts, setContextContexts] = useState<{ type: 'channel' | 'user' | 'task'; id: string; name: string }[]>([]);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const scrollToBottom = () => {
@@ -26,8 +29,10 @@ export function AiAssistant() {
         if (!input.trim() || isLoading) return;
 
         const query = input;
+        const contexts = contextContexts; // Capture current state
         setInput('');
-        await sendMessage(query);
+        setContextContexts([]); // Clear context after send
+        await sendMessage(query, contexts);
     };
 
     if (!isOpen) {
@@ -119,13 +124,13 @@ export function AiAssistant() {
             {/* Input */}
             <form onSubmit={handleSubmit} className="p-4 border-t border-border bg-background">
                 <div className="relative flex items-center gap-2">
-                    <input
-                        type="text"
+                    <AgentInput
                         value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        placeholder={`Ask ${activeAgent} agent...`}
-                        className="flex-1 px-4 py-3 rounded-xl bg-muted/50 border border-border/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-muted-foreground/70"
+                        onChange={setInput}
+                        onSubmit={handleSubmit}
                         disabled={isLoading}
+                        placeholder={`Ask ${activeAgent} agent...`}
+                        onContextChange={setContextContexts}
                     />
                     <button
                         type="submit"
