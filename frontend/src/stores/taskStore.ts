@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { apiGet, apiPost, apiPut } from '@/lib/api';
+import { apiGet, apiPost, apiPut, apiDelete } from '@/lib/api';
 import type { TaskDto, CreateTaskRequest, UpdateTaskRequest, TaskActivityDto, TaskDetailDto } from '@/types/task';
 
 interface TaskState {
@@ -26,6 +26,7 @@ interface TaskState {
     addSubtask: (workspaceId: string, taskId: string, title: string, assigneeId?: string) => Promise<void>;
     toggleSubtask: (workspaceId: string, subtaskId: string) => Promise<void>;
     addComment: (workspaceId: string, taskId: string, content: string) => Promise<void>;
+    deleteTask: (workspaceId: string, taskId: string) => Promise<void>;
 }
 
 export const useTaskStore = create<TaskState>((set, get) => ({
@@ -157,6 +158,31 @@ export const useTaskStore = create<TaskState>((set, get) => ({
         try {
             await apiPost(`/workspaces/${workspaceId}/tasks/${taskId}/comments`, { content });
             await get().fetchTaskDetails(workspaceId, taskId);
+        } catch (e) {
+            set({ error: (e as Error).message });
+        }
+    },
+
+    deleteTask: async (workspaceId, taskId) => {
+        try {
+            await apiDelete(`/workspaces/${workspaceId}/tasks/${taskId}`);
+            // Close the detail panel and remove from all caches
+            set(state => {
+                const { [taskId]: _, ...restDetails } = state.taskDetails;
+
+                // Remove task from all lists in the tasks cache
+                const updatedTasks: Record<string, any[]> = {};
+                for (const [listId, taskList] of Object.entries(state.tasks)) {
+                    updatedTasks[listId] = taskList.filter(t => t.id !== taskId);
+                }
+
+                return {
+                    activeTaskId: null,
+                    isDetailPanelOpen: false,
+                    taskDetails: restDetails,
+                    tasks: updatedTasks
+                };
+            });
         } catch (e) {
             set({ error: (e as Error).message });
         }

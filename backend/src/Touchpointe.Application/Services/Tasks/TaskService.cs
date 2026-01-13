@@ -597,5 +597,28 @@ namespace Touchpointe.Application.Services.Tasks
 
             return dtos.OrderByDescending(d => d.UrgencyScore).ToList();
         }
+
+        public async Task DeleteTaskAsync(Guid workspaceId, Guid userId, Guid taskId)
+        {
+            var task = await _context.Tasks
+                .Include(t => t.Activities)
+                .FirstOrDefaultAsync(t => t.Id == taskId && t.List.Space.WorkspaceId == workspaceId);
+
+            if (task == null)
+                throw new Exception("Task not found");
+
+            // Query and remove related entities
+            var subtasks = await _context.Subtasks.Where(s => s.TaskId == taskId).ToListAsync();
+            var comments = await _context.TaskComments.Where(c => c.TaskId == taskId).ToListAsync();
+            
+            _context.Subtasks.RemoveRange(subtasks);
+            _context.TaskComments.RemoveRange(comments);
+            _context.TaskActivities.RemoveRange(task.Activities);
+            
+            // Remove the task itself
+            _context.Tasks.Remove(task);
+            
+            await _context.SaveChangesAsync(CancellationToken.None);
+        }
     }
 }

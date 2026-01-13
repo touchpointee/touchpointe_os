@@ -154,5 +154,20 @@ namespace Touchpointe.API.Controllers
                 return BadRequest(new { error = ex.Message });
             }
         }
+
+        [HttpDelete("{taskId}")]
+        public async Task<ActionResult> DeleteTask(Guid workspaceId, Guid taskId)
+        {
+            try
+            {
+                var userId = GetUserId();
+                await _taskService.DeleteTaskAsync(workspaceId, userId, taskId);
+                return Ok(new { message = "Task deleted successfully" });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
     }
 }

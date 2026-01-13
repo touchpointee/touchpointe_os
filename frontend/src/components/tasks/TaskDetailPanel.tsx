@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { X, Copy, MoreHorizontal, Calendar as CalendarIcon, Flag, ChevronDown, Check } from 'lucide-react';
+import { X, Copy, MoreHorizontal, Calendar as CalendarIcon, Flag, ChevronDown, Check, Trash2 } from 'lucide-react';
 import { useTaskStore } from '@/stores/taskStore';
 import { useWorkspaces, isValidUUID } from '@/stores/workspaceStore';
 import { useTeamStore } from '@/stores/teamStore';
@@ -34,7 +34,8 @@ export function TaskDetailPanel() {
         fetchTaskDetails,
         updateTask,
         addSubtask,
-        toggleSubtask
+        toggleSubtask,
+        deleteTask
     } = useTaskStore();
     const { activeWorkspace } = useWorkspaces();
     const { members, fetchMembers } = useTeamStore();
@@ -145,6 +146,17 @@ export function TaskDetailPanel() {
                     </div>
                     <div className="flex items-center gap-2">
                         <button className="p-2 hover:bg-muted rounded-md text-muted-foreground"><Copy className="w-4 h-4" /></button>
+                        <button
+                            onClick={() => {
+                                if (window.confirm('Are you sure you want to delete this task?')) {
+                                    deleteTask(workspaceId, task.id);
+                                }
+                            }}
+                            className="p-2 hover:bg-red-500/10 rounded-md text-red-500"
+                            title="Delete Task"
+                        >
+                            <Trash2 className="w-4 h-4" />
+                        </button>
                         <button className="p-2 hover:bg-muted rounded-md text-muted-foreground"><MoreHorizontal className="w-4 h-4" /></button>
                         <button onClick={closeTaskDetail} className="p-2 hover:bg-muted rounded-md text-muted-foreground"><X className="w-4 h-4" /></button>
                     </div>

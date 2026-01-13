@@ -14,5 +14,6 @@ namespace Touchpointe.Application.Common.Interfaces
         Task<SubtaskDto> ToggleSubtaskAsync(Guid workspaceId, Guid userId, Guid subtaskId);
         Task<TaskCommentDto> AddCommentAsync(Guid workspaceId, Guid userId, Guid taskId, CreateCommentRequest request);
         Task<List<MyTaskDto>> GetMyTasksAsync(Guid userId, Guid workspaceId);
+        Task DeleteTaskAsync(Guid workspaceId, Guid userId, Guid taskId);
     }
 }
