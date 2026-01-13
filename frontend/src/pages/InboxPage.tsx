@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useMentionStore } from '@/stores/mentionStore';
-import { Bell, CheckCircle, Mail, RotateCcw, MessageSquare, Briefcase, MessageCircle } from 'lucide-react';
+import { Bell, CheckCircle, Mail, RotateCcw, MessageSquare, MessageCircle } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useTaskStore } from '@/stores/taskStore';
 import { useNavigate } from 'react-router-dom';

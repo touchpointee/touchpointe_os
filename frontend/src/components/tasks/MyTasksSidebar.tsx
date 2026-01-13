@@ -4,7 +4,6 @@ import {
     AlertCircle,
     AtSign,
     Flame,
-    CheckCircle2,
     MessageCircle
 } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
