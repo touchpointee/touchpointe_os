@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef, useMemo } from 'react';
 import type { KeyboardEvent } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useChatStore } from '@/stores/chatStore';
 import { useWorkspaces } from '@/stores/workspaceStore';
 import { useRealtimeStore } from '@/stores/realtimeStore';
@@ -24,11 +25,13 @@ export function ChatWindow() {
     } = useRealtimeStore();
     const { activeWorkspace } = useWorkspaces();
     const currentUser = getCurrentUser();
+    const [searchParams] = useSearchParams();
 
     const [isSending, setIsSending] = useState(false);
     const [mentionQuery, setMentionQuery] = useState<string | null>(null);
     const [mentionPosition, setMentionPosition] = useState<{ top?: number, bottom?: number, left: number }>({ left: 0 });
     const [hasContent, setHasContent] = useState(false);
+    const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null);
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLDivElement>(null);
@@ -48,10 +51,11 @@ export function ChatWindow() {
     const filteredMembers = useMemo(() => {
         if (mentionQuery === null) return [];
         return members.filter(u =>
-            u.fullName.toLowerCase().includes(mentionQuery.toLowerCase()) ||
-            u.email.toLowerCase().includes(mentionQuery.toLowerCase())
+            (u.fullName.toLowerCase().includes(mentionQuery.toLowerCase()) ||
+                u.email.toLowerCase().includes(mentionQuery.toLowerCase())) &&
+            u.id !== currentUser?.id // Exclude self
         ).slice(0, 5);
-    }, [members, mentionQuery]);
+    }, [members, mentionQuery, currentUser]);
 
     useEffect(() => {
         if (activeWorkspace && activeId) {
@@ -68,8 +72,23 @@ export function ChatWindow() {
     }, [activeWorkspace, activeId, isDm, fetchMessages, fetchWorkspaceMembers, joinChannel, leaveChannel]);
 
     useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [currentMessages.length, activeId]);
+        const messageId = searchParams.get('messageId');
+        if (messageId && currentMessages.length > 0) {
+            const el = document.getElementById(messageId);
+            if (el) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                setHighlightedMessageId(messageId);
+                // Remove highlight after 2s
+                setTimeout(() => setHighlightedMessageId(null), 2000);
+            } else {
+                // Fallback: Scroll to bottom if not found (or should we fetch?)
+                // For now, default behavior handles bottom scroll if we don't interfere
+                messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+            }
+        } else {
+            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }
+    }, [currentMessages.length, activeId, searchParams]);
 
     const handleInput = () => {
         if (!inputRef.current) return;
@@ -278,9 +297,14 @@ export function ChatWindow() {
                     currentMessages.map((msg, idx) => {
                         const isMe = msg.senderId === currentUser?.id;
                         const showHeader = idx === 0 || currentMessages[idx - 1].senderId !== msg.senderId || (new Date(msg.createdAt).getTime() - new Date(currentMessages[idx - 1].createdAt).getTime() > 60000 * 5);
+                        const isHighlighted = msg.id === highlightedMessageId;
 
                         return (
-                            <div key={msg.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} ${msg.isOptimistic ? 'animate-pulse' : ''}`}> {/* Add Animation */}
+                            <div
+                                key={msg.id}
+                                id={msg.id}
+                                className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} ${msg.isOptimistic ? 'animate-pulse' : ''} ${isHighlighted ? 'bg-yellow-500/20 -mx-4 px-4 py-2 transition-colors duration-500' : ''}`}
+                            >
                                 {showHeader && (
                                     <div className="flex items-center gap-2 mb-1 mt-2">
                                         <span className="text-xs font-semibold text-foreground/80">{msg.senderName}</span>
@@ -288,7 +312,7 @@ export function ChatWindow() {
                                     </div>
                                 )}
                                 <div
-                                    className={`px-3 py-2 rounded-2xl max-w-[70%] text-sm shadow-sm transition-all duration-200 hover:shadow-md ${isMe // Add Styles
+                                    className={`px-3 py-2 rounded-2xl max-w-[70%] text-sm shadow-sm transition-all duration-200 hover:shadow-md ${isMe
                                         ? 'bg-primary text-primary-foreground rounded-tr-sm'
                                         : 'bg-muted text-foreground rounded-tl-sm'
                                         }`}

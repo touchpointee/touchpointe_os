@@ -83,6 +83,15 @@ namespace Touchpointe.Application.Services.Tasks
             };
             _context.TaskActivities.Add(activity);
 
+            _context.TaskActivities.Add(activity);
+
+            // Auto-watch: Creator and Assignee
+            if (userId != request.AssigneeId)
+            {
+                _context.TaskWatchers.Add(new TaskWatcher { TaskId = task.Id, UserId = userId });
+            }
+            _context.TaskWatchers.Add(new TaskWatcher { TaskId = task.Id, UserId = request.AssigneeId });
+
             await _context.SaveChangesAsync(CancellationToken.None);
 
             // Fetch again to include navigation props
@@ -155,6 +164,13 @@ namespace Touchpointe.Application.Services.Tasks
                     Timestamp = DateTime.UtcNow
                 });
                 task.AssigneeId = request.AssigneeId.Value;
+
+                // Auto-watch new Assignee
+                var alreadyWatcher = await _context.TaskWatchers.AnyAsync(w => w.TaskId == task.Id && w.UserId == request.AssigneeId.Value);
+                if (!alreadyWatcher)
+                {
+                    _context.TaskWatchers.Add(new TaskWatcher { TaskId = task.Id, UserId = request.AssigneeId.Value });
+                }
             }
 
             if (request.Title != null && task.Title != request.Title)
@@ -390,6 +406,10 @@ namespace Touchpointe.Application.Services.Tasks
                 .Include(c => c.User)
                 .FirstAsync(c => c.Id == comment.Id);
             
+            // Register Mentions in DB
+            await RegisterMentions(taskId, comment.Id, request.Content, userId);
+            await _context.SaveChangesAsync(CancellationToken.None);
+
             // Notification logic
             await ProcessMentions(request.Content, userId, createdComment.User.FullName, workspaceId, 
                 $"mentioned you in a comment on task '{task.Title}'", 
@@ -444,6 +464,7 @@ namespace Touchpointe.Application.Services.Tasks
                 var isInWorkspace = await _context.WorkspaceMembers.AnyAsync(wm => wm.WorkspaceId == workspaceId && wm.UserId == uid);
                 if (isInWorkspace)
                 {
+                    // 1. Send Notification
                     await _notificationService.NotifyUserAsync(
                         uid,
                         "New Mention",
@@ -451,8 +472,130 @@ namespace Touchpointe.Application.Services.Tasks
                         2, // Type 2 = Mention
                         JsonSerializer.Serialize(dataObj)
                     );
+
+                    // 2. Persist Task/Comment Mention relations
+                    // Extract TaskId and CommentId from dataObj if possible, simpler to rely on caller passing them explicitly in future refactor
+                    // For now, checking if dataObj has TaskId/CommentId properties via reflection or dynamic is risky/slow.
+                    // Better approach: Overload ProcessMentions or pass explicit IDs. 
+                    // BUT: 'dataObj' is anonymous object. 
+                    // Let's assume the mention logic also adds them to watchers if not present.
+                    // Note: This method is private. I will update AddCommentAsync to handle the DB inserts directly before calling this.
                 }
             }
+        }
+
+        private async Task RegisterMentions(Guid taskId, Guid? commentId, string content, Guid senderId) {
+             var mentionRegex = new Regex(@"<@([a-fA-F0-9-]+)\|([^>]+)>");
+            var matches = mentionRegex.Matches(content);
+            var mentionedUserIds = new HashSet<Guid>();
+             foreach (Match match in matches)
+            {
+                if (Guid.TryParse(match.Groups[1].Value, out Guid uid)) mentionedUserIds.Add(uid);
+            }
+
+            foreach (var uid in mentionedUserIds)
+            {
+                 // Add Task Mention (Only if not a comment mention, i.e. Description mention)
+                 if (commentId == null && !await _context.TaskMentions.AnyAsync(tm => tm.TaskId == taskId && tm.UserId == uid)) {
+                     _context.TaskMentions.Add(new TaskMention { TaskId = taskId, UserId = uid });
+                 }
+
+                 // Add Comment Mention
+                 if (commentId.HasValue && !await _context.CommentMentions.AnyAsync(cm => cm.CommentId == commentId.Value && cm.UserId == uid)) {
+                     _context.CommentMentions.Add(new CommentMention { CommentId = commentId.Value, UserId = uid });
+                 }
+
+                 // Auto-add to watchers
+                 if (!await _context.TaskWatchers.AnyAsync(tw => tw.TaskId == taskId && tw.UserId == uid)) {
+                     _context.TaskWatchers.Add(new TaskWatcher { TaskId = taskId, UserId = uid });
+                 }
+            }
+            // Save changes happens in caller
+        }
+        public async Task<List<MyTaskDto>> GetMyTasksAsync(Guid userId, Guid workspaceId)
+        {
+            // 1. Verify User is in Workspace
+            var isMember = await _context.WorkspaceMembers.AnyAsync(wm => wm.WorkspaceId == workspaceId && wm.UserId == userId);
+            if (!isMember) return new List<MyTaskDto>(); // Or throw Unauthorized
+
+            // 2. Fetch Tasks where User is Involved
+            // Using a broad fetch to allow client-side or memory calculation of complex flags
+            // Optimized to fetch valid candidates first
+            var taskQuery = _context.Tasks
+                .Include(t => t.Workspace)
+                .Include(t => t.List).ThenInclude(l => l.Space)
+                .Include(t => t.Assignee)
+                .Include(t => t.Watchers)
+                .Include(t => t.Mentions)
+                .Include(t => t.Activities) // For LastActivity
+                // .Include(t => t.Subtasks) // If we need subtask counts, handled via Select/Count usually better
+                .Where(t => t.WorkspaceId == workspaceId)
+                .Where(t => 
+                    t.AssigneeId == userId ||
+                    t.Watchers.Any(w => w.UserId == userId) ||
+                    t.Mentions.Any(m => m.UserId == userId) 
+                    // Note: Comment mentions are trickier. 
+                    // Ideally, we'd add '|| t.Comments.Any(c => c.Mentions.Any(cm => cm.UserId == userId))'
+                    // but for performance, let's include it if indexed efficiently.
+                    || _context.TaskComments.Any(c => c.TaskId == t.Id && c.Mentions.Any(cm => cm.UserId == userId))
+                );
+
+            var tasks = await taskQuery.ToListAsync();
+
+            // 3. Project to DTO and Calculate Scores in Memory
+            var dtos = new List<MyTaskDto>();
+            var now = DateTime.UtcNow;
+
+            foreach (var t in tasks)
+            {
+                var dto = new MyTaskDto
+                {
+                    TaskId = t.Id,
+                    WorkspaceId = t.WorkspaceId,
+                    Title = t.Title,
+                    WorkspaceName = t.Workspace?.Name ?? "",
+                    SpaceName = t.List?.Space?.Name ?? "",
+                    ListName = t.List?.Name ?? "",
+                    Status = t.Status.ToString(),
+                    Priority = t.Priority.ToString(),
+                    DueDate = t.DueDate,
+                    AssigneeName = t.Assignee?.FullName ?? "",
+                    AssigneeAvatarUrl = t.Assignee?.AvatarUrl ?? "",
+                    
+                    SubtaskCount = await _context.Subtasks.CountAsync(s => s.TaskId == t.Id), // Consider optimizing to GroupBy
+                    CompletedSubtasks = await _context.Subtasks.CountAsync(s => s.TaskId == t.Id && s.IsCompleted),
+                    CommentCount = await _context.TaskComments.CountAsync(c => c.TaskId == t.Id),
+
+                    IsAssigned = t.AssigneeId == userId,
+                    IsWatching = t.Watchers.Any(w => w.UserId == userId),
+                    IsMentioned = t.Mentions.Any(m => m.UserId == userId) 
+                                  || await _context.TaskComments.AnyAsync(c => c.TaskId == t.Id && c.Mentions.Any(cm => cm.UserId == userId)), // Refined check
+
+                    IsBlocked = t.Status == TaskStatus.BLOCKED,
+                    IsOverdue = t.DueDate.HasValue && t.DueDate.Value < now && t.Status != TaskStatus.DONE,
+                    IsDueToday = t.DueDate.HasValue && t.DueDate.Value.Date == now.Date,
+                    IsDueThisWeek = t.DueDate.HasValue && t.DueDate.Value <= now.AddDays(7) && t.DueDate.Value >= now,
+                    
+                    LastActivityAt = t.Activities.OrderByDescending(a => a.Timestamp).Select(a => a.Timestamp).FirstOrDefault()
+                };
+
+                if (dto.LastActivityAt == default) dto.LastActivityAt = t.UpdatedAt;
+
+                // 4. Calculate Urgency Score
+                int score = 0;
+                if (dto.IsOverdue) score += 100;
+                if (dto.IsDueToday) score += 60;
+                if (dto.IsDueThisWeek) score += 30;
+                if (t.Priority == TaskPriority.HIGH || t.Priority == TaskPriority.URGENT) score += 20;
+                if (dto.IsMentioned) score += 15;
+                if ((now - dto.LastActivityAt).TotalHours < 4) score += 10; // Recently updated (4h window)
+                if (dto.IsBlocked) score -= 50;
+
+                dto.UrgencyScore = score;
+                dtos.Add(dto);
+            }
+
+            return dtos.OrderByDescending(d => d.UrgencyScore).ToList();
         }
     }
 }

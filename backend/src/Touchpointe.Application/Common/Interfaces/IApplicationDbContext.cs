@@ -30,6 +30,11 @@ namespace Touchpointe.Application.Common.Interfaces
         DbSet<DealContact> DealContacts { get; }
         DbSet<CrmActivity> CrmActivities { get; }
         DbSet<AiChatMessage> AiChatMessages { get; }
+        
+        DbSet<TaskWatcher> TaskWatchers { get; }
+        DbSet<TaskMention> TaskMentions { get; }
+        DbSet<CommentMention> CommentMentions { get; }
+        DbSet<ChatMention> ChatMentions { get; }
 
         Task<int> SaveChangesAsync(CancellationToken cancellationToken);
     }

@@ -7,7 +7,7 @@ using Touchpointe.Application.DTOs;
 namespace Touchpointe.API.Controllers
 {
     [ApiController]
-    [Route("{workspaceId}/tasks")]
+    [Route("workspaces/{workspaceId}/tasks")]
     [Authorize]
     public class TasksController : ControllerBase
     {
@@ -133,6 +133,21 @@ namespace Touchpointe.API.Controllers
                 var userId = GetUserId();
                 var comment = await _taskService.AddCommentAsync(workspaceId, userId, taskId, request);
                 return Ok(comment);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+        [HttpGet("my-tasks")]
+        public async Task<ActionResult<List<MyTaskDto>>> GetMyTasks(Guid workspaceId)
+        {
+            try
+            {
+                var userId = GetUserId();
+                var tasks = await _taskService.GetMyTasksAsync(userId, workspaceId);
+                return Ok(tasks);
             }
             catch (Exception ex)
             {

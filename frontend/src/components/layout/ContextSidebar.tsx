@@ -15,6 +15,7 @@ import {
     DollarSign
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { MyTasksSidebar } from '@/components/tasks/MyTasksSidebar';
 import { TasksSidebar } from '@/components/tasks/TasksSidebar';
 import { ChatSidebar } from '@/components/chat/ChatSidebar';
 import { AiSidebar } from '@/components/ai/AiSidebar';
@@ -32,7 +33,7 @@ function TasksSidebarWrapper() {
     return <TasksSidebar workspaceId={workspaceId} />;
 }
 
-type ModuleType = 'home' | 'tasks' | 'crm' | 'chat' | 'team' | 'settings' | 'ai';
+type ModuleType = 'home' | 'tasks' | 'my-tasks' | 'crm' | 'chat' | 'team' | 'settings' | 'ai';
 
 interface SidebarItem {
     icon: React.ElementType;
@@ -41,7 +42,7 @@ interface SidebarItem {
     children?: { label: string; path: string }[];
 }
 
-const moduleContent: Record<Exclude<ModuleType, 'crm' | 'ai'>, { title: string; items: SidebarItem[] }> = {
+const moduleContent: Record<Exclude<ModuleType, 'crm' | 'ai' | 'tasks' | 'my-tasks'>, { title: string; items: SidebarItem[] }> = {
     home: {
         title: 'Home',
         items: [
@@ -78,11 +79,12 @@ const moduleContent: Record<Exclude<ModuleType, 'crm' | 'ai'>, { title: string; 
             { icon: Shield, label: 'Security', path: '/settings/security' },
         ],
     },
-    tasks: { title: '', items: [] }, // Handled separately
 };
 
 function getModuleFromPath(pathname: string): ModuleType {
     const segments = pathname.split('/').filter(Boolean);
+
+    if (segments[0] === 'my-tasks') return 'my-tasks';
 
     // Handle /workspace/:id/:module pattern
     if (segments[0] === 'workspace' && segments.length >= 3) {
@@ -119,6 +121,14 @@ export function ContextSidebar({ className }: { className?: string }) {
         return (
             <aside className={sidebarClasses}>
                 <TasksSidebarWrapper />
+            </aside>
+        );
+    }
+
+    if (currentModule === 'my-tasks') {
+        return (
+            <aside className={sidebarClasses}>
+                <MyTasksSidebar />
             </aside>
         );
     }

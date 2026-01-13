@@ -8,7 +8,8 @@ namespace Touchpointe.Domain.Entities
         TODO,
         IN_PROGRESS,
         IN_REVIEW,
-        DONE
+        DONE,
+        BLOCKED
     }
 
     public enum TaskPriority
@@ -57,5 +58,7 @@ namespace Touchpointe.Domain.Entities
 
         // Navigation
         public ICollection<TaskActivity> Activities { get; set; } = new List<TaskActivity>();
+        public ICollection<TaskWatcher> Watchers { get; set; } = new List<TaskWatcher>();
+        public ICollection<TaskMention> Mentions { get; set; } = new List<TaskMention>();
     }
 }

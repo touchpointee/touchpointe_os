@@ -14,5 +14,7 @@ namespace Touchpointe.Domain.Entities
 
         public string Content { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        public ICollection<CommentMention> Mentions { get; set; } = new List<CommentMention>();
     }
 }

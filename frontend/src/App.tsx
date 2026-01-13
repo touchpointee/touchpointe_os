@@ -8,6 +8,8 @@ import { AuthGuard } from '@/components/auth/AuthGuard';
 import { PublicRoute } from '@/components/auth/PublicRoute';
 import { AcceptInvitePage } from '@/pages/auth/AcceptInvitePage';
 import AiPage from '@/pages/AiPage';
+import { MyTasksPage } from '@/pages/MyTasksPage';
+
 
 import { ToastProvider } from '@/contexts/ToastContext';
 
@@ -59,6 +61,13 @@ function App() {
                                 </AppLayout>
                             </AuthGuard>
                         } />
+                        <Route path="/my-tasks" element={
+                            <AuthGuard>
+                                <AppLayout>
+                                    <MyTasksPage />
+                                </AppLayout>
+                            </AuthGuard>
+                        } />
                         <Route path="/tasks" element={
                             <AuthGuard>
                                 <AppLayout>
@@ -94,7 +103,21 @@ function App() {
                                 </AppLayout>
                             </AuthGuard>
                         } />
-                        <Route path="/chat/*" element={
+                        <Route path="/chat" element={
+                            <AuthGuard>
+                                <AppLayout>
+                                    <ChatPage />
+                                </AppLayout>
+                            </AuthGuard>
+                        } />
+                        <Route path="/chat/channel/:channelId" element={
+                            <AuthGuard>
+                                <AppLayout>
+                                    <ChatPage />
+                                </AppLayout>
+                            </AuthGuard>
+                        } />
+                        <Route path="/chat/dm/:dmGroupId" element={
                             <AuthGuard>
                                 <AppLayout>
                                     <ChatPage />

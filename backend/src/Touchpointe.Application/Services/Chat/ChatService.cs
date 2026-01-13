@@ -186,6 +186,7 @@ namespace Touchpointe.Application.Services.Chat
             // Process Mentions
             await ProcessMentions(request.Content, userId, sender?.FullName ?? "Someone", workspaceId, 
                 $"mentioned you in #{channel.Name}", 
+                message.Id,
                 new { ChannelId = channelId, MessageId = message.Id });
             
             var messageDto = new MessageDto(
@@ -358,6 +359,7 @@ namespace Touchpointe.Application.Services.Chat
             // Process Mentions
             await ProcessMentions(request.Content, userId, sender?.FullName ?? "Someone", workspaceId, 
                 "mentioned you in a Direct Message", 
+                message.Id,
                 new { DmGroupId = dmGroupId, MessageId = message.Id });
 
             var messageDto = new MessageDto(
@@ -392,7 +394,7 @@ namespace Touchpointe.Application.Services.Chat
                 .ToListAsync();
         }
 
-        private async Task ProcessMentions(string content, Guid senderId, string senderName, Guid workspaceId, string baseMessage, object dataObj)
+        private async Task ProcessMentions(string content, Guid senderId, string senderName, Guid workspaceId, string baseMessage, Guid messageId, object dataObj)
         {
             var mentionRegex = new Regex(@"<@([a-fA-F0-9-]+)\|([^>]+)>");
             var matches = mentionRegex.Matches(content);
@@ -402,19 +404,33 @@ namespace Touchpointe.Application.Services.Chat
             {
                 if (Guid.TryParse(match.Groups[1].Value, out Guid uid))
                 {
-                    if (uid != senderId) // Don't notify self
+                    if (uid != senderId) // Don't notify or save self-mentions
                     {
                         mentionedUserIds.Add(uid);
                     }
                 }
             }
 
+            if (!mentionedUserIds.Any()) return;
+
             foreach (var uid in mentionedUserIds)
             {
-                // Verify user is in workspace (optional but safe)
+                // Verify user is in workspace
                 var isInWorkspace = await _context.WorkspaceMembers.AnyAsync(wm => wm.WorkspaceId == workspaceId && wm.UserId == uid);
+                
                 if (isInWorkspace)
                 {
+                    // Create ChatMention entity
+                    var chatMention = new ChatMention
+                    {
+                        Id = Guid.NewGuid(),
+                        MessageId = messageId,
+                        UserId = uid,
+                        CreatedAt = DateTime.UtcNow
+                    };
+                    _context.ChatMentions.Add(chatMention);
+
+                    // Notification
                     await _notificationService.NotifyUserAsync(
                         uid,
                         "New Mention",
@@ -424,6 +440,8 @@ namespace Touchpointe.Application.Services.Chat
                     );
                 }
             }
+            
+            await _context.SaveChangesAsync(CancellationToken.None);
         }
 
         public async Task AddReactionAsync(Guid workspaceId, Guid messageId, Guid userId, string emoji)

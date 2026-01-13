@@ -40,7 +40,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
     fetchTasks: async (workspaceId, listId) => {
         set({ loading: true, error: null });
         try {
-            const tasks = await apiGet<TaskDto[]>(`/${workspaceId}/tasks/list/${listId}`);
+            const tasks = await apiGet<TaskDto[]>(`/workspaces/${workspaceId}/tasks/list/${listId}`);
             set(state => ({
                 tasks: { ...state.tasks, [listId]: tasks },
                 loading: false
@@ -52,7 +52,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
 
     createTask: async (workspaceId, request) => {
         try {
-            const newTask = await apiPost<TaskDto>(`/${workspaceId}/tasks`, request);
+            const newTask = await apiPost<TaskDto>(`/workspaces/${workspaceId}/tasks`, request);
             await get().fetchTasks(workspaceId, request.listId);
             return newTask;
         } catch (e) {
@@ -89,7 +89,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
                 };
             });
 
-            await apiPut<TaskDto>(`/${workspaceId}/tasks/${taskId}`, fullRequest);
+            await apiPut<TaskDto>(`/workspaces/${workspaceId}/tasks/${taskId}`, fullRequest);
             await get().fetchTasks(workspaceId, listId);
 
             // If detail panel is open for this task, refresh details
@@ -104,7 +104,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
 
     fetchActivities: async (workspaceId, taskId) => {
         try {
-            const activities = await apiGet<TaskActivityDto[]>(`/${workspaceId}/tasks/${taskId}/activities`);
+            const activities = await apiGet<TaskActivityDto[]>(`/workspaces/${workspaceId}/tasks/${taskId}/activities`);
             set(state => ({
                 activities: { ...state.activities, [taskId]: activities }
             }));
@@ -118,7 +118,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
 
     fetchTaskDetails: async (workspaceId, taskId) => {
         try {
-            const details = await apiGet<TaskDetailDto>(`/${workspaceId}/tasks/${taskId}`);
+            const details = await apiGet<TaskDetailDto>(`/workspaces/${workspaceId}/tasks/${taskId}`);
             set(state => ({
                 taskDetails: { ...state.taskDetails, [taskId]: details }
             }));
@@ -130,7 +130,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
     addSubtask: async (workspaceId, taskId, title, assigneeId) => {
         try {
             // Optimistic? Maybe later. For now, fetch after add.
-            await apiPost(`/${workspaceId}/tasks/${taskId}/subtasks`, { title, assigneeId });
+            await apiPost(`/workspaces/${workspaceId}/tasks/${taskId}/subtasks`, { title, assigneeId });
             await get().fetchTaskDetails(workspaceId, taskId);
         } catch (e) {
             set({ error: (e as Error).message });
@@ -146,7 +146,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
             const activeTaskId = get().activeTaskId;
             if (!activeTaskId) return;
 
-            await apiPut(`/${workspaceId}/tasks/subtasks/${subtaskId}/toggle`, {});
+            await apiPut(`/workspaces/${workspaceId}/tasks/subtasks/${subtaskId}/toggle`, {});
             await get().fetchTaskDetails(workspaceId, activeTaskId);
         } catch (e) {
             set({ error: (e as Error).message });
@@ -155,7 +155,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
 
     addComment: async (workspaceId, taskId, content) => {
         try {
-            await apiPost(`/${workspaceId}/tasks/${taskId}/comments`, { content });
+            await apiPost(`/workspaces/${workspaceId}/tasks/${taskId}/comments`, { content });
             await get().fetchTaskDetails(workspaceId, taskId);
         } catch (e) {
             set({ error: (e as Error).message });

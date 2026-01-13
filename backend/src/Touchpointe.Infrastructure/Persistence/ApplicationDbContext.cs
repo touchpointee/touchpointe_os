@@ -23,7 +23,11 @@ namespace Touchpointe.Infrastructure.Persistence
         public DbSet<TaskItem> Tasks { get; set; }
         public DbSet<TaskActivity> TaskActivities { get; set; }
         public DbSet<Subtask> Subtasks => Set<Subtask>();
+        public DbSet<TaskWatcher> TaskWatchers => Set<TaskWatcher>();
+        public DbSet<TaskMention> TaskMentions => Set<TaskMention>();
         public DbSet<TaskComment> TaskComments => Set<TaskComment>();
+        public DbSet<CommentMention> CommentMentions => Set<CommentMention>();
+        public DbSet<ChatMention> ChatMentions => Set<ChatMention>();
         public DbSet<Channel> Channels { get; set; }
         public DbSet<ChannelMember> ChannelMembers { get; set; }
         public DbSet<Message> Messages { get; set; }
@@ -237,6 +241,70 @@ namespace Touchpointe.Infrastructure.Persistence
                 .HasIndex(c => c.TaskId);
             modelBuilder.Entity<TaskComment>()
                 .HasIndex(c => c.TaskId);
+            
+            // TaskWatcher
+            modelBuilder.Entity<TaskWatcher>()
+                .HasKey(tw => new { tw.TaskId, tw.UserId });
+
+            modelBuilder.Entity<TaskWatcher>()
+                .HasOne(tw => tw.Task)
+                .WithMany(t => t.Watchers)
+                .HasForeignKey(tw => tw.TaskId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<TaskWatcher>()
+                .HasOne(tw => tw.User)
+                .WithMany()
+                .HasForeignKey(tw => tw.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // TaskMention
+            modelBuilder.Entity<TaskMention>()
+                .HasOne(tm => tm.Task)
+                .WithMany(t => t.Mentions)
+                .HasForeignKey(tm => tm.TaskId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            modelBuilder.Entity<TaskMention>()
+                .HasOne(tm => tm.User)
+                .WithMany()
+                .HasForeignKey(tm => tm.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+            
+            modelBuilder.Entity<TaskMention>()
+                .HasIndex(tm => tm.UserId);
+
+            // CommentMention
+            modelBuilder.Entity<CommentMention>()
+                .HasOne(cm => cm.Comment)
+                .WithMany(c => c.Mentions)
+                .HasForeignKey(cm => cm.CommentId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<CommentMention>()
+                .HasOne(cm => cm.User)
+                .WithMany()
+                .HasForeignKey(cm => cm.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // ChatMention
+            modelBuilder.Entity<ChatMention>()
+                .HasKey(cm => new { cm.MessageId, cm.UserId });
+
+            modelBuilder.Entity<ChatMention>()
+                .HasOne(cm => cm.Message)
+                .WithMany(m => m.Mentions)
+                .HasForeignKey(cm => cm.MessageId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<ChatMention>()
+                .HasOne(cm => cm.User)
+                .WithMany()
+                .HasForeignKey(cm => cm.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            modelBuilder.Entity<CommentMention>()
+                .HasIndex(cm => cm.UserId);
 
             // CRM: Company
             modelBuilder.Entity<Company>()

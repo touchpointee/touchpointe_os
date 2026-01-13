@@ -1,6 +1,7 @@
 import {
     Home,
     CheckSquare,
+    CheckCircle2,
     Users,
     MessageSquare,
     UsersRound,
@@ -12,6 +13,7 @@ import { cn } from '@/lib/utils';
 
 const navItems = [
     { icon: Home, label: 'Home', path: '/home' },
+    { icon: CheckCircle2, label: 'My Tasks', path: '/my-tasks' },
     { icon: CheckSquare, label: 'Tasks', path: '/tasks' },
     { icon: Users, label: 'CRM', path: '/crm' },
     { icon: MessageSquare, label: 'Chat', path: '/chat' },
