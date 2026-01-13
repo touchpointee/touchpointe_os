@@ -6,7 +6,7 @@ using Touchpointe.Application.Common.Interfaces;
 namespace Touchpointe.API.Controllers
 {
     [ApiController]
-    [Route("notifications")]
+    [Route("api/notifications")]
     [Authorize]
     public class NotificationsController : ControllerBase
     {

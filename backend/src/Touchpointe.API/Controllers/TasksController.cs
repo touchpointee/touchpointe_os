@@ -7,7 +7,7 @@ using Touchpointe.Application.DTOs;
 namespace Touchpointe.API.Controllers
 {
     [ApiController]
-    [Route("workspaces/{workspaceId}/tasks")]
+    [Route("api/workspaces/{workspaceId}/tasks")]
     [Authorize]
     public class TasksController : ControllerBase
     {

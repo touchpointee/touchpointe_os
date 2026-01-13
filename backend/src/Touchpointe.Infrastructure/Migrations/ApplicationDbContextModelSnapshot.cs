@@ -416,6 +416,111 @@ namespace Touchpointe.Infrastructure.Migrations
                     b.ToTable("Folders");
                 });
 
+            modelBuilder.Entity("Touchpointe.Domain.Entities.Meeting", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("EndTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("EndedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("JoinCode")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("StartTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("StartedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("WorkspaceId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedByUserId");
+
+                    b.HasIndex("JoinCode")
+                        .IsUnique();
+
+                    b.HasIndex("WorkspaceId");
+
+                    b.ToTable("Meetings");
+                });
+
+            modelBuilder.Entity("Touchpointe.Domain.Entities.MeetingParticipant", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("FirstJoinedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("GuestName")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("LastLeftAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("MeetingId")
+                        .HasColumnType("uuid");
+
+                    b.Property<double>("TotalDurationSeconds")
+                        .HasColumnType("double precision");
+
+                    b.Property<Guid?>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MeetingId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("MeetingParticipants");
+                });
+
+            modelBuilder.Entity("Touchpointe.Domain.Entities.MeetingSession", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("JoinTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("LeaveTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("MeetingParticipantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MeetingParticipantId");
+
+                    b.ToTable("MeetingSessions");
+                });
+
             modelBuilder.Entity("Touchpointe.Domain.Entities.Message", b =>
                 {
                     b.Property<Guid>("Id")
@@ -936,7 +1041,7 @@ namespace Touchpointe.Infrastructure.Migrations
                     b.HasOne("Touchpointe.Domain.Entities.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("Touchpointe.Domain.Entities.Workspace", "Workspace")
@@ -1104,6 +1209,54 @@ namespace Touchpointe.Infrastructure.Migrations
                     b.Navigation("Space");
 
                     b.Navigation("Workspace");
+                });
+
+            modelBuilder.Entity("Touchpointe.Domain.Entities.Meeting", b =>
+                {
+                    b.HasOne("Touchpointe.Domain.Entities.User", "CreatedBy")
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Touchpointe.Domain.Entities.Workspace", "Workspace")
+                        .WithMany()
+                        .HasForeignKey("WorkspaceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("CreatedBy");
+
+                    b.Navigation("Workspace");
+                });
+
+            modelBuilder.Entity("Touchpointe.Domain.Entities.MeetingParticipant", b =>
+                {
+                    b.HasOne("Touchpointe.Domain.Entities.Meeting", "Meeting")
+                        .WithMany("Participants")
+                        .HasForeignKey("MeetingId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Touchpointe.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Meeting");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Touchpointe.Domain.Entities.MeetingSession", b =>
+                {
+                    b.HasOne("Touchpointe.Domain.Entities.MeetingParticipant", "Participant")
+                        .WithMany("Sessions")
+                        .HasForeignKey("MeetingParticipantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Participant");
                 });
 
             modelBuilder.Entity("Touchpointe.Domain.Entities.Message", b =>
@@ -1417,6 +1570,16 @@ namespace Touchpointe.Infrastructure.Migrations
             modelBuilder.Entity("Touchpointe.Domain.Entities.Folder", b =>
                 {
                     b.Navigation("Lists");
+                });
+
+            modelBuilder.Entity("Touchpointe.Domain.Entities.Meeting", b =>
+                {
+                    b.Navigation("Participants");
+                });
+
+            modelBuilder.Entity("Touchpointe.Domain.Entities.MeetingParticipant", b =>
+                {
+                    b.Navigation("Sessions");
                 });
 
             modelBuilder.Entity("Touchpointe.Domain.Entities.Message", b =>

@@ -42,6 +42,10 @@ namespace Touchpointe.Infrastructure.Persistence
         public DbSet<CrmActivity> CrmActivities => Set<CrmActivity>();
         public DbSet<AiChatMessage> AiChatMessages => Set<AiChatMessage>();
 
+        public DbSet<Meeting> Meetings => Set<Meeting>();
+        public DbSet<MeetingParticipant> MeetingParticipants => Set<MeetingParticipant>();
+        public DbSet<MeetingSession> MeetingSessions => Set<MeetingSession>();
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -443,6 +447,49 @@ namespace Touchpointe.Infrastructure.Persistence
 
             modelBuilder.Entity<MessageReaction>()
                 .HasIndex(r => new { r.MessageId, r.UserId, r.Emoji }); // Optimization
+            // AiChatMessage
+            modelBuilder.Entity<AiChatMessage>()
+                .HasOne(m => m.User)
+                .WithMany()
+                .HasForeignKey(m => m.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Meeting
+            modelBuilder.Entity<Meeting>()
+                .HasIndex(m => m.JoinCode)
+                .IsUnique();
+
+            modelBuilder.Entity<Meeting>()
+                .HasOne(m => m.Workspace)
+                .WithMany()
+                .HasForeignKey(m => m.WorkspaceId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Meeting>()
+                .HasOne(m => m.CreatedBy)
+                .WithMany()
+                .HasForeignKey(m => m.CreatedByUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // MeetingParticipant
+            modelBuilder.Entity<MeetingParticipant>()
+                .HasOne(p => p.Meeting)
+                .WithMany(m => m.Participants)
+                .HasForeignKey(p => p.MeetingId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<MeetingParticipant>()
+                .HasOne(p => p.User)
+                .WithMany()
+                .HasForeignKey(p => p.UserId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            // MeetingSession
+            modelBuilder.Entity<MeetingSession>()
+                .HasOne(s => s.Participant)
+                .WithMany(p => p.Sessions)
+                .HasForeignKey(s => s.MeetingParticipantId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

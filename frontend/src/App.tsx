@@ -4,11 +4,14 @@ import { AppLayout } from '@/components/layout';
 import { HomePage, TasksPage, CrmPage, ChatPage, TeamPage, SettingsPage, ProfilePage, InboxPage } from '@/pages';
 import { LoginPage } from '@/pages/auth/LoginPage';
 import { RegisterPage } from '@/pages/auth/RegisterPage';
+import { MeetPage } from './pages/meet/MeetPage';
+import { RoomPage } from './pages/meet/RoomPage';
 import { AuthGuard } from '@/components/auth/AuthGuard';
 import { PublicRoute } from '@/components/auth/PublicRoute';
 import { AcceptInvitePage } from '@/pages/auth/AcceptInvitePage';
 import AiPage from '@/pages/AiPage';
 import { MyTasksPage } from '@/pages/MyTasksPage';
+import { MeetingHistoryPage } from './pages/meet/MeetingHistoryPage';
 
 
 import { ToastProvider } from '@/contexts/ToastContext';
@@ -39,6 +42,9 @@ function App() {
                             </AuthGuard>
                         } />
 
+                        {/* Public Meet Route */}
+                        <Route path="/meet/:joinCode" element={<RoomPage />} />
+
                         {/* Protected Routes - Auth + Valid Workspace Required */}
                         <Route path="/home/inbox" element={
                             <AuthGuard>
@@ -58,6 +64,20 @@ function App() {
                             <AuthGuard>
                                 <AppLayout hideContextSidebar={true}>
                                     <HomePage />
+                                </AppLayout>
+                            </AuthGuard>
+                        } />
+                        <Route path="/workspace/:workspaceId/meet" element={
+                            <AuthGuard>
+                                <AppLayout hideContextSidebar={true}>
+                                    <MeetPage />
+                                </AppLayout>
+                            </AuthGuard>
+                        } />
+                        <Route path="/meet/history/:meetingId" element={
+                            <AuthGuard>
+                                <AppLayout hideContextSidebar={true}>
+                                    <MeetingHistoryPage />
                                 </AppLayout>
                             </AuthGuard>
                         } />
@@ -107,6 +127,13 @@ function App() {
                             <AuthGuard>
                                 <AppLayout>
                                     <ChatPage />
+                                </AppLayout>
+                            </AuthGuard>
+                        } />
+                        <Route path="/meet" element={
+                            <AuthGuard>
+                                <AppLayout hideContextSidebar={true}>
+                                    <MeetPage />
                                 </AppLayout>
                             </AuthGuard>
                         } />

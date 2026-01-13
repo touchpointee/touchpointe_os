@@ -6,7 +6,8 @@ import {
     MessageSquare,
     UsersRound,
     Settings,
-    Sparkles
+    Sparkles,
+    Video
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -17,6 +18,7 @@ const navItems = [
     { icon: CheckSquare, label: 'Tasks', path: '/tasks' },
     { icon: Users, label: 'CRM', path: '/crm' },
     { icon: MessageSquare, label: 'Chat', path: '/chat' },
+    { icon: Video, label: 'Meet', path: '/meet' },
     { icon: Sparkles, label: 'Agent', path: '/ai' },
     { icon: UsersRound, label: 'Team', path: '/team' },
     { icon: Settings, label: 'Settings', path: '/settings' },

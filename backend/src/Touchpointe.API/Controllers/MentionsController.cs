@@ -10,7 +10,7 @@ namespace Touchpointe.API.Controllers
 {
     [Authorize]
     [ApiController]
-    [Route("mentions")]
+    [Route("api/mentions")]
     public class MentionsController : ControllerBase
     {
         private readonly IApplicationDbContext _context;

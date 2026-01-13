@@ -662,6 +662,8 @@
         "dependencies": {
           "Microsoft.EntityFrameworkCore": "9.0.0",
           "Microsoft.Extensions.Configuration.Abstractions": "10.0.1",
+          "Microsoft.IdentityModel.Tokens": "8.0.1",
+          "System.IdentityModel.Tokens.Jwt": "8.0.1",
           "Touchpointe.Domain": "1.0.0"
         },
         "runtime": {

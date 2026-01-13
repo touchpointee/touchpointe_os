@@ -8,7 +8,7 @@ using Touchpointe.Application.DTOs;
 namespace Touchpointe.API.Controllers
 {
     [ApiController]
-    [Route("profile")]
+    [Route("api/profile")]
     [Authorize]
     public class ProfileController : ControllerBase
     {

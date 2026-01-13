@@ -36,6 +36,10 @@ namespace Touchpointe.Application.Common.Interfaces
         DbSet<CommentMention> CommentMentions { get; }
         DbSet<ChatMention> ChatMentions { get; }
 
+        DbSet<Meeting> Meetings { get; }
+        DbSet<MeetingParticipant> MeetingParticipants { get; }
+        DbSet<MeetingSession> MeetingSessions { get; }
+
         Task<int> SaveChangesAsync(CancellationToken cancellationToken);
     }
 }

@@ -9,7 +9,7 @@ using Touchpointe.Application.DTOs;
 namespace Touchpointe.API.Controllers
 {
     [ApiController]
-    [Route("{workspaceId}/dashboard")]
+    [Route("api/{workspaceId}/dashboard")]
     [Authorize]
     public class DashboardController : ControllerBase
     {
