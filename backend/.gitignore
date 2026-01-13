@@ -1,0 +1,23 @@
+# Build outputs
+bin/
+obj/
+out/
+
+# IDE
+.idea/
+.vs/
+*.user
+*.suo
+*.csproj.user
+
+# Secrets and local configs
+appsettings.Development.json
+appsettings.Local.json
+*.local.json
+
+# Logs
+logs/
+*.log
+
+# Debug
+*.pdb

@@ -3,7 +3,6 @@ import {
     LayoutDashboard,
     AlertTriangle,
     CalendarClock,
-    Briefcase,
     Zap,
     Users,
     CheckSquare,
