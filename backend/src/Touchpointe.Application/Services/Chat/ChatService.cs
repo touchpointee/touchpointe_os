@@ -356,11 +356,8 @@ namespace Touchpointe.Application.Services.Chat
 
             var sender = await _context.Users.FindAsync(userId);
 
-            // Process Mentions
-            await ProcessMentions(request.Content, userId, sender?.FullName ?? "Someone", workspaceId, 
-                "mentioned you in a Direct Message", 
-                message.Id,
-                new { DmGroupId = dmGroupId, MessageId = message.Id });
+            // Removed processing mentions for Direct Messages as requested
+            // Mentions are only for Channels
 
             var messageDto = new MessageDto(
                 message.Id,

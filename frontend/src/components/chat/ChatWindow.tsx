@@ -111,6 +111,11 @@ export function ChatWindow() {
             }
         }
 
+        if (isDm) {
+            setMentionQuery(null);
+            return;
+        }
+
         const selection = window.getSelection();
         if (!selection || selection.rangeCount === 0) return;
 
