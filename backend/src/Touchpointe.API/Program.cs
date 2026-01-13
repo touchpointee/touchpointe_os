@@ -66,6 +66,17 @@ builder.Services.AddAuthentication(); // Ensure Auth is configured
 
 builder.Services.AddAuthorization();
 
+
+// Configure Forwarded Headers for Coolify/Nginx/Docker
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedFor | 
+                               Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedProto;
+    // Trust all networks and proxies since we are behind a reverse proxy in Docker
+    options.KnownNetworks.Clear(); 
+    options.KnownProxies.Clear();
+});
+
 var app = builder.Build();
 
 // Apply any pending migrations on startup
@@ -87,6 +98,8 @@ using (var scope = app.Services.CreateScope())
         Console.WriteLine($"[DB MIGRATION] ERROR: Could not apply migrations. {ex.Message}");
     }
 }
+
+app.UseForwardedHeaders(); // Must be first!
 
 app.UseSwagger();
 app.UseSwaggerUI();
