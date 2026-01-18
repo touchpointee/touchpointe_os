@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Navigate, useLocation, useParams } from 'react-router-dom';
+import { Navigate, useParams } from 'react-router-dom';
 import { useUserStore } from '@/stores/userStore';
 import { useWorkspaces } from '@/stores/workspaceStore';
 import { Loader2 } from 'lucide-react';
@@ -11,7 +11,7 @@ interface AuthGuardProps {
 }
 
 export function AuthGuard({ children, requireWorkspace = true }: AuthGuardProps) {
-    const location = useLocation();
+    // const location = useLocation(); // Removed unused variable
     const { workspaceId } = useParams();
     const { user, fetchUser, isLoading: isUserLoading } = useUserStore();
     const {

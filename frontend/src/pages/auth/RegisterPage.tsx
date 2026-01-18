@@ -38,14 +38,14 @@ export function RegisterPage() {
         try {
             // Register Request
             // Using PascalCase keys to match backend DTO validation errors
-            const response = await apiPost<{ token: string }>('/auth/register', {
+            await apiPost<{ token: string }>('/auth/register', {
                 FullName: formData.fullName,
                 Username: formData.username,
                 Email: formData.email,
                 Password: formData.password
             });
 
-            const { token } = response;
+            // const { token } = response; // Token is unused in frontend code as it's HttpOnly
             // Token is now HttpOnly cookie
             toast.success('Account Created', 'Welcome to Touchpointe!');
 

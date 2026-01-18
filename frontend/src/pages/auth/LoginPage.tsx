@@ -34,7 +34,7 @@ export function LoginPage() {
                 password: formData.password
             });
 
-            const { token, lastActiveWorkspaceId } = response;
+            const { lastActiveWorkspaceId } = response;
 
             // Token is now HttpOnly cookie
             toast.success('Welcome back', 'Successfully signed in to your account.');
