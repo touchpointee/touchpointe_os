@@ -8,31 +8,35 @@ export interface User {
 }
 
 export function getCurrentUser(): User | null {
-    const token = localStorage.getItem('token');
-    if (!token) return null;
+    // Return null if no user in storage (AuthGuard checks actual session)
     try {
-        const decoded = jwtDecode<any>(token);
-        return {
-            id: decoded.sub || decoded.nameid,
-            email: decoded.email,
-            name: decoded.unique_name || decoded.name,
-            exp: decoded.exp
-        };
+        const storage = localStorage.getItem('user-storage');
+        if (storage) {
+            const parsed = JSON.parse(storage);
+            return parsed.state?.user || null;
+        }
     } catch (e) {
         return null;
     }
+    return null;
 }
 
 import { useAiStore } from '@/stores/aiStore';
+import { apiPost } from '@/lib/api';
 
-export function logout(): void {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+export async function logout(): Promise<void> {
+    try {
+        await apiPost('/auth/logout', {});
+    } catch (e) {
+        console.error('Logout failed', e);
+    }
+    localStorage.removeItem('token'); // Cleanup legacy
+    localStorage.removeItem('user-storage');
     localStorage.removeItem('workspace-storage');
     useAiStore.getState().clearState();
     window.location.href = '/login';
 }
 
 export function getToken(): string | null {
-    return localStorage.getItem('token');
+    return null; // Token is now HttpOnly cookie not accessible to JS
 }

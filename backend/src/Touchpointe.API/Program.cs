@@ -7,11 +7,16 @@ using Touchpointe.Infrastructure.Middleware;
 using Microsoft.EntityFrameworkCore;
 using Touchpointe.Infrastructure.Persistence;
 using Touchpointe.Infrastructure.Persistence;
+using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.RateLimiting;
+using FluentValidation.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // 13. Add services to the container.
 builder.Configuration.AddEnvironmentVariables(); // Ensure all env vars are loaded (e.g. FRONTEND_URL)
+
+builder.Services.AddFluentValidationAutoValidation();
 
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
@@ -48,7 +53,59 @@ builder.Services.AddCors(options =>
         }
     });
 });
-builder.Services.AddSignalR(); // Add SignalR Service
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    
+    // Global Limit: 300 requests per minute per authenticated user (or IP)
+    options.AddPolicy("GlobalLimiter", context =>
+    {
+        // Use User Identity if available, otherwise IP
+        var username = context.User.Identity?.IsAuthenticated == true
+            ? context.User.Identity.Name
+            : context.Connection.RemoteIpAddress?.ToString();
+
+        return System.Threading.RateLimiting.RateLimitPartition.GetFixedWindowLimiter(username ?? "anonymous",
+            _ => new System.Threading.RateLimiting.FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 300,
+                Window = TimeSpan.FromMinutes(1),
+                QueueProcessingOrder = System.Threading.RateLimiting.QueueProcessingOrder.OldestFirst,
+                QueueLimit = 10
+            });
+    });
+
+    // Auth Limit: 10 attempts per minute (Login/Register protection)
+    options.AddFixedWindowLimiter("AuthLimiter", opt =>
+    {
+        opt.PermitLimit = 10;
+        opt.Window = TimeSpan.FromMinutes(1);
+        opt.QueueLimit = 0;
+    });
+});
+
+var redisConnection = Environment.GetEnvironmentVariable("REDIS_CONNECTION");
+var signalRBuilder = builder.Services.AddSignalR();
+
+if (!string.IsNullOrEmpty(redisConnection))
+{
+    Console.WriteLine($"[REDIS] Configuring SignalR Backplane with connection: {redisConnection}");
+    try 
+    {
+        signalRBuilder.AddStackExchangeRedis(redisConnection, options => {
+            options.Configuration.ChannelPrefix = "Touchpointe";
+        });
+    }
+    catch (Exception ex)
+    {
+         Console.WriteLine($"[REDIS] Failed to configure Redis: {ex.Message}. Falling back to in-memory.");
+    }
+}
+else
+{
+    Console.WriteLine("[REDIS] Start without Redis Backplane (Single Instance Mode)");
+}
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(); // Register Swagger services
 builder.Services.AddOpenApi();
@@ -109,13 +166,16 @@ app.MapOpenApi();
 app.UseHttpsRedirection();
 app.UseCors("AllowFrontend");
 
+app.UseRateLimiter();
+
 app.UseAuthentication();
 app.UseAuthorization();
 
 // Workspace isolation
 app.UseMiddleware<WorkspaceAuthorizationMiddleware>();
 
-app.MapControllers();
+app.MapControllers()
+   .RequireRateLimiting("GlobalLimiter");
 app.MapHub<Touchpointe.Api.Hubs.ChatHub>("/api/hubs/chat");
 app.MapHub<Touchpointe.API.Hubs.MeetHub>("/api/hubs/meet");
 

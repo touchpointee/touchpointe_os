@@ -9,10 +9,6 @@ function getHeaders(): Record<string, string> {
     const headers: Record<string, string> = {
         'Content-Type': 'application/json',
     };
-    const token = localStorage.getItem('token');
-    if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-    }
     return headers;
 }
 
@@ -52,7 +48,8 @@ async function handleResponse(res: Response) {
 
 export async function apiGet<T>(path: string): Promise<T> {
     const res = await fetch(`${API_BASE}${path}`, {
-        headers: getHeaders()
+        headers: getHeaders(),
+        credentials: 'include',
     });
     return handleResponse(res);
 }
@@ -61,6 +58,7 @@ export async function apiPost<T>(path: string, body: unknown): Promise<T> {
     const res = await fetch(`${API_BASE}${path}`, {
         method: 'POST',
         headers: getHeaders(),
+        credentials: 'include',
         body: JSON.stringify(body),
     });
     return handleResponse(res);
@@ -70,6 +68,7 @@ export async function apiPut<T>(path: string, body: unknown): Promise<T> {
     const res = await fetch(`${API_BASE}${path}`, {
         method: 'PUT',
         headers: getHeaders(),
+        credentials: 'include',
         body: JSON.stringify(body),
     });
     return handleResponse(res);
@@ -79,6 +78,7 @@ export async function apiPatch<T>(path: string, body: unknown): Promise<T> {
     const res = await fetch(`${API_BASE}${path}`, {
         method: 'PATCH',
         headers: getHeaders(),
+        credentials: 'include',
         body: JSON.stringify(body),
     });
     return handleResponse(res);
@@ -88,6 +88,7 @@ export async function apiDelete(path: string): Promise<void> {
     const res = await fetch(`${API_BASE}${path}`, {
         method: 'DELETE',
         headers: getHeaders(),
+        credentials: 'include',
     });
     if (res.status === 401) {
         localStorage.removeItem('token');
@@ -105,7 +106,8 @@ export async function apiRequest<T>(path: string, options: RequestInit = {}): Pr
         headers: {
             ...getHeaders(),
             ...options.headers as Record<string, string>
-        }
+        },
+        credentials: 'include',
     });
     return handleResponse(res);
 }

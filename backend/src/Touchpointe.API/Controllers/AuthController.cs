@@ -6,11 +6,13 @@ using Touchpointe.Application.Common.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Touchpointe.API.Controllers
 {
     [ApiController]
     [Route("api/auth")]
+    [EnableRateLimiting("AuthLimiter")]
     public class AuthController : ControllerBase
     {
         private readonly IAuthenticationService _authenticationService;
@@ -28,7 +30,14 @@ namespace Touchpointe.API.Controllers
             try 
             {
                 var result = await _authenticationService.Register(request);
-                return Ok(result);
+                SetTokenCookie(result.Token);
+                return Ok(new 
+                {
+                    result.Id,
+                    result.FullName,
+                    result.Email,
+                    result.LastActiveWorkspaceId
+                });
             }
             catch (Exception ex)
             {
@@ -43,12 +52,43 @@ namespace Touchpointe.API.Controllers
             try
             {
                 var result = await _authenticationService.Login(request);
-                return Ok(result);
+                SetTokenCookie(result.Token);
+                return Ok(new 
+                {
+                    result.Id,
+                    result.FullName,
+                    result.Email,
+                    result.LastActiveWorkspaceId
+                });
             }
             catch (Exception ex)
             {
                  return BadRequest(new { error = ex.Message });
             }
+        }
+
+        [HttpPost("logout")]
+        public IActionResult Logout()
+        {
+            Response.Cookies.Delete("jwt", new CookieOptions 
+            { 
+                HttpOnly = true, 
+                Secure = true, 
+                SameSite = SameSiteMode.Strict 
+            });
+            return Ok(new { message = "Logged out" });
+        }
+
+        private void SetTokenCookie(string token)
+        {
+            var cookieOptions = new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true, // Keep Secure=true, localhost usually supports it. If issues persist, make dynamic.
+                SameSite = SameSiteMode.None, // Allow Cross-Origin (Port) cookies
+                Expires = DateTime.UtcNow.AddHours(2) 
+            };
+            Response.Cookies.Append("jwt", token, cookieOptions);
         }
 
         [Authorize]

@@ -625,6 +625,10 @@ namespace Touchpointe.Infrastructure.Migrations
 
                     b.HasIndex("SenderId");
 
+                    b.HasIndex("WorkspaceId");
+
+                    b.HasIndex("ChannelId", "CreatedAt");
+
                     b.ToTable("Messages");
                 });
 
@@ -743,6 +747,9 @@ namespace Touchpointe.Infrastructure.Migrations
                     b.Property<Guid>("TaskId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("TaskItemId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasColumnType("text");
@@ -752,6 +759,8 @@ namespace Touchpointe.Infrastructure.Migrations
                     b.HasIndex("AssigneeId");
 
                     b.HasIndex("TaskId");
+
+                    b.HasIndex("TaskItemId");
 
                     b.ToTable("Subtasks");
                 });
@@ -813,6 +822,8 @@ namespace Touchpointe.Infrastructure.Migrations
 
                     b.HasIndex("TaskId");
 
+                    b.HasIndex("TaskId", "Timestamp");
+
                     b.ToTable("TaskActivities");
                 });
 
@@ -832,12 +843,17 @@ namespace Touchpointe.Infrastructure.Migrations
                     b.Property<Guid>("TaskId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("TaskItemId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
                     b.HasIndex("TaskId");
+
+                    b.HasIndex("TaskItemId");
 
                     b.HasIndex("UserId");
 
@@ -1007,6 +1023,8 @@ namespace Touchpointe.Infrastructure.Migrations
                     b.HasIndex("TaskId");
 
                     b.HasIndex("UserId");
+
+                    b.HasIndex("UserId", "EndTime");
 
                     b.ToTable("TaskTimeEntries");
                 });
@@ -1511,6 +1529,10 @@ namespace Touchpointe.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Touchpointe.Domain.Entities.TaskItem", null)
+                        .WithMany("Subtasks")
+                        .HasForeignKey("TaskItemId");
+
                     b.Navigation("Assignee");
 
                     b.Navigation("Task");
@@ -1553,6 +1575,10 @@ namespace Touchpointe.Infrastructure.Migrations
                         .HasForeignKey("TaskId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("Touchpointe.Domain.Entities.TaskItem", null)
+                        .WithMany("Comments")
+                        .HasForeignKey("TaskItemId");
 
                     b.HasOne("Touchpointe.Domain.Entities.User", "User")
                         .WithMany()
@@ -1806,7 +1832,11 @@ namespace Touchpointe.Infrastructure.Migrations
                 {
                     b.Navigation("Activities");
 
+                    b.Navigation("Comments");
+
                     b.Navigation("Mentions");
+
+                    b.Navigation("Subtasks");
 
                     b.Navigation("TimeEntries");
 

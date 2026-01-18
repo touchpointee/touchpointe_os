@@ -6,6 +6,6 @@ namespace Touchpointe.Application.Common.Interfaces
 {
     public interface IDashboardService
     {
-        Task<DashboardDataDto> GetDashboardDataAsync(Guid workspaceId, Guid userId);
+        Task<DashboardDataDto> GetDashboardDataAsync(Guid workspaceId, Guid userId, CancellationToken cancellationToken = default);
     }
 }

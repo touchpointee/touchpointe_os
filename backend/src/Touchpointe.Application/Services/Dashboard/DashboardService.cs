@@ -18,29 +18,31 @@ namespace Touchpointe.Application.Services.Dashboard
             _context = context;
         }
 
-        public async Task<DashboardDataDto> GetDashboardDataAsync(Guid workspaceId, Guid userId)
+        public async Task<DashboardDataDto> GetDashboardDataAsync(Guid workspaceId, Guid userId, CancellationToken cancellationToken = default)
         {
             var today = DateTime.UtcNow.Date;
 
-            // 1. Stats
-            var openTasks = await _context.Tasks
-                .CountAsync(t => t.WorkspaceId == workspaceId && t.AssigneeId == userId && t.Status != Touchpointe.Domain.Entities.TaskStatus.DONE);
-            
-            var dueToday = await _context.Tasks
-                .CountAsync(t => t.WorkspaceId == workspaceId && t.AssigneeId == userId && t.Status != Touchpointe.Domain.Entities.TaskStatus.DONE && t.DueDate.HasValue && t.DueDate.Value.Date == today);
+            // 1. Task Stats (Aggregated Query)
+            var taskStatsTask = _context.Tasks
+                .Where(t => t.WorkspaceId == workspaceId && t.AssigneeId == userId)
+                .GroupBy(x => 1)
+                .Select(g => new
+                {
+                    Open = g.Count(t => t.Status != Touchpointe.Domain.Entities.TaskStatus.DONE),
+                    DueToday = g.Count(t => t.Status != Touchpointe.Domain.Entities.TaskStatus.DONE && t.DueDate.HasValue && t.DueDate.Value.Date == today),
+                    Overdue = g.Count(t => t.Status != Touchpointe.Domain.Entities.TaskStatus.DONE && t.DueDate.HasValue && t.DueDate.Value.Date < today),
+                    CompletedToday = g.Count(t => t.Status == Touchpointe.Domain.Entities.TaskStatus.DONE && t.UpdatedAt.Date == today)
+                })
+                .FirstOrDefaultAsync(cancellationToken);
 
-            var overdue = await _context.Tasks
-                .CountAsync(t => t.WorkspaceId == workspaceId && t.AssigneeId == userId && t.Status != Touchpointe.Domain.Entities.TaskStatus.DONE && t.DueDate.HasValue && t.DueDate.Value.Date < today);
+            // 2. Active Deals
+            var activeDealsTask = _context.Deals
+                .CountAsync(d => d.WorkspaceId == workspaceId && d.Stage != DealStage.CLOSED_WON && d.Stage != DealStage.CLOSED_LOST, cancellationToken);
 
-            var activeDeals = await _context.Deals
-                .CountAsync(d => d.WorkspaceId == workspaceId && d.Stage != DealStage.CLOSED_WON && d.Stage != DealStage.CLOSED_LOST);
-
-            var completedToday = await _context.Tasks
-                .CountAsync(t => t.WorkspaceId == workspaceId && t.AssigneeId == userId && t.Status == Touchpointe.Domain.Entities.TaskStatus.DONE && t.UpdatedAt.Date == today);
-
-            // 2. My Tasks (Top 30 due soon)
-            var myTasks = await _context.Tasks
+            // 3. My Tasks (Top 30 due soon)
+            var myTasksTask = _context.Tasks
                 .Include(t => t.Assignee)
+                .Include(t => t.CreatedBy) // Include CreatedBy to prevent null reference in Select
                 .Include(t => t.Tags)
                 .Where(t => t.WorkspaceId == workspaceId && t.AssigneeId == userId && t.Status != Touchpointe.Domain.Entities.TaskStatus.DONE)
                 .OrderBy(t => t.DueDate ?? DateTime.MaxValue)
@@ -58,7 +60,7 @@ namespace Touchpointe.Application.Services.Dashboard
                     t.Assignee != null ? t.Assignee.FullName : "",
                     t.Assignee != null ? t.Assignee.AvatarUrl : null,
                     t.CreatedById,
-                    t.CreatedBy != null ? t.CreatedBy.FullName : "",
+                    t.CreatedBy != null ? t.CreatedBy.FullName : "", // Null handling
                     t.DueDate,
                     t.OrderIndex,
                     t.CreatedAt,
@@ -67,10 +69,10 @@ namespace Touchpointe.Application.Services.Dashboard
                     t.CustomStatus,
                     t.Tags.Select(tg => new TagDto(tg.Id, tg.Name, tg.Color)).ToList()
                 ))
-                .ToListAsync();
+                .ToListAsync(cancellationToken);
 
-            // 3. Recent Activity (Task + CRM)
-            var taskActivities = await _context.TaskActivities
+            // 4. Recent Activity (Task + CRM) in Parallel
+            var taskActivitiesTask = _context.TaskActivities
                 .Include(a => a.ChangedBy)
                 .Where(a => a.Task.WorkspaceId == workspaceId)
                 .OrderByDescending(a => a.Timestamp)
@@ -84,9 +86,9 @@ namespace Touchpointe.Application.Services.Dashboard
                     UserInitial = a.ChangedBy.FullName.Substring(0, 1),
                     LinkId = a.TaskId.ToString()
                 })
-                .ToListAsync();
+                .ToListAsync(cancellationToken);
 
-            var crmActivities = await _context.CrmActivities
+            var crmActivitiesTask = _context.CrmActivities
                 .Include(a => a.User)
                 .Where(a => a.WorkspaceId == workspaceId)
                 .OrderByDescending(a => a.CreatedAt)
@@ -100,11 +102,16 @@ namespace Touchpointe.Application.Services.Dashboard
                     UserInitial = a.User.FullName.Substring(0, 1),
                     LinkId = a.EntityId.ToString()
                 })
-                .ToListAsync();
+                .ToListAsync(cancellationToken);
 
-            // Merge and Sort
-            var recentActivity = taskActivities
-                .Concat(crmActivities)
+            // Execute all in parallel
+            await Task.WhenAll(taskStatsTask, activeDealsTask, myTasksTask, taskActivitiesTask, crmActivitiesTask);
+
+            var taskStats = await taskStatsTask; // Result
+
+            // Merge Activities
+            var recentActivity = (await taskActivitiesTask)
+                .Concat(await crmActivitiesTask)
                 .OrderByDescending(a => a.CreatedAt)
                 .Take(10)
                 .ToList();
@@ -113,13 +120,13 @@ namespace Touchpointe.Application.Services.Dashboard
             {
                 Stats = new DashboardStatsDto
                 {
-                    OpenTasks = openTasks,
-                    DueToday = dueToday,
-                    Overdue = overdue,
-                    ActiveDeals = activeDeals,
-                    CompletedTasksToday = completedToday
+                    OpenTasks = taskStats?.Open ?? 0,
+                    DueToday = taskStats?.DueToday ?? 0,
+                    Overdue = taskStats?.Overdue ?? 0,
+                    ActiveDeals = await activeDealsTask,
+                    CompletedTasksToday = taskStats?.CompletedToday ?? 0
                 },
-                MyTasks = myTasks,
+                MyTasks = await myTasksTask,
                 RecentActivity = recentActivity
             };
         }

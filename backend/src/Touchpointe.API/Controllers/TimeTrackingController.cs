@@ -12,20 +12,13 @@ namespace Touchpointe.API.Controllers
     [ApiController]
     [Route("api/workspaces/{workspaceId}")]
     [Authorize]
-    public class TimeTrackingController : ControllerBase
+    public class TimeTrackingController : BaseController
     {
         private readonly ITimeTrackingService _service;
 
         public TimeTrackingController(ITimeTrackingService service)
         {
             _service = service;
-        }
-
-        private Guid GetUserId()
-        {
-            var idClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(idClaim)) throw new UnauthorizedAccessException();
-            return Guid.Parse(idClaim);
         }
 
         [HttpPost("tasks/{taskId}/time/start")]

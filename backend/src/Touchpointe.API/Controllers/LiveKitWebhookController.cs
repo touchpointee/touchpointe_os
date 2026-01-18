@@ -36,19 +36,76 @@ namespace Touchpointe.API.Controllers
         [HttpPost]
         public async Task<IActionResult> HandleWebhook()
         {
-            // Verify Signature (LiveKit sends Authorization header)
-            // https://docs.livekit.io/server/webhooks/#verification
-            // Skipping manual verification logic for brevity/lack of SDK, 
-            // but in production, YOU MUST VERIFY THIS using TokenVerifier.
-
-            using var reader = new StreamReader(Request.Body);
-            var json = await reader.ReadToEndAsync();
-            
-            // Simple parsing to avoid complex dependency
-            // Looking for "event" and "participant"
-            
-            try 
+            try
             {
+                // 1. Get Authorization Header
+                if (!Request.Headers.TryGetValue("Authorization", out var authHeader))
+                {
+                    _logger.LogWarning("LiveKit Webhook missing Authorization header");
+                    return Unauthorized();
+                }
+
+                var jwt = authHeader.ToString().Replace("Bearer ", "", StringComparison.OrdinalIgnoreCase);
+
+                // 2. Read Body
+                using var reader = new StreamReader(Request.Body);
+                var json = await reader.ReadToEndAsync();
+
+                // 3. Verify Signature & Claims
+                var apiKey = _configuration["LiveKit:ApiKey"];
+                var apiSecret = _configuration["LiveKit:ApiSecret"];
+
+                if (string.IsNullOrEmpty(apiKey) || string.IsNullOrEmpty(apiSecret))
+                {
+                    _logger.LogError("LiveKit configuration missing");
+                    return StatusCode(500); 
+                }
+
+                var tokenHandler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
+                var validationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(Encoding.UTF8.GetBytes(apiSecret)),
+                    ValidateIssuer = true,
+                    ValidIssuer = apiKey,
+                    ValidateAudience = false, // Webhooks don't usually have audience
+                    ValidateLifetime = true,
+                    ClockSkew = TimeSpan.FromMinutes(5)
+                };
+
+                System.Security.Claims.ClaimsPrincipal principal;
+                try
+                {
+                    principal = tokenHandler.ValidateToken(jwt, validationParameters, out var validatedToken);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "LiveKit Webhook JWT validation failed");
+                    return Unauthorized();
+                }
+
+                // 4. Verify Body Hash (claim "sha256")
+                var sha256Claim = principal.FindFirst("sha256")?.Value;
+                if (string.IsNullOrEmpty(sha256Claim))
+                {
+                    _logger.LogWarning("LiveKit Webhook JWT missing sha256 claim");
+                    return Unauthorized();
+                }
+
+                using (var sha256 = SHA256.Create())
+                {
+                    var bytes = Encoding.UTF8.GetBytes(json);
+                    var hash = sha256.ComputeHash(bytes);
+                    var hashString = Convert.ToBase64String(hash);
+
+                    if (hashString != sha256Claim)
+                    {
+                        _logger.LogWarning("LiveKit Webhook Body Hash Mismatch. Expected: {Expected}, Actual: {Actual}", sha256Claim, hashString);
+                        return Unauthorized();
+                    }
+                }
+
+                // 5. Process Event
                 var evt = System.Text.Json.JsonSerializer.Deserialize<LiveKitWebhookEvent>(json, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 
                 if (evt == null) return BadRequest();

@@ -27,16 +27,8 @@ export function AuthGuard({ children, requireWorkspace = true }: AuthGuardProps)
 
     useEffect(() => {
         const init = async () => {
-            // 1. Strict Token Check
-            const token = localStorage.getItem('token');
-            if (!token) {
-                // No need to do anything, render check below will redirect
-                setIsInitializing(false);
-                return;
-            }
-
             try {
-                // 2. ALWAYS verify user with backend (don't trust cached user)
+                // 1. ALWAYS verify user with backend (don't trust cached user)
                 // This catches stale tokens where user was deleted from DB
                 await fetchUser();
                 const currentUser = useUserStore.getState().user;
@@ -113,11 +105,9 @@ export function AuthGuard({ children, requireWorkspace = true }: AuthGuardProps)
         );
     }
 
-    // AUTH CHECK
-    const token = localStorage.getItem('token');
-    if (!token) {
-        return <Navigate to="/login" state={{ from: location }} replace />;
-    }
+    // AUTH CHECK - Rely on user state failure
+    // If fetchUser failed, it forces logout which sets user=null
+    // If user is null and not initializing, we redirect
 
     // USER CHECK
     if (!user) {

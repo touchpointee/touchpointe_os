@@ -139,3 +139,12 @@ C:\Users\ajmal\Desktop\kravino Innovations\touchpointe\touchpointe_os\backend\sr
 C:\Users\ajmal\Desktop\kravino Innovations\touchpointe\touchpointe_os\backend\src\Touchpointe.API\obj\Debug\net9.0\Touchpointe.API.pdb
 C:\Users\ajmal\Desktop\kravino Innovations\touchpointe\touchpointe_os\backend\src\Touchpointe.API\obj\Debug\net9.0\Touchpointe.API.genruntimeconfig.cache
 C:\Users\ajmal\Desktop\kravino Innovations\touchpointe\touchpointe_os\backend\src\Touchpointe.API\obj\Debug\net9.0\ref\Touchpointe.API.dll
+C:\Users\ajmal\Desktop\kravino Innovations\touchpointe\touchpointe_os\backend\src\Touchpointe.API\bin\Debug\net9.0\MessagePack.dll
+C:\Users\ajmal\Desktop\kravino Innovations\touchpointe\touchpointe_os\backend\src\Touchpointe.API\bin\Debug\net9.0\MessagePack.Annotations.dll
+C:\Users\ajmal\Desktop\kravino Innovations\touchpointe\touchpointe_os\backend\src\Touchpointe.API\bin\Debug\net9.0\Microsoft.AspNetCore.SignalR.StackExchangeRedis.dll
+C:\Users\ajmal\Desktop\kravino Innovations\touchpointe\touchpointe_os\backend\src\Touchpointe.API\bin\Debug\net9.0\Microsoft.NET.StringTools.dll
+C:\Users\ajmal\Desktop\kravino Innovations\touchpointe\touchpointe_os\backend\src\Touchpointe.API\bin\Debug\net9.0\Pipelines.Sockets.Unofficial.dll
+C:\Users\ajmal\Desktop\kravino Innovations\touchpointe\touchpointe_os\backend\src\Touchpointe.API\bin\Debug\net9.0\StackExchange.Redis.dll
+C:\Users\ajmal\Desktop\kravino Innovations\touchpointe\touchpointe_os\backend\src\Touchpointe.API\bin\Debug\net9.0\FluentValidation.dll
+C:\Users\ajmal\Desktop\kravino Innovations\touchpointe\touchpointe_os\backend\src\Touchpointe.API\bin\Debug\net9.0\FluentValidation.AspNetCore.dll
+C:\Users\ajmal\Desktop\kravino Innovations\touchpointe\touchpointe_os\backend\src\Touchpointe.API\bin\Debug\net9.0\FluentValidation.DependencyInjectionExtensions.dll

@@ -13,19 +13,13 @@ namespace Touchpointe.API.Controllers
     [ApiController]
     [Route("api/workspaces/{workspaceId}/team")]
     [Authorize]
-    public class TeamController : ControllerBase
+    public class TeamController : BaseController
     {
         private readonly ITeamService _teamService;
 
         public TeamController(ITeamService teamService)
         {
             _teamService = teamService;
-        }
-
-        private Guid GetUserId()
-        {
-            var idClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            return idClaim != null ? Guid.Parse(idClaim) : Guid.Empty;
         }
 
         [HttpGet("members")]

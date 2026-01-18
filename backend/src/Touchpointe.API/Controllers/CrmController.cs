@@ -13,19 +13,13 @@ namespace Touchpointe.API.Controllers
     [ApiController]
     [Route("api/workspaces/{workspaceId}/crm")]
     [Authorize]
-    public class CrmController : ControllerBase
+    public class CrmController : BaseController
     {
         private readonly ICrmService _crmService;
 
         public CrmController(ICrmService crmService)
         {
             _crmService = crmService;
-        }
-
-        private Guid GetUserId()
-        {
-            var idClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            return idClaim != null ? Guid.Parse(idClaim) : Guid.Empty;
         }
 
         // --- Companies ---

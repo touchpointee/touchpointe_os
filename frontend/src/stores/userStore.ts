@@ -37,8 +37,8 @@ export const useUserStore = create<UserState>()(
                 } catch (e: any) {
                     // Clear cached user on any fetch failure (token expired, user deleted, etc.)
                     set({ user: null, error: e.message, isLoading: false });
-                    // Also clear token since user is not valid
-                    localStorage.removeItem('token');
+                    // clear cached user
+                    set({ user: null, error: e.message, isLoading: false });
                 }
             },
 

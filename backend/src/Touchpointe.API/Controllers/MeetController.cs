@@ -15,7 +15,7 @@ namespace Touchpointe.API.Controllers
     [Authorize]
     [ApiController]
     [Route("api/[controller]")]
-    public class MeetController : ControllerBase
+    public class MeetController : BaseController
     {
         private readonly IApplicationDbContext _context;
         private readonly ILiveKitTokenService _tokenService;
@@ -26,12 +26,6 @@ namespace Touchpointe.API.Controllers
         {
             _context = context;
             _tokenService = tokenService;
-        }
-
-        private Guid GetUserId()
-        {
-            var idClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-            return idClaim != null ? Guid.Parse(idClaim) : Guid.Empty;
         }
 
         // GET: api/meet/workspace/{workspaceId}

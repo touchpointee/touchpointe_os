@@ -3,6 +3,7 @@ using Touchpointe.Application.Common.Interfaces;
 using Touchpointe.Application.Services.Authentication;
 using Touchpointe.Application.Services.Crm;
 using Touchpointe.Application.Services.Chat;
+using FluentValidation;
 
 namespace Touchpointe.Application
 {
@@ -25,7 +26,10 @@ namespace Touchpointe.Application
             services.AddScoped<ITagService, Services.Tasks.TagService>();
             services.AddScoped<Services.Tasks.ListStatusService>();
             services.AddScoped<ITimeTrackingService, Services.TimeTrackingService>();
+            services.AddHttpClient();
 
+            services.AddValidatorsFromAssembly(System.Reflection.Assembly.GetExecutingAssembly());
+            
             return services;
         }
     }

@@ -11,7 +11,7 @@ namespace Touchpointe.API.Controllers
     [Authorize]
     [ApiController]
     [Route("api/mentions")]
-    public class MentionsController : ControllerBase
+    public class MentionsController : BaseController
     {
         private readonly IApplicationDbContext _context;
 
@@ -20,23 +20,25 @@ namespace Touchpointe.API.Controllers
             _context = context;
         }
 
-        private Guid GetUserId()
-        {
-            var idClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            return idClaim != null ? Guid.Parse(idClaim) : Guid.Empty;
-        }
-
         [HttpGet]
-        public async Task<ActionResult<List<UserMentionDto>>> GetMentions()
+        public async Task<ActionResult<List<UserMentionDto>>> GetMentions([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
         {
             var userId = GetUserId();
             if (userId == Guid.Empty) return Unauthorized();
+
+            if (page < 1) page = 1;
+            if (pageSize < 1) pageSize = 20;
+            if (pageSize > 100) pageSize = 100;
+
+            int takeAmount = page * pageSize;
 
             // 1. Task Mentions
             var taskMentionsQuery = _context.TaskMentions
                 .Include(tm => tm.Task)
                 .Include(tm => tm.Task.CreatedBy)
                 .Where(tm => tm.UserId == userId)
+                .OrderByDescending(tm => tm.CreatedAt)
+                .Take(takeAmount)
                 .Select(tm => new UserMentionDto
                 {
                     Type = MentionType.TASK,
@@ -55,6 +57,8 @@ namespace Touchpointe.API.Controllers
                 .Include(cm => cm.Comment.User)
                 .Include(cm => cm.Comment.Task)
                 .Where(cm => cm.UserId == userId)
+                .OrderByDescending(cm => cm.CreatedAt)
+                .Take(takeAmount)
                 .Select(cm => new UserMentionDto
                 {
                     Type = MentionType.COMMENT,
@@ -75,6 +79,8 @@ namespace Touchpointe.API.Controllers
                 .Include(cm => cm.Message.DirectMessageGroup)
                 .Include(cm => cm.SourceUser)
                 .Where(cm => cm.UserId == userId)
+                .OrderByDescending(cm => cm.CreatedAt)
+                .Take(takeAmount)
                 .Select(cm => new UserMentionDto
                 {
                     Type = MentionType.CHAT,
@@ -95,11 +101,6 @@ namespace Touchpointe.API.Controllers
                     Info = cm.Info
                 });
 
-            // Union and Sort
-            // Note: EF Core might not support Union of disparate selects easily in one query depending on provider.
-            // Client-side evaluation is safer for Union of different table sources if projection acts up.
-            // But let's try to execute them separately and merge in memory for simplicity/reliability.
-            
             var tMentions = await taskMentionsQuery.ToListAsync();
             var cMentions = await commentMentionsQuery.ToListAsync();
             var chMentions = await chatMentionsQuery.ToListAsync();
@@ -108,6 +109,8 @@ namespace Touchpointe.API.Controllers
                 .Concat(cMentions)
                 .Concat(chMentions)
                 .OrderByDescending(m => m.CreatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .ToList();
 
             return Ok(allMentions);

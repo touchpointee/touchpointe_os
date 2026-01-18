@@ -12,19 +12,13 @@ namespace Touchpointe.API.Controllers
     [ApiController]
     [Route("api/workspaces/{workspaceId}/chat")]
     [Authorize]
-    public class ChatController : ControllerBase
+    public class ChatController : BaseController
     {
         private readonly IChatService _chatService;
 
         public ChatController(IChatService chatService)
         {
             _chatService = chatService;
-        }
-
-        private Guid GetUserId()
-        {
-            var idClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            return idClaim != null ? Guid.Parse(idClaim) : Guid.Empty;
         }
 
         // --- Channels ---

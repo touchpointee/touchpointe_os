@@ -11,7 +11,7 @@ namespace Touchpointe.API.Controllers
     [ApiController]
     [Route("api/{workspaceId}/dashboard")]
     [Authorize]
-    public class DashboardController : ControllerBase
+    public class DashboardController : BaseController
     {
         private readonly IDashboardService _dashboardService;
 
@@ -20,18 +20,12 @@ namespace Touchpointe.API.Controllers
             _dashboardService = dashboardService;
         }
 
-        private Guid GetUserId()
-        {
-            var idClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            return idClaim != null ? Guid.Parse(idClaim) : Guid.Empty;
-        }
-
         [HttpGet]
-        public async Task<ActionResult<DashboardDataDto>> GetDashboard(Guid workspaceId)
+        public async Task<ActionResult<DashboardDataDto>> GetDashboard(Guid workspaceId, CancellationToken cancellationToken)
         {
             try
             {
-                var data = await _dashboardService.GetDashboardDataAsync(workspaceId, GetUserId());
+                var data = await _dashboardService.GetDashboardDataAsync(workspaceId, GetUserId(), cancellationToken);
                 return Ok(data);
             }
             catch (Exception ex)

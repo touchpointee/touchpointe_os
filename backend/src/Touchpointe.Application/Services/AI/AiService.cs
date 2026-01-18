@@ -18,15 +18,15 @@ namespace Touchpointe.Application.Services.AI
     {
         private readonly IApplicationDbContext _context;
         private readonly IConfiguration _configuration;
-        private readonly HttpClient _httpClient;
+        private readonly IHttpClientFactory _httpClientFactory;
         private readonly ITaskService _taskService;
         private readonly IChatService _chatService;
 
-        public AiService(IApplicationDbContext context, IConfiguration configuration, ITaskService taskService, IChatService chatService)
+        public AiService(IApplicationDbContext context, IConfiguration configuration, IHttpClientFactory httpClientFactory, ITaskService taskService, IChatService chatService)
         {
             _context = context;
             _configuration = configuration;
-            _httpClient = new HttpClient();
+            _httpClientFactory = httpClientFactory;
             _taskService = taskService;
             _chatService = chatService;
         }
@@ -231,9 +231,11 @@ I can help you with general questions about your workspace. For specific actions
 
             var requestBody = new { model, messages, temperature = 0.7 };
             var content = new StringContent(JsonSerializer.Serialize(requestBody), Encoding.UTF8, "application/json");
-            _httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", apiKey);
+            
+            var client = _httpClientFactory.CreateClient();
+            client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", apiKey);
 
-            var response = await _httpClient.PostAsync(apiUrl, content);
+            var response = await client.PostAsync(apiUrl, content);
             var responseString = await response.Content.ReadAsStringAsync();
 
             if (!response.IsSuccessStatusCode)

@@ -90,13 +90,24 @@ namespace Touchpointe.Infrastructure
                     {
                         OnMessageReceived = context =>
                         {
-                            var accessToken = context.Request.Query["access_token"];
-                            var path = context.HttpContext.Request.Path;
-                            if (!string.IsNullOrEmpty(accessToken) &&
-                                (path.StartsWithSegments("/api/hubs/chat") || path.StartsWithSegments("/api/hubs/meet")))
+                            // 1. Try to get token from SignalR Query String
+                            var accessToken = context.Request.Query["access_token"].ToString();
+
+                            // 2. If not in query, try to get from HttpOnly Cookie
+                            if (string.IsNullOrEmpty(accessToken))
                             {
-                                context.Token = accessToken.FirstOrDefault();
+                                if (context.Request.Cookies.TryGetValue("jwt", out var cookieToken))
+                                {
+                                    accessToken = cookieToken;
+                                }
                             }
+
+                            // 3. Set the token if found
+                            if (!string.IsNullOrEmpty(accessToken))
+                            {
+                                context.Token = accessToken;
+                            }
+                            
                             return System.Threading.Tasks.Task.CompletedTask;
                         }
                     };

@@ -225,6 +225,9 @@ namespace Touchpointe.Infrastructure.Persistence
 
             modelBuilder.Entity<TaskActivity>()
                 .HasIndex(ta => ta.TaskId);
+            
+            modelBuilder.Entity<TaskActivity>()
+                .HasIndex(ta => new { ta.TaskId, ta.Timestamp });
 
             // Subtask
             modelBuilder.Entity<Subtask>()
@@ -316,6 +319,9 @@ namespace Touchpointe.Infrastructure.Persistence
                 .OnDelete(DeleteBehavior.Cascade);
             
             modelBuilder.Entity<CommentMention>()
+                .HasIndex(cm => cm.UserId);
+                
+            modelBuilder.Entity<ChatMention>()
                 .HasIndex(cm => cm.UserId);
 
             // CRM: Company
@@ -419,6 +425,10 @@ namespace Touchpointe.Infrastructure.Persistence
                 .HasIndex(m => m.DirectMessageGroupId);
             modelBuilder.Entity<Message>()
                 .HasIndex(m => m.CreatedAt);
+            modelBuilder.Entity<Message>()
+                .HasIndex(m => m.WorkspaceId);
+            modelBuilder.Entity<Message>()
+                .HasIndex(m => new { m.ChannelId, m.CreatedAt });
 
             // Chat: Direct Messages
             modelBuilder.Entity<DirectMessageGroup>()
@@ -542,6 +552,9 @@ namespace Touchpointe.Infrastructure.Persistence
                 .HasIndex(t => t.TaskId);
             modelBuilder.Entity<TaskTimeEntry>()
                 .HasIndex(t => t.UserId);
+
+            modelBuilder.Entity<TaskTimeEntry>()
+                .HasIndex(t => new { t.UserId, t.EndTime });
         }
     }
 }

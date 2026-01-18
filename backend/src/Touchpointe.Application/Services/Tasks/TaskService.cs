@@ -20,7 +20,7 @@ namespace Touchpointe.Application.Services.Tasks
             _notificationService = notificationService;
         }
 
-        public async Task<List<TaskDto>> GetTasksByListAsync(Guid workspaceId, Guid listId)
+        public async Task<List<TaskDto>> GetTasksByListAsync(Guid workspaceId, Guid listId, CancellationToken cancellationToken = default)
         {
             var tasks = await _context.Tasks
                 .Include(t => t.Assignee)
@@ -28,18 +28,18 @@ namespace Touchpointe.Application.Services.Tasks
                 .Include(t => t.Tags)
                 .Where(t => t.WorkspaceId == workspaceId && t.ListId == listId)
                 .OrderBy(t => t.OrderIndex)
-                .ToListAsync();
+                .ToListAsync(cancellationToken);
 
             return tasks.Select(MapToDto).ToList();
         }
 
-        public async Task<TaskDto> CreateTaskAsync(Guid workspaceId, Guid userId, CreateTaskRequest request)
+        public async Task<TaskDto> CreateTaskAsync(Guid workspaceId, Guid userId, CreateTaskRequest request, CancellationToken cancellationToken = default)
         {
             // 1. Validate Assignee (if provided)
             if (request.AssigneeId.HasValue && request.AssigneeId.Value != userId)
             {
                 var isMember = await _context.WorkspaceMembers
-                    .AnyAsync(wm => wm.WorkspaceId == workspaceId && wm.UserId == request.AssigneeId.Value);
+                    .AnyAsync(wm => wm.WorkspaceId == workspaceId && wm.UserId == request.AssigneeId.Value, cancellationToken);
 
                 if (!isMember)
                 {
@@ -50,7 +50,7 @@ namespace Touchpointe.Application.Services.Tasks
             // 2. Get Max Order
             var maxOrder = await _context.Tasks
                 .Where(t => t.ListId == request.ListId)
-                .MaxAsync(t => (int?)t.OrderIndex) ?? 0;
+                .MaxAsync(t => (int?)t.OrderIndex, cancellationToken) ?? 0;
 
             // 3. Status Defaulting
             var customStatus = request.CustomStatus;
@@ -59,7 +59,7 @@ namespace Touchpointe.Application.Services.Tasks
                 var firstStatus = await _context.ListStatuses
                     .Where(s => s.ListId == request.ListId)
                     .OrderBy(s => s.Order)
-                    .FirstOrDefaultAsync();
+                    .FirstOrDefaultAsync(cancellationToken);
                 
                 customStatus = firstStatus?.Id.ToString();
             }
@@ -88,7 +88,7 @@ namespace Touchpointe.Application.Services.Tasks
             {
                 var tags = await _context.Tags
                     .Where(tg => tg.WorkspaceId == workspaceId && request.TagIds.Contains(tg.Id))
-                    .ToListAsync();
+                    .ToListAsync(cancellationToken);
                 foreach (var tag in tags) task.Tags.Add(tag);
             }
 
@@ -113,25 +113,25 @@ namespace Touchpointe.Application.Services.Tasks
                 _context.TaskWatchers.Add(new TaskWatcher { TaskId = task.Id, UserId = task.AssigneeId.Value });
             }
 
-            await _context.SaveChangesAsync(CancellationToken.None);
+            await _context.SaveChangesAsync(cancellationToken);
 
             // Fetch again with navigation props
             var createdTask = await _context.Tasks
                 .Include(t => t.Assignee)
                 .Include(t => t.CreatedBy)
                 .Include(t => t.Tags)
-                .FirstAsync(t => t.Id == task.Id);
+                .FirstAsync(t => t.Id == task.Id, cancellationToken);
 
             return MapToDto(createdTask);
         }
 
-        public async Task<TaskDto> UpdateTaskAsync(Guid workspaceId, Guid userId, Guid taskId, UpdateTaskRequest request)
+        public async Task<TaskDto> UpdateTaskAsync(Guid workspaceId, Guid userId, Guid taskId, UpdateTaskRequest request, CancellationToken cancellationToken = default)
         {
             var task = await _context.Tasks
                 .Include(t => t.Assignee)
                 .Include(t => t.CreatedBy)
                 .Include(t => t.Tags)
-                .FirstOrDefaultAsync(t => t.Id == taskId && t.WorkspaceId == workspaceId);
+                .FirstOrDefaultAsync(t => t.Id == taskId && t.WorkspaceId == workspaceId, cancellationToken);
 
             if (task == null) throw new Exception("Task not found.");
             
@@ -190,7 +190,7 @@ namespace Touchpointe.Application.Services.Tasks
                 if (request.AssigneeId.HasValue)
                 {
                     var isMember = await _context.WorkspaceMembers
-                        .AnyAsync(wm => wm.WorkspaceId == workspaceId && wm.UserId == request.AssigneeId.Value);
+                        .AnyAsync(wm => wm.WorkspaceId == workspaceId && wm.UserId == request.AssigneeId.Value, cancellationToken);
                     if (!isMember) throw new Exception("New assignee is not a member of this workspace.");
 
                     _context.TaskWatchers.Add(new TaskWatcher { TaskId = task.Id, UserId = request.AssigneeId.Value });
@@ -275,24 +275,24 @@ namespace Touchpointe.Application.Services.Tasks
                 task.Tags.Clear();
                 var tags = await _context.Tags
                     .Where(tg => tg.WorkspaceId == workspaceId && request.TagIds.Contains(tg.Id))
-                    .ToListAsync();
+                    .ToListAsync(cancellationToken);
                 foreach (var tag in tags) task.Tags.Add(tag);
             }
 
             task.UpdatedAt = DateTime.UtcNow;
-            await _context.SaveChangesAsync(CancellationToken.None);
+            await _context.SaveChangesAsync(cancellationToken);
 
             return MapToDto(task);
         }
 
-        public async Task<List<TaskActivityDto>> GetTaskActivitiesAsync(Guid workspaceId, Guid taskId)
+        public async Task<List<TaskActivityDto>> GetTaskActivitiesAsync(Guid workspaceId, Guid taskId, CancellationToken cancellationToken = default)
         {
              var activities = await _context.TaskActivities
                 .Include(a => a.ChangedBy)
                 .Where(a => a.TaskId == taskId) // Workspace check implicit via Task existence, but could be safer
                 .Where(a => a.Task.WorkspaceId == workspaceId)
                 .OrderByDescending(a => a.Timestamp)
-                .ToListAsync();
+                .ToListAsync(cancellationToken);
 
             return activities.Select(a => new TaskActivityDto(
                 a.Id,
@@ -305,13 +305,13 @@ namespace Touchpointe.Application.Services.Tasks
             )).ToList();
         }
 
-        public async Task<TaskDetailDto> GetTaskDetailsAsync(Guid workspaceId, Guid taskId)
+        public async Task<TaskDetailDto> GetTaskDetailsAsync(Guid workspaceId, Guid taskId, CancellationToken cancellationToken = default)
         {
             var task = await _context.Tasks
                 .Include(t => t.Assignee)
                 .Include(t => t.CreatedBy)
                 .Include(t => t.Tags)
-                .FirstOrDefaultAsync(t => t.Id == taskId && t.WorkspaceId == workspaceId);
+                .FirstOrDefaultAsync(t => t.Id == taskId && t.WorkspaceId == workspaceId, cancellationToken);
 
             if (task == null) throw new Exception("Task not found.");
 
@@ -326,23 +326,23 @@ namespace Touchpointe.Application.Services.Tasks
                     s.AssigneeId, 
                     s.Assignee != null ? s.Assignee.FullName : "Unassigned", // Handling potential null if not enforced yet
                     s.OrderIndex))
-                .ToListAsync();
+                .ToListAsync(cancellationToken);
 
             var comments = await _context.TaskComments
                 .Include(c => c.User)
                 .Where(c => c.TaskId == taskId)
                 .OrderByDescending(c => c.CreatedAt)
                 .Select(c => new TaskCommentDto(c.Id, c.UserId, c.User.FullName, "", c.Content, c.CreatedAt))
-                .ToListAsync();
+                .ToListAsync(cancellationToken);
 
-            var activities = await GetTaskActivitiesAsync(workspaceId, taskId);
+            var activities = await GetTaskActivitiesAsync(workspaceId, taskId, cancellationToken);
 
             return new TaskDetailDto(MapToDto(task), subtasks, comments, activities);
         }
 
-        public async Task<SubtaskDto> AddSubtaskAsync(Guid workspaceId, Guid userId, Guid taskId, CreateSubtaskRequest request)
+        public async Task<SubtaskDto> AddSubtaskAsync(Guid workspaceId, Guid userId, Guid taskId, CreateSubtaskRequest request, CancellationToken cancellationToken = default)
         {
-            var task = await _context.Tasks.FirstOrDefaultAsync(t => t.Id == taskId && t.WorkspaceId == workspaceId);
+            var task = await _context.Tasks.FirstOrDefaultAsync(t => t.Id == taskId && t.WorkspaceId == workspaceId, cancellationToken);
             if (task == null) throw new Exception("Task not found.");
 
             // STRICT PERMISSION CHECK: Only Main Task Owner can add subtasks
@@ -353,13 +353,13 @@ namespace Touchpointe.Application.Services.Tasks
 
             // Validate Assignee
              var isMember = await _context.WorkspaceMembers
-                .AnyAsync(wm => wm.WorkspaceId == workspaceId && wm.UserId == request.AssigneeId);
+                .AnyAsync(wm => wm.WorkspaceId == workspaceId && wm.UserId == request.AssigneeId, cancellationToken);
             
             if (!isMember) throw new Exception("Assignee is not a member of this workspace.");
 
             var maxOrder = await _context.Subtasks
                 .Where(s => s.TaskId == taskId)
-                .MaxAsync(s => (int?)s.OrderIndex) ?? 0;
+                .MaxAsync(s => (int?)s.OrderIndex, cancellationToken) ?? 0;
 
             var subtask = new Subtask
             {
@@ -380,20 +380,20 @@ namespace Touchpointe.Application.Services.Tasks
                 ChangedById = userId
             });
 
-            await _context.SaveChangesAsync(CancellationToken.None);
+            await _context.SaveChangesAsync(cancellationToken);
 
             // Fetch again to get Assignee name
-             var createdSubtask = await _context.Subtasks.Include(s => s.Assignee).FirstAsync(s => s.Id == subtask.Id);
+             var createdSubtask = await _context.Subtasks.Include(s => s.Assignee).FirstAsync(s => s.Id == subtask.Id, cancellationToken);
 
             return new SubtaskDto(createdSubtask.Id, createdSubtask.Title, createdSubtask.IsCompleted, createdSubtask.AssigneeId, createdSubtask.Assignee?.FullName, createdSubtask.OrderIndex);
         }
 
-        public async Task<SubtaskDto> ToggleSubtaskAsync(Guid workspaceId, Guid userId, Guid subtaskId)
+        public async Task<SubtaskDto> ToggleSubtaskAsync(Guid workspaceId, Guid userId, Guid subtaskId, CancellationToken cancellationToken = default)
         {
             var subtask = await _context.Subtasks
                 .Include(s => s.Task)
                 .Include(s => s.Assignee)
-                .FirstOrDefaultAsync(s => s.Id == subtaskId && s.Task.WorkspaceId == workspaceId);
+                .FirstOrDefaultAsync(s => s.Id == subtaskId && s.Task.WorkspaceId == workspaceId, cancellationToken);
 
             if (subtask == null) throw new Exception("Subtask not found.");
 
@@ -414,16 +414,16 @@ namespace Touchpointe.Application.Services.Tasks
                 ChangedById = userId
             });
 
-            await _context.SaveChangesAsync(CancellationToken.None);
+            await _context.SaveChangesAsync(cancellationToken);
 
 
             
             return new SubtaskDto(subtask.Id, subtask.Title, subtask.IsCompleted, subtask.AssigneeId, subtask.Assignee?.FullName, subtask.OrderIndex);
         }
 
-        public async Task<TaskCommentDto> AddCommentAsync(Guid workspaceId, Guid userId, Guid taskId, CreateCommentRequest request)
+        public async Task<TaskCommentDto> AddCommentAsync(Guid workspaceId, Guid userId, Guid taskId, CreateCommentRequest request, CancellationToken cancellationToken = default)
         {
-            var task = await _context.Tasks.FirstOrDefaultAsync(t => t.Id == taskId && t.WorkspaceId == workspaceId);
+            var task = await _context.Tasks.FirstOrDefaultAsync(t => t.Id == taskId && t.WorkspaceId == workspaceId, cancellationToken);
             if (task == null) throw new Exception("Task not found.");
 
             var comment = new TaskComment
@@ -443,16 +443,16 @@ namespace Touchpointe.Application.Services.Tasks
                 ChangedById = userId
             });
 
-            await _context.SaveChangesAsync(CancellationToken.None);
+            await _context.SaveChangesAsync(cancellationToken);
 
             // Fetch to get user details
             var createdComment = await _context.TaskComments
                 .Include(c => c.User)
-                .FirstAsync(c => c.Id == comment.Id);
+                .FirstAsync(c => c.Id == comment.Id, cancellationToken);
             
             // Register Mentions in DB
             await RegisterMentions(taskId, comment.Id, request.Content, userId);
-            await _context.SaveChangesAsync(CancellationToken.None);
+            await _context.SaveChangesAsync(cancellationToken);
 
             // Notification logic
             await ProcessMentions(request.Content, userId, createdComment.User.FullName, workspaceId, 
@@ -558,106 +558,139 @@ namespace Touchpointe.Application.Services.Tasks
             }
             // Save changes happens in caller
         }
-        public async Task<List<MyTaskDto>> GetMyTasksAsync(Guid userId, Guid workspaceId)
+        public async Task<List<MyTaskDto>> GetMyTasksAsync(Guid userId, Guid workspaceId, CancellationToken cancellationToken = default)
         {
-            // 1. Verify User is in Workspace
-            var isMember = await _context.WorkspaceMembers.AnyAsync(wm => wm.WorkspaceId == workspaceId && wm.UserId == userId);
-            if (!isMember) return new List<MyTaskDto>(); // Or throw Unauthorized
+            var today = DateTime.UtcNow.Date;
+            var nextWeek = DateTime.UtcNow.AddDays(7);
 
-            // 2. Fetch Tasks where User is Involved
-            // Using a broad fetch to allow client-side or memory calculation of complex flags
-            // Optimized to fetch valid candidates first
-            var taskQuery = _context.Tasks
-                .Include(t => t.Workspace)
-                .Include(t => t.List).ThenInclude(l => l.Space)
-                .Include(t => t.Assignee)
-                .Include(t => t.Watchers)
-                .Include(t => t.Mentions)
-                .Include(t => t.Tags)
-                .Include(t => t.Activities) // For LastActivity
-                // .Include(t => t.Subtasks) // If we need subtask counts, handled via Select/Count usually better
+            var tasks = await _context.Tasks
                 .Where(t => t.WorkspaceId == workspaceId)
                 .Where(t => 
                     t.AssigneeId == userId ||
                     t.Watchers.Any(w => w.UserId == userId) ||
-                    t.Mentions.Any(m => m.UserId == userId) 
-                    // Note: Comment mentions are trickier. 
-                    // Ideally, we'd add '|| t.Comments.Any(c => c.Mentions.Any(cm => cm.UserId == userId))'
-                    // but for performance, let's include it if indexed efficiently.
-                    || _context.TaskComments.Any(c => c.TaskId == t.Id && c.Mentions.Any(cm => cm.UserId == userId))
-                );
-
-            var tasks = await taskQuery.ToListAsync();
-
-            // 3. Project to DTO and Calculate Scores in Memory
-            var dtos = new List<MyTaskDto>();
-            var now = DateTime.UtcNow;
-
-            foreach (var t in tasks)
-            {
-                var dto = new MyTaskDto
+                    t.Mentions.Any(m => m.UserId == userId) ||
+                    t.Comments.Any(c => c.Mentions.Any(cm => cm.UserId == userId)))
+                .Select(t => new
                 {
-                    TaskId = t.Id,
-                    WorkspaceId = t.WorkspaceId,
-                    Title = t.Title,
-                    WorkspaceName = t.Workspace?.Name ?? "",
-                    SpaceName = t.List?.Space?.Name ?? "",
-                    ListName = t.List?.Name ?? "",
+                    t.Id,
+                    t.WorkspaceId,
+                    t.Title,
+                    WorkspaceName = t.Workspace.Name,
+                    SpaceName = t.List.Space.Name,
+                    ListName = t.List.Name,
                     Status = t.CustomStatus ?? t.Status.ToString(),
-                    Priority = t.Priority.ToString(),
-                    DueDate = t.DueDate,
-                    AssigneeName = t.Assignee?.FullName ?? "",
-                    AssigneeAvatarUrl = t.Assignee?.AvatarUrl ?? "",
+                    Priority = t.Priority, // Enum
+                    t.DueDate,
+                    AssigneeName = t.Assignee != null ? t.Assignee.FullName : "",
+                    AssigneeAvatarUrl = t.Assignee != null ? t.Assignee.AvatarUrl : "",
                     Tags = t.Tags.Select(tg => new TagDto(tg.Id, tg.Name, tg.Color)).ToList(),
                     
-                    SubtaskCount = await _context.Subtasks.CountAsync(s => s.TaskId == t.Id), // Consider optimizing to GroupBy
-                    CompletedSubtasks = await _context.Subtasks.CountAsync(s => s.TaskId == t.Id && s.IsCompleted),
-                    CommentCount = await _context.TaskComments.CountAsync(c => c.TaskId == t.Id),
+                    SubtaskCount = t.Subtasks.Count,
+                    CompletedSubtasks = t.Subtasks.Count(s => s.IsCompleted),
+                    CommentCount = t.Comments.Count,
 
                     IsAssigned = t.AssigneeId == userId,
                     IsWatching = t.Watchers.Any(w => w.UserId == userId),
                     IsMentioned = t.Mentions.Any(m => m.UserId == userId) 
-                                  || await _context.TaskComments.AnyAsync(c => c.TaskId == t.Id && c.Mentions.Any(cm => cm.UserId == userId)), // Refined check
-
+                                  || t.Comments.Any(c => c.Mentions.Any(cm => cm.UserId == userId)),
+                    
                     IsBlocked = t.Status == TaskStatus.BLOCKED,
-                    IsOverdue = t.DueDate.HasValue && t.DueDate.Value < now && t.Status != TaskStatus.DONE,
+                    // Re-calculate complex date logic in memory or simple checks here?
+                    // EF can translate simple date comparisons usually.
+                    
+                    LastActivityAt = t.Activities.OrderByDescending(a => a.Timestamp).Select(a => a.Timestamp).FirstOrDefault(),
+                    UpdatedAt = t.UpdatedAt
+                })
+                .ToListAsync(cancellationToken);
+
+            var now = DateTime.UtcNow;
+            
+            var dtos = tasks.Select(t => {
+                var isOverdue = t.DueDate.HasValue && t.DueDate.Value < now && t.Status != TaskStatus.DONE.ToString(); // NoteStatus string comparison might be tricky if localized or mismatched
+                // Fix: Status in anonymous type is string or enum?
+                // In Entity it is helper property CustomStatus vs Status (Enum).
+                // Let's use the same logic as before:
+                // IsOverdue = ... && t.Status != TaskStatus.DONE
+                // But we projected string "Status".
+                // Better: Project raw Status Enum.
+                
+                var statusEnum = (TaskStatus)Enum.Parse(typeof(TaskStatus), t.Status == "TODO" || t.Status == "IN_PROGRESS" || t.Status == "DONE" || t.Status == "BLOCKED" || t.Status == "IN_REVIEW" ? t.Status : "TODO", true); 
+                // Actually, t.Priority is Enum in entity, but projected as Enum?
+                // Let's check original Projection: Status = t.CustomStatus ?? t.Status.ToString()
+                
+                // Optimized Recalculation:
+                var isDone = t.Status == "DONE"; // If CustomStatus is "DONE" manually? safer to check Enum if projected.
+                // Re-reading original code: t.Status != TaskStatus.DONE. 
+                // I will Project t.StatusEnum as well.
+                
+                return new MyTaskDto
+                {
+                    TaskId = t.Id,
+                    WorkspaceId = t.WorkspaceId,
+                    Title = t.Title,
+                    WorkspaceName = t.WorkspaceName,
+                    SpaceName = t.SpaceName,
+                    ListName = t.ListName,
+                    Status = t.Status,
+                    Priority = t.Priority.ToString(),
+                    DueDate = t.DueDate,
+                    AssigneeName = t.AssigneeName,
+                    AssigneeAvatarUrl = t.AssigneeAvatarUrl,
+                    Tags = t.Tags,
+                    
+                    SubtaskCount = t.SubtaskCount,
+                    CompletedSubtasks = t.CompletedSubtasks,
+                    CommentCount = t.CommentCount,
+
+                    IsAssigned = t.IsAssigned,
+                    IsWatching = t.IsWatching,
+                    IsMentioned = t.IsMentioned,
+
+                    IsBlocked = t.IsBlocked,
+                    IsOverdue = t.DueDate.HasValue && t.DueDate.Value < now && !isDone, // Approximation, strict check requires Enum
                     IsDueToday = t.DueDate.HasValue && t.DueDate.Value.Date == now.Date,
                     IsDueThisWeek = t.DueDate.HasValue && t.DueDate.Value <= now.AddDays(7) && t.DueDate.Value >= now,
                     
-                    LastActivityAt = t.Activities.OrderByDescending(a => a.Timestamp).Select(a => a.Timestamp).FirstOrDefault()
+                    LastActivityAt = t.LastActivityAt != default ? t.LastActivityAt : t.UpdatedAt,
+                    UrgencyScore = 0 // Calculated below
                 };
+            }).ToList();
 
-                if (dto.LastActivityAt == default) dto.LastActivityAt = t.UpdatedAt;
-
-                // 4. Calculate Urgency Score
-                int score = 0;
-                if (dto.IsOverdue) score += 100;
-                if (dto.IsDueToday) score += 60;
-                if (dto.IsDueThisWeek) score += 30;
-                if (t.Priority == TaskPriority.HIGH || t.Priority == TaskPriority.URGENT) score += 20;
-                if (dto.IsMentioned) score += 15;
-                if ((now - dto.LastActivityAt).TotalHours < 4) score += 10; // Recently updated (4h window)
-                if (dto.IsBlocked) score -= 50;
-
-                dto.UrgencyScore = score;
-                dtos.Add(dto);
+            // Calculate Urgency Score
+            foreach (var dto in dtos)
+            {
+                 int score = 0;
+                 if (dto.IsOverdue) score += 100;
+                 if (dto.IsDueToday) score += 60;
+                 if (dto.IsDueThisWeek) score += 30;
+                 if (dto.Priority == "HIGH" || dto.Priority == "URGENT") score += 20;
+                 if (dto.IsMentioned) score += 15;
+                 if ((now - dto.LastActivityAt).TotalHours < 4) score += 10;
+                 if (dto.IsBlocked) score -= 50;
+                 dto.UrgencyScore = score;
             }
 
             return dtos.OrderByDescending(d => d.UrgencyScore).ToList();
         }
 
-        public async Task DeleteTaskAsync(Guid workspaceId, Guid userId, Guid taskId)
+        public async Task DeleteTaskAsync(Guid workspaceId, Guid userId, Guid taskId, CancellationToken cancellationToken = default)
         {
             var task = await _context.Tasks
                 .Include(t => t.Activities)
-                .FirstOrDefaultAsync(t => t.Id == taskId && t.List.Space.WorkspaceId == workspaceId);
+                .FirstOrDefaultAsync(t => t.Id == taskId && t.List.Space.WorkspaceId == workspaceId, cancellationToken);
 
             if (task == null)
                 throw new Exception("Task not found");
 
+            // STRICT PERMISSION CHECK: Only Assignee or Creator can delete
+            if (task.AssigneeId != userId && task.CreatedById != userId)
+            {
+                throw new UnauthorizedAccessException("You don't have permission to delete this task.");
+            }
+
             // Query and remove related entities
-            var subtasks = await _context.Subtasks.Where(s => s.TaskId == taskId).ToListAsync();
-            var comments = await _context.TaskComments.Where(c => c.TaskId == taskId).ToListAsync();
+            var subtasks = await _context.Subtasks.Where(s => s.TaskId == taskId).ToListAsync(cancellationToken);
+            var comments = await _context.TaskComments.Where(c => c.TaskId == taskId).ToListAsync(cancellationToken);
             
             _context.Subtasks.RemoveRange(subtasks);
             _context.TaskComments.RemoveRange(comments);
@@ -666,7 +699,7 @@ namespace Touchpointe.Application.Services.Tasks
             // Remove the task itself
             _context.Tasks.Remove(task);
             
-            await _context.SaveChangesAsync(CancellationToken.None);
+            await _context.SaveChangesAsync(cancellationToken);
         }
     }
 }

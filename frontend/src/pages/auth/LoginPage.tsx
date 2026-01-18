@@ -36,7 +36,7 @@ export function LoginPage() {
 
             const { token, lastActiveWorkspaceId } = response;
 
-            localStorage.setItem('token', token);
+            // Token is now HttpOnly cookie
             toast.success('Welcome back', 'Successfully signed in to your account.');
 
             // Fetch Data

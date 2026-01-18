@@ -46,7 +46,7 @@ export function RegisterPage() {
             });
 
             const { token } = response;
-            localStorage.setItem('token', token);
+            // Token is now HttpOnly cookie
             toast.success('Account Created', 'Welcome to Touchpointe!');
 
             // Fetch Data
