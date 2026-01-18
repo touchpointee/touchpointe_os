@@ -102,10 +102,20 @@ export function ChatSidebar() {
                         <button
                             key={channel.id}
                             onClick={() => setActiveChannel(channel.id)}
-                            className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm transition-colors ${activeChannelId === channel.id ? 'bg-accent/50 text-foreground' : 'text-muted-foreground hover:bg-accent/25'
+                            className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-xs transition-colors ${activeChannelId === channel.id ? 'nav-item-selected' : 'text-muted-foreground hover:bg-accent hover:text-foreground'
                                 }`}
                         >
-                            {channel.isPrivate ? <Lock className="w-3.5 h-3.5" /> : <Hash className="w-3.5 h-3.5" />}
+                            {channel.isPrivate ? (
+                                <Lock className="w-3.5 h-3.5" />
+                            ) : (
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5 text-current">
+                                    <path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                    <path d="M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                    <circle cx="12" cy="12" r="2" fill="currentColor" />
+                                    <path d="M16.2 7.8c2.3 2.3 2.3 6.1 0 8.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                    <path d="M19.1 4.9C23 8.8 23 15.2 19.1 19.1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                </svg>
+                            )}
                             <span className="truncate">{channel.name}</span>
                         </button>
                     ))}
@@ -124,13 +134,13 @@ export function ChatSidebar() {
                 {isCreatingDm && (
                     <form onSubmit={handleCreateDm} className="mb-4 bg-background p-2 rounded border">
                         <select
-                            className="w-full text-xs bg-transparent border mb-2 p-1 rounded"
+                            className="w-full text-xs bg-background text-foreground border border-border mb-2 p-1 rounded focus:outline-none focus:ring-1 focus:ring-primary"
                             value={selectedMemberId}
                             onChange={e => setSelectedMemberId(e.target.value)}
                         >
-                            <option value="">Select User...</option>
+                            <option value="" className="bg-background text-foreground">Select User...</option>
                             {members.filter(m => m.id !== currentUser?.id).map(m => (
-                                <option key={m.id} value={m.id}>{m.fullName}</option>
+                                <option key={m.id} value={m.id} className="bg-background text-foreground">{m.fullName}</option>
                             ))}
                         </select>
                         <div className="flex justify-end gap-2">
@@ -147,7 +157,7 @@ export function ChatSidebar() {
                             <button
                                 key={group.id}
                                 onClick={() => setActiveDmInfo(group.id)}
-                                className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm transition-colors ${activeDmGroupId === group.id ? 'bg-accent/50 text-foreground' : 'text-muted-foreground hover:bg-accent/25'
+                                className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-xs transition-colors ${activeDmGroupId === group.id ? 'nav-item-selected' : 'text-muted-foreground hover:bg-accent hover:text-foreground'
                                     }`}
                             >
                                 <div className="relative">

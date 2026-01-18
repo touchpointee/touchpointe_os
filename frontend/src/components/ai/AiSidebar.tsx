@@ -67,7 +67,7 @@ export function AiSidebar() {
                             className={cn(
                                 "flex items-center justify-center gap-2 p-1.5 rounded-md text-[11px] font-medium transition-all",
                                 activeAgent === agent.id
-                                    ? "bg-background text-foreground shadow-sm"
+                                    ? "nav-item-selected shadow-sm"
                                     : "text-muted-foreground hover:text-foreground hover:bg-background/50"
                             )}
                         >

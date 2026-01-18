@@ -16,19 +16,19 @@ import type { TaskDto, TaskStatus, TaskPriority } from '@/types/task';
 
 // Status Config
 const statusConfig: Record<TaskStatus, { color: string; icon: React.ElementType }> = {
-    TODO: { color: 'bg-zinc-200 text-zinc-700', icon: Circle },
-    IN_PROGRESS: { color: 'bg-blue-100 text-blue-700', icon: ArrowUp },
-    IN_REVIEW: { color: 'bg-yellow-100 text-yellow-700', icon: HelpCircle },
-    DONE: { color: 'bg-green-100 text-green-700', icon: CheckCircle2 },
+    TODO: { color: 'bg-[#C62828] text-white', icon: Circle },
+    IN_PROGRESS: { color: 'bg-[#F57C00] text-white', icon: ArrowUp },
+    IN_REVIEW: { color: 'bg-[#FBC02D] text-white', icon: HelpCircle },
+    DONE: { color: 'bg-[#388E3C] text-white', icon: CheckCircle2 },
 };
 
 // Priority Config
 const priorityConfig: Record<TaskPriority, { color: string; icon: React.ElementType }> = {
-    NONE: { color: 'text-zinc-400', icon: Circle },
-    LOW: { color: 'text-zinc-600', icon: ArrowDown },
-    MEDIUM: { color: 'text-blue-600', icon: Circle },
-    HIGH: { color: 'text-orange-600', icon: ArrowUp },
-    URGENT: { color: 'text-red-600', icon: AlertCircle },
+    NONE: { color: 'text-[#9E9E9E]', icon: Circle },
+    LOW: { color: 'text-[#6B7280]', icon: ArrowDown },
+    MEDIUM: { color: 'text-[#2563EB]', icon: Circle },
+    HIGH: { color: 'text-[#F97316]', icon: ArrowUp },
+    URGENT: { color: 'text-[#DC2626]', icon: AlertCircle },
 };
 
 export function TaskListView() {
@@ -66,7 +66,7 @@ export function TaskListView() {
     }
 
     return (
-        <div className="w-full pb-20">
+        <div className="w-full pb-20 selection:bg-black selection:text-white dark:selection:bg-white dark:selection:text-black">
             {/* Header - Hidden on Mobile */}
             <div className="hidden md:grid grid-cols-[40px_1fr_180px_140px_140px] gap-2 px-4 py-2 border-b border-border text-xs font-medium text-muted-foreground bg-muted/30">
                 <div className="flex justify-center">#</div>
@@ -127,15 +127,11 @@ function TaskRow({
             <div className="flex items-start md:contents w-full gap-3">
                 {/* 1. Check/Toggle Status */}
                 <div className="flex justify-center shrink-0 mt-0.5 md:mt-0">
-                    <button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onUpdate({ status: task.status === 'DONE' ? 'TODO' : 'DONE' });
-                        }}
-                        className="text-muted-foreground hover:text-primary transition-colors"
+                    <div
+                        className="text-muted-foreground transition-colors cursor-default"
                     >
                         {task.status === 'DONE' ? <CheckCircle2 className="w-5 h-5 md:w-4 md:h-4 text-green-600" /> : <Circle className="w-5 h-5 md:w-4 md:h-4" />}
-                    </button>
+                    </div>
                 </div>
 
                 {/* 2. Title (Click to open detail) */}

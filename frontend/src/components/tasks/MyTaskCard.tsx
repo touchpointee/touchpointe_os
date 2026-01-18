@@ -13,10 +13,11 @@ export const MyTaskCard: React.FC<TaskCardProps> = ({ task, onStatusChange, onCl
 
     const getPriorityColor = (p: string) => {
         switch (p) {
-            case 'URGENT': return 'bg-red-500/10 text-red-500 border-red-500/20';
-            case 'HIGH': return 'bg-orange-500/10 text-orange-500 border-orange-500/20';
-            case 'MEDIUM': return 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20';
-            default: return 'bg-gray-500/10 text-gray-400 border-gray-500/20';
+            case 'URGENT': return 'bg-[#DC2626]/10 text-[#DC2626] border-[#DC2626]/20';
+            case 'HIGH': return 'bg-[#F97316]/10 text-[#F97316] border-[#F97316]/20';
+            case 'MEDIUM': return 'bg-[#2563EB]/10 text-[#2563EB] border-[#2563EB]/20';
+            case 'LOW': return 'bg-[#6B7280]/10 text-[#6B7280] border-[#6B7280]/20';
+            default: return 'bg-[#9E9E9E]/10 text-[#9E9E9E] border-[#9E9E9E]/20';
         }
     };
 
@@ -26,12 +27,11 @@ export const MyTaskCard: React.FC<TaskCardProps> = ({ task, onStatusChange, onCl
             className="group relative flex items-center gap-4 p-4 rounded-xl border border-white/5 bg-[#1C1C1E] hover:bg-[#2C2C2E] hover:border-white/10 transition-all cursor-pointer"
         >
             {/* Status Toggle */}
-            <button
-                onClick={(e) => { e.stopPropagation(); onStatusChange(task.taskId, task.status === 'DONE' ? 'TODO' : 'DONE'); }}
-                className={`shrink-0 transition-colors ${task.status === 'DONE' ? 'text-green-500' : 'text-gray-500 hover:text-gray-300'}`}
+            <div
+                className={`shrink-0 transition-colors ${task.status === 'DONE' ? 'text-green-500' : 'text-gray-500'}`}
             >
                 {task.status === 'DONE' ? <CheckCircle2 className="w-5 h-5" /> : <Circle className="w-5 h-5" />}
-            </button>
+            </div>
 
             <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Search, Bell, Sparkles, ChevronDown, Moon, Sun, User, LogOut, Plus, Check, Menu } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { Search, Bell, Settings, ChevronDown, Moon, Sun, User, LogOut, Plus, Check, Menu } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { logout } from '@/lib/auth';
 import { useWorkspaces } from '@/stores/workspaceStore';
@@ -17,6 +17,7 @@ interface GlobalHeaderProps {
 
 export function GlobalHeader({ workspaceName = 'My Workspace', userName = 'User', onOpenMobileMenu }: GlobalHeaderProps) {
     const navigate = useNavigate();
+    const location = useLocation();
     const { theme, toggleTheme } = useTheme();
     const { workspaces, activeWorkspace, setActiveWorkspace, clear: resetWorkspaces } = useWorkspaces();
     const userInitial = userName.charAt(0).toUpperCase();
@@ -66,6 +67,21 @@ export function GlobalHeader({ workspaceName = 'My Workspace', userName = 'User'
 
     return (
         <header className="fixed top-0 left-0 right-0 h-14 glass border-b border-border/50 flex items-center justify-between px-4 z-40 md:left-[72px]">
+            {/* Settings Animation Style */}
+            <style>
+                {`
+                    @keyframes settings-spin {
+                        from { transform: rotate(0deg); }
+                        to { transform: rotate(360deg); }
+                    }
+                    .settings-spin {
+                        transition: transform 0.3s ease;
+                    }
+                    .settings-group:hover .settings-spin {
+                        animation: settings-spin 4s linear infinite;
+                    }
+                `}
+            </style>
             {/* Left: Hamburger & Workspace Selector */}
             <div className="flex items-center gap-2">
                 {/* Mobile Menu Button */}
@@ -162,16 +178,26 @@ export function GlobalHeader({ workspaceName = 'My Workspace', userName = 'User'
                     )}
                 </button>
 
-                {/* AI Button */}
-                <button className="w-9 h-9 rounded-lg flex items-center justify-center hover:bg-accent transition-colors">
-                    <Sparkles className="w-5 h-5 text-muted-foreground" />
+                {/* Settings Button */}
+                {/* Settings Button */}
+                <button
+                    onClick={() => navigate('/settings')}
+                    className={cn(
+                        "settings-group w-9 h-9 rounded-lg flex items-center justify-center transition-colors",
+                        (location.pathname.startsWith('/settings') && !isNotificationsOpen) ? "nav-item-selected" : "hover:bg-accent"
+                    )}
+                >
+                    <Settings className="w-5 h-5 text-muted-foreground settings-spin" />
                 </button>
 
                 {/* Notifications */}
                 <button
                     ref={notificationRef}
                     onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
-                    className="relative w-9 h-9 rounded-lg flex items-center justify-center hover:bg-accent transition-colors"
+                    className={cn(
+                        "relative w-9 h-9 rounded-lg flex items-center justify-center transition-colors",
+                        isNotificationsOpen ? "nav-item-selected" : "hover:bg-accent"
+                    )}
                 >
                     <Bell className="w-5 h-5 text-muted-foreground" />
                     <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-destructive" />

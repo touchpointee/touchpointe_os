@@ -135,7 +135,7 @@ export function TaskDetailPanel() {
             <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40" onClick={closeTaskDetail} />
 
             {/* Panel */}
-            <div className="fixed inset-y-0 right-0 w-full md:w-[60%] md:min-w-[600px] bg-background border-l border-border shadow-2xl z-50 flex flex-col animate-in slide-in-from-right duration-300">
+            <div className="fixed inset-y-0 right-0 w-full md:w-[60%] md:min-w-[600px] bg-background border-l border-border shadow-2xl z-50 flex flex-col animate-in slide-in-from-right duration-300 selection:bg-black selection:text-white dark:selection:bg-white dark:selection:text-black">
 
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 py-4 border-b border-border">

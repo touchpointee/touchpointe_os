@@ -27,26 +27,26 @@ const statusConfig: Record<TaskStatus, {
     label: string
 }> = {
     TODO: {
-        headerPill: 'bg-zinc-800/80 text-zinc-400 border border-zinc-700/50',
-        addTaskColor: 'text-zinc-500 hover:bg-zinc-500/10',
+        headerPill: 'bg-[#C62828] text-white border border-red-900/50',
+        addTaskColor: 'text-[#C62828] hover:bg-red-500/10',
         icon: Circle,
         label: 'TO DO'
     },
     IN_PROGRESS: {
-        headerPill: 'bg-blue-600 text-white border-transparent shadow-md shadow-blue-900/20',
-        addTaskColor: 'text-blue-500 hover:bg-blue-500/10',
+        headerPill: 'bg-[#F57C00] text-white border-transparent shadow-md shadow-orange-900/20',
+        addTaskColor: 'text-[#F57C00] hover:bg-orange-500/10',
         icon: ArrowUp,
         label: 'IN PROGRESS'
     },
     IN_REVIEW: {
-        headerPill: 'bg-purple-600 text-white border-transparent shadow-md shadow-purple-900/20',
-        addTaskColor: 'text-purple-500 hover:bg-purple-500/10',
+        headerPill: 'bg-[#FBC02D] text-white border-transparent shadow-md shadow-yellow-900/20',
+        addTaskColor: 'text-[#FBC02D] hover:bg-yellow-500/10',
         icon: HelpCircle,
         label: 'IN REVIEW'
     },
     DONE: {
-        headerPill: 'bg-green-600 text-white border-transparent shadow-md shadow-green-900/20',
-        addTaskColor: 'text-green-500 hover:bg-green-500/10',
+        headerPill: 'bg-[#388E3C] text-white border-transparent shadow-md shadow-green-900/20',
+        addTaskColor: 'text-[#388E3C] hover:bg-green-500/10',
         icon: CheckCircle2,
         label: 'DONE'
     },
@@ -153,7 +153,7 @@ export function TaskBoardView() {
     return (
         <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
             {/* FULL HEIGHT container - columns fill width equally */}
-            <div className="flex h-full gap-4 p-4 items-stretch min-h-0 min-w-0 overflow-x-auto snap-x snap-mandatory md:snap-none">
+            <div className="flex h-full gap-4 p-4 items-stretch min-h-0 min-w-0 overflow-x-auto snap-x snap-mandatory md:snap-none selection:bg-black selection:text-white dark:selection:bg-white dark:selection:text-black">
                 {statuses.map(status => (
                     <BoardColumn
                         key={status}
@@ -278,11 +278,11 @@ function SortableTaskItem({ task, onClick }: { task: TaskDto; onClick?: () => vo
 
 function TaskCard({ task, isOverlay }: { task: TaskDto; isOverlay?: boolean }) {
     const priorityColors: Record<string, string> = {
-        URGENT: 'text-red-500',
-        HIGH: 'text-orange-500',
-        MEDIUM: 'text-blue-500',
-        LOW: 'text-zinc-500',
-        NONE: 'text-zinc-600',
+        URGENT: 'text-[#DC2626]',
+        HIGH: 'text-[#F97316]',
+        MEDIUM: 'text-[#2563EB]',
+        LOW: 'text-[#6B7280]',
+        NONE: 'text-[#9E9E9E]',
     };
 
     return (

@@ -194,7 +194,11 @@ function SidebarItemComponent({ item }: { item: SidebarItem }) {
 
     // Active check: strict includes for CRM to handle potential sub-routes?
     // User Requirement: pathname.includes("/crm/deals") -> active
-    const isActive = item.path && location.pathname.includes(item.path);
+    // FIX: Also check for non-workspace prefixed routes (e.g. /crm/deals vs /workspace/ID/crm/deals)
+    const isActive = item.path && (
+        location.pathname.includes(item.path) ||
+        (item.path.includes('/crm/') && location.pathname.endsWith(item.path.split('/crm')[1]))
+    );
 
     const handleClick = (e: React.MouseEvent) => {
         e.preventDefault();
@@ -211,16 +215,16 @@ function SidebarItemComponent({ item }: { item: SidebarItem }) {
                     <span>{item.label}</span>
                     <ChevronRight className="w-3 h-3 ml-auto" />
                 </div>
-                <div className="ml-6 space-y-0.5">
+                <div className="ml-4 space-y-0.5">
                     {item.children.map((child, i) => (
                         <a
                             key={i}
                             href={child.path}
                             onClick={(e) => { e.preventDefault(); navigate(child.path); }}
                             className={cn(
-                                "block px-3 py-1.5 text-sm rounded-md transition-colors cursor-pointer",
+                                "block px-3 py-1.5 text-xs rounded-md transition-colors cursor-pointer",
                                 location.pathname.includes(child.path)
-                                    ? "bg-primary/10 text-primary font-medium"
+                                    ? "nav-item-selected"
                                     : "text-muted-foreground hover:text-foreground hover:bg-accent"
                             )}
                         >
@@ -239,7 +243,7 @@ function SidebarItemComponent({ item }: { item: SidebarItem }) {
             className={cn(
                 'flex items-center gap-2 px-3 py-2 text-sm rounded-md transition-colors cursor-pointer',
                 isActive
-                    ? 'bg-primary/10 text-primary font-medium'
+                    ? 'nav-item-selected font-medium'
                     : 'text-muted-foreground hover:text-foreground hover:bg-accent'
             )}
         >

@@ -127,23 +127,26 @@ export const useHierarchyStore = create<HierarchyState>((set, get) => ({
 
     toggleSpace: (spaceId) => {
         const { expandedSpaces } = get();
-        const newSet = new Set(expandedSpaces);
-        if (newSet.has(spaceId)) {
-            newSet.delete(spaceId);
-        } else {
+        const newSet = new Set<string>();
+
+        // If clicking a different space, open it (and close others by virtue of new Set)
+        if (!expandedSpaces.has(spaceId)) {
             newSet.add(spaceId);
         }
+        // If clicking the same space, it will be removed (toggled off) because we start with empty set
+        // and don't add it back.
+
         set({ expandedSpaces: newSet });
     },
 
     toggleFolder: (folderId) => {
         const { expandedFolders } = get();
-        const newSet = new Set(expandedFolders);
-        if (newSet.has(folderId)) {
-            newSet.delete(folderId);
-        } else {
+        const newSet = new Set<string>();
+
+        if (!expandedFolders.has(folderId)) {
             newSet.add(folderId);
         }
+
         set({ expandedFolders: newSet });
     },
 }));

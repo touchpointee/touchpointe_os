@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 
 @layer base {
@@ -186,4 +187,56 @@ body {
 
 .hover\:bg-accent:hover {
   background-color: hsl(var(--accent));
+}
+
+/* Custom Animation for Agent Icon */
+@keyframes agent-blink-keyframe {
+
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+
+  50% {
+    opacity: 0.2;
+  }
+}
+
+.agent-blink {
+  animation: agent-blink-keyframe 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite !important;
+}
+
+/* === Sidebar Selected State Override === 
+   Forces specific colors for selected sidebar items in Light and Dark modes.
+   Uses !important to ensure it overrides any utility classes.
+*/
+.nav-item-selected {
+  background-color: black !important;
+}
+
+/* Force ALL children (text, icons, etc.) to match the contrast color */
+.nav-item-selected,
+.nav-item-selected * {
+  color: white !important;
+}
+
+/* Dark Mode Overrides */
+.dark .nav-item-selected {
+  background-color: white !important;
+}
+
+.dark .nav-item-selected,
+.dark .nav-item-selected * {
+  color: black !important;
+}
+
+/* Tooltip Styling matching selected state */
+.nav-tooltip {
+  background-color: black !important;
+  color: white !important;
+}
+
+.dark .nav-tooltip {
+  background-color: white !important;
+  color: black !important;
 }

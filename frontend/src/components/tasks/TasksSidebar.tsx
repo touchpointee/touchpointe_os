@@ -1,13 +1,10 @@
 import { useEffect, useState, useRef } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import {
-    ChevronRight,
-    ChevronDown,
-    FolderOpen,
-    Folder as FolderIcon,
-    List,
+    Layers,
+    Rocket,
+    Folder,
     Plus,
-    LayoutGrid,
     MoreVertical,
     Pencil,
     Trash,
@@ -28,6 +25,9 @@ export function TasksSidebar({ workspaceId }: TasksSidebarProps) {
     const [newSpaceName, setNewSpaceName] = useState('');
 
     const { activeWorkspace } = useWorkspaces();
+    const location = useLocation();
+    const activeListId = location.pathname.match(/\/tasks\/list\/([^\/]+)/)?.[1];
+
     const role = activeWorkspace?.userRole;
     // Handle both string and number cases just to be safe (runtime vs types)
     const canManageStructure = role === 'OWNER' || role === 'ADMIN' || role === 0 || role === 1;
@@ -48,8 +48,21 @@ export function TasksSidebar({ workspaceId }: TasksSidebarProps) {
 
     if (loading) {
         return (
-            <div className="p-4 text-muted-foreground text-sm">
-                Loading hierarchy...
+            <div className="p-4 pb-20 select-none animate-pulse">
+                {/* Header Skeleton */}
+                <div className="flex items-center justify-between mb-4">
+                    <div className="h-3 w-16 bg-muted-foreground/20 rounded" />
+                </div>
+
+                {/* Skeleton Items */}
+                <div className="space-y-3">
+                    {[1, 2, 3].map((i) => (
+                        <div key={i} className="flex items-center gap-2 px-2 py-1.5">
+                            <div className="w-5 h-5 bg-muted-foreground/10 rounded" />
+                            <div className="h-4 flex-1 bg-muted-foreground/10 rounded" />
+                        </div>
+                    ))}
+                </div>
             </div>
         );
     }
@@ -87,7 +100,7 @@ export function TasksSidebar({ workspaceId }: TasksSidebarProps) {
                 </div>
             )}
 
-            <nav className="space-y-0.5">
+            <nav className="space-y-1">
                 {spaces.map((space) => (
                     <SpaceItem
                         key={space.id}
@@ -98,6 +111,7 @@ export function TasksSidebar({ workspaceId }: TasksSidebarProps) {
                         onToggle={() => toggleSpace(space.id)}
                         onToggleFolder={toggleFolder}
                         canManageStructure={canManageStructure}
+                        activeListId={activeListId}
                     />
                 ))}
             </nav>
@@ -114,10 +128,19 @@ interface SpaceItemProps {
     onToggle: () => void;
     onToggleFolder: (folderId: string) => void;
     canManageStructure: boolean;
+    activeListId?: string;
 }
 
-function SpaceItem({ space, workspaceId, isExpanded, expandedFolders, onToggle, onToggleFolder, canManageStructure }: SpaceItemProps) {
+function SpaceItem({ space, workspaceId, isExpanded, expandedFolders, onToggle, onToggleFolder, canManageStructure, activeListId }: SpaceItemProps) {
     const { createFolder, createList, updateSpace, deleteSpace } = useHierarchyStore();
+
+    // Calculate Highlight State
+    const isChildFolderExpanded = space.folders.some(f => expandedFolders.has(f.id));
+    const isChildListActive = space.lists.some(l => l.id === activeListId) ||
+        space.folders.some(f => f.lists.some(l => l.id === activeListId));
+
+    // Only highlight if expanded AND no child interaction (folder open or list active)
+    const shouldHighlight = isExpanded && !isChildFolderExpanded && !isChildListActive;
 
     // UI State
     const [isEditing, setIsEditing] = useState(false);
@@ -149,22 +172,27 @@ function SpaceItem({ space, workspaceId, isExpanded, expandedFolders, onToggle, 
         }
     };
 
-    const hasChildren = space.folders.length > 0 || space.lists.length > 0;
-
     return (
-        <div className="mb-1">
-            <div className="group flex items-center gap-1.5 px-2 py-1.5 rounded-md hover:bg-accent/50 transition-colors relative">
-                {/* Expand Toggle */}
-                <button onClick={onToggle} className="p-0.5 hover:bg-accent rounded text-muted-foreground">
-                    {hasChildren ? (
-                        isExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />
-                    ) : (
-                        <div className="w-3.5 h-3.5" />
-                    )}
-                </button>
+        <div className="mb-2">
+            <div
+                className={cn(
+                    "group flex items-center gap-2 px-2 py-1.5 rounded-md transition-all duration-200 relative cursor-pointer select-none",
+                    shouldHighlight ? "nav-item-selected" : "hover:bg-accent text-foreground"
+                )}
+                onClick={onToggle}
+            >
+                {/* Active Indicator */}
+                {shouldHighlight && (
+                    <div className="absolute left-0 top-1.5 bottom-1.5 w-0.5 bg-primary/40 rounded-full" />
+                )}
 
                 {/* Icon */}
-                <LayoutGrid className="w-4 h-4 text-muted-foreground mr-1" />
+                <div className={cn(
+                    "flex items-center justify-center w-5 h-5 rounded bg-primary/5 text-primary group-hover:bg-primary/10 transition-colors mr-2",
+                    shouldHighlight && "bg-transparent dark:bg-transparent"
+                )}>
+                    <Layers className="w-3.5 h-3.5" />
+                </div>
 
                 {/* Content */}
                 <div className="flex-1 min-w-0">
@@ -191,11 +219,17 @@ function SpaceItem({ space, workspaceId, isExpanded, expandedFolders, onToggle, 
                             </button>
                         </div>
                     ) : (
-                        <span className="text-sm font-medium truncate block">{space.name}</span>
+                        <span className={cn(
+                            "text-sm tracking-tight truncate block transition-colors font-semibold",
+                            isExpanded ? "text-foreground" : "text-muted-foreground group-hover:text-foreground",
+                            shouldHighlight && ""
+                        )}>
+                            {space.name}
+                        </span>
                     )}
                 </div>
 
-                {/* Actions - ONLY Context Menu for Space (No Plus Button) */}
+                {/* Actions */}
                 <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
                     {canManageStructure && (
                         <ContextMenu
@@ -210,7 +244,8 @@ function SpaceItem({ space, workspaceId, isExpanded, expandedFolders, onToggle, 
 
             {/* Inline Create Input */}
             {showNewItem && (
-                <div className="ml-8 mt-1 mb-2 pr-2 relative group/input">
+                <div className="ml-9 mt-1 mb-2 pr-2 relative group/input">
+                    <div className="absolute left-[-11px] top-6 w-3 h-px bg-border/60"></div>
                     <input
                         type="text"
                         value={newItemName}
@@ -232,9 +267,12 @@ function SpaceItem({ space, workspaceId, isExpanded, expandedFolders, onToggle, 
                 </div>
             )}
 
-            {/* Children */}
+            {/* Children with Tree Line */}
             {isExpanded && (
-                <div className="ml-2 pl-2 border-l border-border/40 space-y-0.5 mt-0.5">
+                <div className="relative ml-2 pl-1 flex flex-col gap-0.5">
+                    {/* Vertical Tree Line */}
+                    <div className="absolute left-[3px] top-0 bottom-2 w-px bg-primary/20" />
+
                     {space.folders.map((folder) => (
                         <FolderItem
                             key={folder.id}
@@ -244,6 +282,7 @@ function SpaceItem({ space, workspaceId, isExpanded, expandedFolders, onToggle, 
                             isExpanded={expandedFolders.has(folder.id)}
                             onToggle={() => onToggleFolder(folder.id)}
                             canManageStructure={canManageStructure}
+                            activeListId={activeListId}
                         />
                     ))}
                     {space.lists.map((list) => (
@@ -268,10 +307,17 @@ interface FolderItemProps {
     isExpanded: boolean;
     onToggle: () => void;
     canManageStructure: boolean;
+    activeListId?: string;
 }
 
-function FolderItem({ folder, spaceId, workspaceId, isExpanded, onToggle, canManageStructure }: FolderItemProps) {
+function FolderItem({ folder, spaceId, workspaceId, isExpanded, onToggle, canManageStructure, activeListId }: FolderItemProps) {
     const { createList, updateFolder, deleteFolder } = useHierarchyStore();
+
+    // Calculate Highlight State
+    const isChildListActive = folder.lists.some(l => l.id === activeListId);
+
+    // Only highlight if expanded AND no child list active
+    const shouldHighlight = isExpanded && !isChildListActive;
 
     const [isEditing, setIsEditing] = useState(false);
     const [editName, setEditName] = useState(folder.name);
@@ -300,19 +346,27 @@ function FolderItem({ folder, spaceId, workspaceId, isExpanded, onToggle, canMan
     };
 
     return (
-        <div>
-            <div className="group flex items-center gap-1.5 px-2 py-1 rounded-md hover:bg-accent/50 transition-colors">
-                <button onClick={onToggle} className="p-0.5 hover:bg-accent rounded text-muted-foreground w-5 flex justify-center">
-                    {folder.lists.length > 0 ? (
-                        isExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />
-                    ) : null}
-                </button>
+        <div className="relative pl-4">
+            {/* Tree Branch Line */}
+            <div className="absolute left-[3px] top-3 w-3.5 h-px bg-primary/20" />
 
-                {isExpanded ? (
-                    <FolderOpen className="w-4 h-4 text-yellow-500/80" />
-                ) : (
-                    <FolderIcon className="w-4 h-4 text-yellow-500/80" />
+            <div
+                className={cn(
+                    "group flex items-center gap-2 px-2 py-1 rounded-md hover:bg-accent transition-colors cursor-pointer select-none",
+                    shouldHighlight && "nav-item-selected"
                 )}
+                onClick={onToggle}
+            >
+                {/* Active Indicator */}
+                {shouldHighlight && (
+                    <div className="absolute left-0 top-1.5 bottom-1.5 w-0.5 bg-primary/40 rounded-full" />
+                )}
+
+                <Folder className={cn(
+                    "w-3.5 h-3.5 transition-colors",
+                    isExpanded ? "text-foreground" : "text-muted-foreground group-hover:text-foreground",
+                    shouldHighlight && ""
+                )} />
 
                 <div className="flex-1 min-w-0">
                     {isEditing ? (
@@ -326,7 +380,7 @@ function FolderItem({ folder, spaceId, workspaceId, isExpanded, onToggle, canMan
                                     if (e.key === 'Enter') handleRename();
                                     if (e.key === 'Escape') setIsEditing(false);
                                 }}
-                                className="w-full text-sm bg-background border border-primary px-1 py-0.5 rounded outline-none h-6 pr-6"
+                                className="w-full text-xs bg-background border border-primary px-1 py-0.5 rounded outline-none h-6 pr-6"
                                 autoFocus
                                 onClick={(e) => e.stopPropagation()}
                             />
@@ -338,7 +392,10 @@ function FolderItem({ folder, spaceId, workspaceId, isExpanded, onToggle, canMan
                             </button>
                         </div>
                     ) : (
-                        <span className="text-sm truncate block text-muted-foreground group-hover:text-foreground transition-colors">{folder.name}</span>
+                        <span className={cn(
+                            "text-xs font-medium truncate block transition-colors",
+                            shouldHighlight ? "" : "text-muted-foreground group-hover:text-foreground"
+                        )}>{folder.name}</span>
                     )}
                 </div>
 
@@ -386,7 +443,10 @@ function FolderItem({ folder, spaceId, workspaceId, isExpanded, onToggle, canMan
             )}
 
             {isExpanded && (
-                <div className="ml-2 pl-2 border-l border-border/40 space-y-0.5 mt-0.5">
+                <div className="relative ml-3 pl-1 flex flex-col gap-0.5 mt-0.5">
+                    {/* Sub-level Vertical Line */}
+                    <div className="absolute left-[3px] top-0 bottom-2 w-px bg-primary/20" />
+
                     {folder.lists.map((list) => (
                         <ListItem
                             key={list.id}
@@ -427,12 +487,12 @@ function ListItem({ list, workspaceId, canManageStructure }: { list: ListDto, wo
                     type="text"
                     value={editName}
                     onChange={(e) => setEditName(e.target.value)}
-                    onBlur={() => { /* Don't auto-save on blur if we want X to work reliably, or delay it. For now, let's keep simple or use same pattern as others */ handleRename(); }}
+                    onBlur={() => { handleRename(); }}
                     onKeyDown={(e) => {
                         if (e.key === 'Enter') handleRename();
                         if (e.key === 'Escape') setIsEditing(false);
                     }}
-                    className="w-full text-sm bg-background border border-primary px-1 py-0.5 rounded outline-none h-6 pr-6"
+                    className="w-full text-[11px] bg-background border border-primary px-1 py-0.5 rounded outline-none h-6 pr-6"
                     autoFocus
                     onClick={(e) => e.stopPropagation()}
                 />
@@ -451,19 +511,24 @@ function ListItem({ list, workspaceId, canManageStructure }: { list: ListDto, wo
             to={`/tasks/list/${list.id}`}
             className={({ isActive }) =>
                 cn(
-                    'group relative flex items-center gap-2 px-2 py-1.5 rounded-md text-sm transition-all',
+                    'group relative flex items-center gap-2 px-2 py-1.5 rounded-md text-[11px] transition-all select-none pl-2',
                     isActive
-                        ? 'bg-primary/10 text-primary font-medium'
+                        ? 'nav-item-selected'
                         : 'text-muted-foreground hover:bg-accent hover:text-foreground'
                 )
             }
         >
             {({ isActive }) => (
                 <>
+                    {/* Tree Branch Line */}
+                    <div className="absolute left-[-2px] bottom-1/2 w-[18px] h-px bg-primary/20" />
+
+                    {/* Active Indicator */}
                     {isActive && (
-                        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-4 bg-primary rounded-full transition-transform" />
+                        <div className="absolute left-0 top-1.5 bottom-1.5 w-0.5 bg-primary/40 rounded-full" />
                     )}
-                    <List className={cn("w-4 h-4 ml-0.5", isActive && "text-primary")} />
+
+                    <Rocket className={cn("w-3.5 h-3.5 ml-0", isActive ? "" : "text-muted-foreground group-hover:text-foreground")} />
                     <span className="truncate flex-1">{list.name}</span>
 
                     {/* Context Menu - Restricted to Admins/Owners */}
@@ -528,7 +593,7 @@ function ContextMenu({ onRename, onDelete, onAddFolder, onAddList }: ContextMenu
                             onClick={() => { onAddList(); setIsOpen(false); }}
                             className="w-full text-left px-3 py-1.5 hover:bg-accent flex items-center gap-2"
                         >
-                            <List className="w-3 h-3" /> New List
+                            <Rocket className="w-3 h-3" /> New Project
                         </button>
                     )}
                     {onAddFolder && (
@@ -536,7 +601,7 @@ function ContextMenu({ onRename, onDelete, onAddFolder, onAddList }: ContextMenu
                             onClick={() => { onAddFolder(); setIsOpen(false); }}
                             className="w-full text-left px-3 py-1.5 hover:bg-accent flex items-center gap-2"
                         >
-                            <FolderIcon className="w-3 h-3" /> New Folder
+                            <Folder className="w-3 h-3" /> New Folder
                         </button>
                     )}
                     {(onAddFolder || onAddList) && <div className="h-px bg-border my-1" />}

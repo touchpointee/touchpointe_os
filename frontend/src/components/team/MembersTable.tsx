@@ -85,7 +85,7 @@ export function MembersTable({ members, currentUserId, currentUserRole, onUpdate
                             </td>
                             <td className="px-5 py-4">
                                 {canManageCheck(member.role) && member.userId !== currentUserId && member.role !== WorkspaceRole.OWNER && (
-                                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <div className="flex items-center gap-1 transition-opacity">
                                         <button
                                             onClick={() => setEditingId(member.memberId)}
                                             className="p-1.5 hover:bg-secondary rounded-md text-muted-foreground hover:text-foreground transition-colors"
