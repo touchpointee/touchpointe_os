@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "JrN06f5Dskk=",
+  "dgSpecHash": "gDBMmvm4mLE=",
   "success": true,
-  "projectFilePath": "C:\\Users\\ajmal\\Desktop\\kravino Innovations\\touchpointe\\touchpointe_management_tool\\backend\\src\\Touchpointe.Infrastructure\\Touchpointe.Infrastructure.csproj",
+  "projectFilePath": "C:\\Users\\ajmal\\Desktop\\kravino Innovations\\touchpointe\\touchpointe_os\\backend\\src\\Touchpointe.Infrastructure\\Touchpointe.Infrastructure.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\ajmal\\.nuget\\packages\\bcrypt.net-next\\4.0.3\\bcrypt.net-next.4.0.3.nupkg.sha512",
     "C:\\Users\\ajmal\\.nuget\\packages\\humanizer.core\\2.14.1\\humanizer.core.2.14.1.nupkg.sha512",

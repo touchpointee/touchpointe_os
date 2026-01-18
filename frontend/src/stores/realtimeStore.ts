@@ -56,6 +56,29 @@ export const useRealtimeStore = create<RealtimeState>()((set, get) => ({
             useChatStore.getState().addMessage(message);
         });
 
+        connection.on('message:reaction:new', (reaction: any) => {
+            // Note: Backend sends reactionDto. We need channelId from context?
+            // Actually, backend sends just reactionDto.
+            // Wait, helper in ChatNotificationService sends just 'reaction'.
+            // And client Group is channel:{id}.
+            // But receiver needs to know which channel if global store?
+            // "channelId" is not in reactionDto from backend service usually, logic check:
+            // Service line 534: reactionDto has MessageId, UserId, Emoji. No ChannelId.
+            // But we join groups per channel. The store puts messages in messages[activeId].
+            // If we are subscribed to channel X, we receive this event.
+            // But the store needs to know WHERE to update the message.
+            // Ideally backend sends { channelId, reaction } or wrapper.
+            // Backend sends: await _hubContext.Clients.Group($"channel:{channelId}").SendAsync("message:reaction:new", reaction);
+            // So we just get 'reaction'.
+            // We can try to find the message in all channels or assume it's for the current channel if we restrict events.
+            // But simpler: The store updates message by ID.
+            useChatStore.getState().handleReactionAdded(reaction);
+        });
+
+        connection.on('message:reaction:remove', ({ messageId, userId, emoji }: { messageId: string, userId: string, emoji: string }) => {
+            useChatStore.getState().handleReactionRemoved(messageId, userId, emoji);
+        });
+
         connection.on('user:typing', ({ userId, userName, channelId }: { userId: string, userName: string, channelId: string }) => {
             set(state => {
                 const current = state.typingUsers[channelId] || [];

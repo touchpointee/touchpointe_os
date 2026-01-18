@@ -1,20 +1,14 @@
-import { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { X, Calendar, User, Flag, Search, UserPlus } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { X, Calendar, User, Flag, Palette, Plus } from 'lucide-react';
 import { useTeamStore } from '@/stores/teamStore';
+import { useTagStore } from '@/stores/tagStore';
 import { cn } from '@/lib/utils';
-import type { TaskPriority } from '@/types/task';
+import type { TaskPriority, CreateTaskRequest } from '@/types/task';
 
 interface CreateTaskModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSubmit: (data: {
-        title: string;
-        subDescription?: string;
-        assigneeId: string;
-        dueDate: string;
-        priority: TaskPriority;
-    }) => Promise<void>;
+    onSubmit: (request: Partial<CreateTaskRequest>) => Promise<any>;
     workspaceId: string;
     defaultStatus?: string;
 }
@@ -28,64 +22,37 @@ const priorities: { value: TaskPriority; label: string; color: string }[] = [
 ];
 
 export function CreateTaskModal({ isOpen, onClose, onSubmit, workspaceId }: CreateTaskModalProps) {
-    const navigate = useNavigate();
-    const { members, fetchMembers, isLoading: membersLoading } = useTeamStore();
-
-    // Check if solo workspace (only current user)
-    const isSoloWorkspace = members.length === 1;
+    // const navigate = useNavigate();
+    const { members, fetchMembers } = useTeamStore();
+    const { tags, fetchTags, createTag } = useTagStore();
 
     // Form state
     const [title, setTitle] = useState('');
     const [subDescription, setSubDescription] = useState('');
-    const [assigneeId, setAssigneeId] = useState('');
-    const [dueDate, setDueDate] = useState('');
-    const [priority, setPriority] = useState<TaskPriority>('MEDIUM');
+    const [assigneeId, setAssigneeId] = useState<string | null>(null);
+    const [dueDate, setDueDate] = useState<string | null>(null);
+    const [priority, setPriority] = useState<TaskPriority>('NONE');
+    const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    // Assignee search
-    const [assigneeSearch, setAssigneeSearch] = useState('');
-    const [showAssigneeDropdown, setShowAssigneeDropdown] = useState(false);
+    // Pickers visibility
+    const [activePicker, setActivePicker] = useState<'assignee' | 'date' | 'priority' | 'tags' | null>(null);
+    const [tagSearch, setTagSearch] = useState('');
 
-    // Fetch members on mount
     useEffect(() => {
         if (isOpen && workspaceId) {
             fetchMembers(workspaceId);
+            fetchTags(workspaceId);
         }
-    }, [isOpen, workspaceId, fetchMembers]);
+    }, [isOpen, workspaceId, fetchMembers, fetchTags]);
 
-    // Filter members by search
-    const filteredMembers = useMemo(() => {
-        if (!assigneeSearch.trim()) return members;
-        const search = assigneeSearch.toLowerCase();
-        return members.filter(m =>
-            m.fullName.toLowerCase().includes(search) ||
-            m.email.toLowerCase().includes(search)
-        );
-    }, [members, assigneeSearch]);
+    const workspaceTags = tags[workspaceId] || [];
+    const filteredTags = workspaceTags.filter(t => t.name.toLowerCase().includes(tagSearch.toLowerCase()));
 
-    // Get selected member
-    const selectedMember = members.find(m => m.userId === assigneeId);
-
-    // Form validation
-    const isValid = title.trim() && assigneeId && dueDate;
-
-    // Reset form on close
-    useEffect(() => {
-        if (!isOpen) {
-            setTitle('');
-            setSubDescription('');
-            setAssigneeId('');
-            setDueDate('');
-            setPriority('MEDIUM');
-            setError(null);
-            setAssigneeSearch('');
-        }
-    }, [isOpen]);
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!isValid) return;
+    const handleSubmit = async (e?: React.FormEvent) => {
+        e?.preventDefault();
+        if (!title.trim() || isSubmitting) return;
 
         setIsSubmitting(true);
         setError(null);
@@ -94,9 +61,10 @@ export function CreateTaskModal({ isOpen, onClose, onSubmit, workspaceId }: Crea
             await onSubmit({
                 title: title.trim(),
                 subDescription: subDescription.trim() || undefined,
-                assigneeId,
-                dueDate,
-                priority
+                assigneeId: assigneeId || undefined,
+                dueDate: dueDate || undefined,
+                priority,
+                tagIds: selectedTagIds
             });
             onClose();
         } catch (err: any) {
@@ -106,221 +74,279 @@ export function CreateTaskModal({ isOpen, onClose, onSubmit, workspaceId }: Crea
         }
     };
 
+    const handleCreateTag = async () => {
+        if (!tagSearch.trim()) return;
+        try {
+            const newTag = await createTag(workspaceId, tagSearch.trim(), '#6B7280');
+            setSelectedTagIds(prev => [...prev, newTag.id]);
+            setTagSearch('');
+        } catch (e) {
+            console.error("Failed to create tag", e);
+        }
+    };
+
+    // Reset on close
+    useEffect(() => {
+        if (!isOpen) {
+            setTitle('');
+            setSubDescription('');
+            setAssigneeId(null);
+            setDueDate(null);
+            setPriority('NONE');
+            setSelectedTagIds([]);
+            setActivePicker(null);
+            setError(null);
+        }
+    }, [isOpen]);
+
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-            {/* Backdrop */}
-            <div
-                className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-                onClick={onClose}
-            />
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
 
-            {/* Modal */}
-            <div className="relative bg-background border border-border rounded-xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden max-h-[90vh] flex flex-col">
-                {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-                    <h2 className="text-lg font-semibold">Create New Task</h2>
-                    <button
-                        onClick={onClose}
-                        className="p-1 rounded-lg hover:bg-muted transition-colors"
-                    >
-                        <X className="w-5 h-5 text-muted-foreground" />
-                    </button>
-                </div>
+            <div className="relative bg-background border border-border rounded-xl shadow-2xl w-full max-w-xl overflow-hidden animate-in zoom-in-95 duration-200">
+                <form onSubmit={handleSubmit} className="p-5 space-y-4">
+                    {/* Compact Header Area */}
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-2 py-1 bg-muted/50 rounded-md">
+                            New Task
+                        </div>
+                        <button type="button" onClick={onClose} className="p-1 hover:bg-muted rounded-full text-muted-foreground transition-colors"><X size={16} /></button>
+                    </div>
 
-                {/* Form */}
-                <form onSubmit={handleSubmit} className="p-6 space-y-5 overflow-y-auto">
-                    {/* Error */}
-                    {error && (
-                        <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-600 text-sm">
-                            {error}
+                    {/* Main Title Input */}
+                    <div className="px-1">
+                        <input
+                            autoFocus
+                            value={title}
+                            onChange={e => setTitle(e.target.value)}
+                            onKeyDown={e => {
+                                if (e.key === 'Enter' && !e.shiftKey) {
+                                    e.preventDefault();
+                                    handleSubmit();
+                                }
+                            }}
+                            placeholder="What needs to be done?"
+                            className="w-full text-2xl font-semibold bg-transparent border-none outline-none placeholder:text-muted-foreground/30 selection:bg-primary/20"
+                        />
+                        <textarea
+                            value={subDescription}
+                            onChange={e => setSubDescription(e.target.value)}
+                            placeholder="Add description..."
+                            className="w-full mt-3 text-sm bg-transparent border-none outline-none resize-none placeholder:text-muted-foreground/30 min-h-[80px] selection:bg-primary/10"
+                        />
+                    </div>
+
+                    {/* Selected Tags Display */}
+                    {selectedTagIds.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 px-1">
+                            {selectedTagIds.map(tid => {
+                                const t = workspaceTags.find(x => x.id === tid);
+                                return t ? (
+                                    <span key={tid} className="flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-bold text-white uppercase shadow-sm" style={{ backgroundColor: t.color }}>
+                                        {t.name}
+                                        <button type="button" onClick={() => setSelectedTagIds(prev => prev.filter(id => id !== tid))} className="hover:scale-110 transition-transform"><X size={10} /></button>
+                                    </span>
+                                ) : null;
+                            })}
                         </div>
                     )}
 
-                    {/* Title */}
-                    <div>
-                        <label className="block text-sm font-medium mb-2">
-                            Task Title <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                            type="text"
-                            value={title}
-                            onChange={(e) => setTitle(e.target.value)}
-                            placeholder="What needs to be done?"
-                            className="w-full px-4 py-2.5 bg-muted/50 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
-                            autoFocus
-                        />
-                    </div>
+                    {/* Errors */}
+                    {error && <div className="text-xs text-red-500 bg-red-500/10 p-2 rounded-lg border border-red-500/20">{error}</div>}
 
-                    {/* Sub Description */}
-                    <div>
-                        <label className="block text-sm font-medium mb-2">
-                            Sub Description <span className="text-zinc-500 font-normal">(Optional)</span>
-                        </label>
-                        <textarea
-                            value={subDescription}
-                            onChange={(e) => setSubDescription(e.target.value)}
-                            placeholder="Additional context/details..."
-                            className="w-full px-4 py-2.5 bg-muted/50 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all min-h-[80px] resize-none"
-                        />
-                    </div>
-
-                    {/* Assignee */}
-                    <div className="relative">
-                        <label className="block text-sm font-medium mb-2">
-                            <User className="w-4 h-4 inline mr-1" />
-                            Assignee <span className="text-red-500">*</span>
-                        </label>
-
-                        {/* Selected or Search */}
-                        <div
-                            className="relative"
-                            onClick={() => setShowAssigneeDropdown(true)}
-                        >
-                            {selectedMember ? (
-                                <div className="flex items-center gap-3 px-4 py-2.5 bg-muted/50 border border-border rounded-lg cursor-pointer hover:border-primary/50 transition-all">
-                                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-bold text-primary">
-                                        {selectedMember.fullName.charAt(0)}
+                    {/* Advanced Controls Row */}
+                    <div className="flex items-center gap-2 pt-4 border-t border-border/50 px-1 relative">
+                        {/* Assignee Picker */}
+                        <div className="relative">
+                            <button
+                                type="button"
+                                onClick={() => setActivePicker(activePicker === 'assignee' ? null : 'assignee')}
+                                className={cn("p-2 rounded-lg transition-all border border-transparent", assigneeId ? "bg-primary/10 border-primary/20 text-primary" : "hover:bg-muted text-muted-foreground")}
+                                title="Assign to..."
+                            >
+                                <User size={18} />
+                                {assigneeId && <span className="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full ring-2 ring-background" />}
+                            </button>
+                            {activePicker === 'assignee' && (
+                                <>
+                                    <div className="fixed inset-0 z-40" onClick={() => setActivePicker(null)} />
+                                    <div className="absolute bottom-full left-0 mb-2 w-56 bg-card border border-border shadow-2xl rounded-xl py-1.5 z-50 animate-in slide-in-from-bottom-2 duration-200">
+                                        <div className="px-3 pb-1 border-b border-border/50 mb-1.5">
+                                            <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider py-1">Assign to</div>
+                                        </div>
+                                        <div className="max-h-56 overflow-y-auto">
+                                            {members.map(m => (
+                                                <button
+                                                    key={m.userId}
+                                                    type="button"
+                                                    onClick={() => { setAssigneeId(m.userId); setActivePicker(null); }}
+                                                    className="w-full flex items-center gap-3 px-3 py-2 text-xs hover:bg-muted transition-colors"
+                                                >
+                                                    <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-bold text-primary">{m.fullName.charAt(0)}</div>
+                                                    <span className="flex-1 text-left">{m.fullName}</span>
+                                                    {assigneeId === m.userId && <span className="text-primary font-bold">✓</span>}
+                                                </button>
+                                            ))}
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => { setAssigneeId(null); setActivePicker(null); }}
+                                            className="w-full text-left px-3 py-2 text-xs text-muted-foreground hover:bg-muted mt-1.5 border-t border-border/50 font-medium"
+                                        >
+                                            Unassign
+                                        </button>
                                     </div>
-                                    <span className="flex-1">{selectedMember.fullName}</span>
-                                    <button
-                                        type="button"
-                                        onClick={(e) => { e.stopPropagation(); setAssigneeId(''); }}
-                                        className="text-muted-foreground hover:text-foreground"
-                                    >
-                                        <X className="w-4 h-4" />
-                                    </button>
-                                </div>
-                            ) : (
-                                <div className="flex items-center gap-2 px-4 py-2.5 bg-muted/50 border border-border rounded-lg cursor-pointer hover:border-primary/50 transition-all">
-                                    <Search className="w-4 h-4 text-muted-foreground" />
-                                    <input
-                                        type="text"
-                                        value={assigneeSearch}
-                                        onChange={(e) => setAssigneeSearch(e.target.value)}
-                                        placeholder="Search team members..."
-                                        className="flex-1 bg-transparent outline-none"
-                                        onFocus={() => setShowAssigneeDropdown(true)}
-                                    />
-                                </div>
+                                </>
                             )}
                         </div>
 
-                        {/* Dropdown */}
-                        {showAssigneeDropdown && !selectedMember && (
-                            <>
-                                <div
-                                    className="fixed inset-0 z-10"
-                                    onClick={() => setShowAssigneeDropdown(false)}
-                                />
-                                <div className="absolute top-full left-0 right-0 mt-1 bg-background border border-border rounded-lg shadow-xl z-20 max-h-48 overflow-y-auto">
-                                    {membersLoading ? (
-                                        <div className="p-3 text-sm text-muted-foreground text-center">Loading...</div>
-                                    ) : filteredMembers.length === 0 ? (
-                                        <div className="p-3 text-sm text-muted-foreground text-center">No members found</div>
-                                    ) : (
-                                        filteredMembers.map((member) => (
+                        {/* Due Date Picker */}
+                        <div className="relative">
+                            <button
+                                type="button"
+                                onClick={() => setActivePicker(activePicker === 'date' ? null : 'date')}
+                                className={cn("p-2 rounded-lg transition-all border border-transparent", dueDate ? "bg-amber-500/10 border-amber-500/20 text-amber-600" : "hover:bg-muted text-muted-foreground")}
+                                title="Set due date"
+                            >
+                                <Calendar size={18} />
+                            </button>
+                            {activePicker === 'date' && (
+                                <>
+                                    <div className="fixed inset-0 z-40" onClick={() => setActivePicker(null)} />
+                                    <div className="absolute bottom-full left-0 mb-2 p-3 bg-card border border-border shadow-2xl rounded-xl z-50 animate-in slide-in-from-bottom-2 duration-200">
+                                        <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2">Due Date</div>
+                                        <input
+                                            type="date"
+                                            value={dueDate || ''}
+                                            onChange={e => { setDueDate(e.target.value); setActivePicker(null); }}
+                                            className="bg-muted border border-border rounded-lg px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-primary/50 transition-all [color-scheme:dark]"
+                                            autoFocus
+                                        />
+                                        {dueDate && (
                                             <button
-                                                key={member.userId}
                                                 type="button"
-                                                onClick={() => {
-                                                    setAssigneeId(member.userId);
-                                                    setShowAssigneeDropdown(false);
-                                                    setAssigneeSearch('');
-                                                }}
-                                                className="w-full flex items-center gap-3 px-4 py-2 hover:bg-muted transition-colors"
+                                                onClick={() => { setDueDate(null); setActivePicker(null); }}
+                                                className="w-full mt-2 text-[10px] text-red-500 hover:underline font-bold"
                                             >
-                                                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-bold text-primary">
-                                                    {member.fullName.charAt(0)}
-                                                </div>
-                                                <div className="text-left">
-                                                    <div className="text-sm font-medium">{member.fullName}</div>
-                                                    <div className="text-xs text-muted-foreground">{member.email}</div>
-                                                </div>
+                                                Clear Date
                                             </button>
-                                        ))
-                                    )}
-                                </div>
-                            </>
-                        )}
-
-                        {/* Solo workspace helper */}
-                        {isSoloWorkspace && !membersLoading && (
-                            <div className="mt-2 flex items-center gap-2 text-xs text-zinc-500">
-                                <span>You're the only member in this workspace.</span>
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        onClose();
-                                        navigate('/team');
-                                    }}
-                                    className="inline-flex items-center gap-1 text-primary hover:underline font-medium"
-                                >
-                                    <UserPlus className="w-3 h-3" />
-                                    Invite teammates
-                                </button>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Due Date */}
-                    <div>
-                        <label className="block text-sm font-medium mb-2">
-                            <Calendar className="w-4 h-4 inline mr-1" />
-                            Due Date <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                            type="date"
-                            value={dueDate}
-                            onChange={(e) => setDueDate(e.target.value)}
-                            min={new Date().toISOString().split('T')[0]}
-                            onClick={(e) => e.currentTarget.showPicker()}
-                            className="w-full px-4 py-2.5 bg-muted/50 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all cursor-pointer [color-scheme:dark]"
-                        />
-                    </div>
-
-                    {/* Priority */}
-                    <div>
-                        <label className="block text-sm font-medium mb-2">
-                            <Flag className="w-4 h-4 inline mr-1" />
-                            Priority
-                        </label>
-                        <div className="flex gap-2 flex-wrap">
-                            {priorities.map((p) => (
-                                <button
-                                    key={p.value}
-                                    type="button"
-                                    onClick={() => setPriority(p.value)}
-                                    className={cn(
-                                        "px-3 py-1.5 rounded-lg text-sm font-medium border transition-all",
-                                        priority === p.value
-                                            ? `${p.color} bg-current/10 border-current`
-                                            : "border-border text-muted-foreground hover:text-foreground hover:border-foreground/30"
-                                    )}
-                                >
-                                    {p.label}
-                                </button>
-                            ))}
+                                        )}
+                                    </div>
+                                </>
+                            )}
                         </div>
-                    </div>
 
-                    {/* Actions */}
-                    <div className="flex justify-end gap-3 pt-4 border-t border-border">
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="px-4 py-2 text-sm font-medium rounded-lg hover:bg-muted transition-colors"
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            type="submit"
-                            disabled={!isValid || isSubmitting}
-                            className="px-6 py-2 bg-primary text-primary-foreground rounded-lg font-medium text-sm hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            {isSubmitting ? 'Creating...' : 'Create Task'}
-                        </button>
+                        {/* Priority Picker */}
+                        <div className="relative">
+                            <button
+                                type="button"
+                                onClick={() => setActivePicker(activePicker === 'priority' ? null : 'priority')}
+                                className={cn("p-2 rounded-lg transition-all border border-transparent", priority !== 'NONE' ? "bg-red-500/10 border-red-500/20 text-red-500" : "hover:bg-muted text-muted-foreground")}
+                                title="Set priority"
+                            >
+                                <Flag size={18} />
+                            </button>
+                            {activePicker === 'priority' && (
+                                <>
+                                    <div className="fixed inset-0 z-40" onClick={() => setActivePicker(null)} />
+                                    <div className="absolute bottom-full left-0 mb-2 w-44 bg-card border border-border shadow-2xl rounded-xl py-1.5 z-50 animate-in slide-in-from-bottom-2 duration-200">
+                                        <div className="px-3 pb-1 border-b border-border/50 mb-1.5">
+                                            <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider py-1">Priority</div>
+                                        </div>
+                                        {priorities.map(p => (
+                                            <button
+                                                key={p.value}
+                                                type="button"
+                                                onClick={() => { setPriority(p.value); setActivePicker(null); }}
+                                                className={cn("w-full flex items-center gap-3 px-3 py-2 text-xs hover:bg-muted transition-colors font-medium", p.color)}
+                                            >
+                                                <Flag size={14} className="fill-current" /> {p.label}
+                                                {priority === p.value && <span className="ml-auto">✓</span>}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </>
+                            )}
+                        </div>
+
+                        {/* Tags Picker */}
+                        <div className="relative">
+                            <button
+                                type="button"
+                                onClick={() => setActivePicker(activePicker === 'tags' ? null : 'tags')}
+                                className={cn("p-2 rounded-lg transition-all border border-transparent", selectedTagIds.length > 0 ? "bg-indigo-500/10 border-indigo-500/20 text-indigo-500" : "hover:bg-muted text-muted-foreground")}
+                                title="Add tags"
+                            >
+                                <Palette size={18} />
+                            </button>
+                            {activePicker === 'tags' && (
+                                <>
+                                    <div className="fixed inset-0 z-40" onClick={() => setActivePicker(null)} />
+                                    <div className="absolute bottom-full left-0 mb-2 w-72 bg-card border border-border shadow-2xl rounded-xl p-3 z-50 animate-in slide-in-from-bottom-2 duration-200">
+                                        <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2 flex justify-between items-center">
+                                            Tags
+                                            <span className="text-[8px] font-normal lowercase bg-muted px-1.5 py-0.5 rounded">Enter to create</span>
+                                        </div>
+                                        <input
+                                            type="text"
+                                            placeholder="Search tags..."
+                                            value={tagSearch}
+                                            onChange={e => setTagSearch(e.target.value)}
+                                            onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleCreateTag())}
+                                            className="w-full bg-muted border-none rounded-lg px-3 py-2 text-xs mb-3 outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                                            autoFocus
+                                        />
+                                        <div className="max-h-48 overflow-y-auto space-y-1 pr-1 custom-scrollbar">
+                                            {filteredTags.map(t => (
+                                                <button
+                                                    key={t.id}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setSelectedTagIds(prev => prev.includes(t.id) ? prev.filter(id => id !== t.id) : [...prev, t.id]);
+                                                    }}
+                                                    className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-muted text-xs transition-all group"
+                                                >
+                                                    <div className="w-2.5 h-2.5 rounded-full shadow-sm group-hover:scale-110 transition-transform" style={{ backgroundColor: t.color }} />
+                                                    <span className="flex-1 text-left font-medium">{t.name}</span>
+                                                    {selectedTagIds.includes(t.id) && <span className="text-primary font-bold">✓</span>}
+                                                </button>
+                                            ))}
+                                            {tagSearch && !filteredTags.some(t => t.name.toLowerCase() === tagSearch.toLowerCase()) && (
+                                                <button
+                                                    type="button"
+                                                    onClick={handleCreateTag}
+                                                    className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg hover:bg-primary/10 text-primary text-xs transition-all font-bold border border-dashed border-primary/40 bg-primary/5"
+                                                >
+                                                    <Plus size={14} /> Create "{tagSearch}"
+                                                </button>
+                                            )}
+                                            {workspaceTags.length === 0 && !tagSearch && (
+                                                <div className="text-[10px] text-muted-foreground text-center py-4 italic">No tags yet. Type to create one!</div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+
+                        <div className="ml-auto flex items-center gap-3">
+                            <button
+                                type="button"
+                                onClick={onClose}
+                                className="text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="submit"
+                                disabled={!title.trim() || isSubmitting}
+                                className="px-6 py-2.5 bg-primary text-primary-foreground rounded-xl font-bold text-xs hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 hover:shadow-primary/30 active:scale-95 disabled:opacity-50 disabled:shadow-none"
+                            >
+                                {isSubmitting ? 'Creating...' : 'Create Task'}
+                            </button>
+                        </div>
                     </div>
                 </form>
             </div>

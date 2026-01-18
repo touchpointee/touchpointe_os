@@ -22,9 +22,6 @@ namespace Touchpointe.Domain.Entities
 
         public int OrderIndex { get; set; }
 
-        // JSONB in DB, represented as string here for simplicity
-        public string? StatusConfig { get; set; } 
-
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 }

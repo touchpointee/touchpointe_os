@@ -22,6 +22,21 @@ namespace Touchpointe.Infrastructure.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("TagTaskItem", b =>
+                {
+                    b.Property<Guid>("TagsId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TasksId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("TagsId", "TasksId");
+
+                    b.HasIndex("TasksId");
+
+                    b.ToTable("TaskTags", (string)null);
+                });
+
             modelBuilder.Entity("Touchpointe.Domain.Entities.AiChatMessage", b =>
                 {
                     b.Property<Guid>("Id")
@@ -133,7 +148,19 @@ namespace Touchpointe.Infrastructure.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("Info")
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("SourceUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.HasKey("MessageId", "UserId");
+
+                    b.HasIndex("SourceUserId");
 
                     b.HasIndex("UserId");
 
@@ -416,6 +443,39 @@ namespace Touchpointe.Infrastructure.Migrations
                     b.ToTable("Folders");
                 });
 
+            modelBuilder.Entity("Touchpointe.Domain.Entities.ListStatus", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Category")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Color")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("ListId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ListId");
+
+                    b.ToTable("ListStatuses", (string)null);
+                });
+
             modelBuilder.Entity("Touchpointe.Domain.Entities.Meeting", b =>
                 {
                     b.Property<Guid>("Id")
@@ -540,6 +600,15 @@ namespace Touchpointe.Infrastructure.Migrations
                     b.Property<Guid?>("DirectMessageGroupId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("ReplyPreviewSenderName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ReplyPreviewText")
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("ReplyToMessageId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid>("SenderId")
                         .HasColumnType("uuid");
 
@@ -582,7 +651,8 @@ namespace Touchpointe.Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.HasIndex("MessageId", "UserId", "Emoji");
+                    b.HasIndex("MessageId", "UserId", "Emoji")
+                        .IsUnique();
 
                     b.ToTable("MessageReactions");
                 });
@@ -658,7 +728,7 @@ namespace Touchpointe.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("AssigneeId")
+                    b.Property<Guid?>("AssigneeId")
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
@@ -684,6 +754,33 @@ namespace Touchpointe.Infrastructure.Migrations
                     b.HasIndex("TaskId");
 
                     b.ToTable("Subtasks");
+                });
+
+            modelBuilder.Entity("Touchpointe.Domain.Entities.Tag", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Color")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("WorkspaceId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("WorkspaceId");
+
+                    b.ToTable("Tags");
                 });
 
             modelBuilder.Entity("Touchpointe.Domain.Entities.TaskActivity", b =>
@@ -753,7 +850,7 @@ namespace Touchpointe.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("AssigneeId")
+                    b.Property<Guid?>("AssigneeId")
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
@@ -761,6 +858,9 @@ namespace Touchpointe.Infrastructure.Migrations
 
                     b.Property<Guid>("CreatedById")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("CustomStatus")
+                        .HasColumnType("text");
 
                     b.Property<string>("Description")
                         .HasColumnType("text");
@@ -828,9 +928,6 @@ namespace Touchpointe.Infrastructure.Migrations
                     b.Property<Guid>("SpaceId")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("StatusConfig")
-                        .HasColumnType("text");
-
                     b.Property<Guid>("WorkspaceId")
                         .HasColumnType("uuid");
 
@@ -867,6 +964,51 @@ namespace Touchpointe.Infrastructure.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("TaskMentions");
+                });
+
+            modelBuilder.Entity("Touchpointe.Domain.Entities.TaskTimeEntry", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<int>("DurationSeconds")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("EndTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsManual")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("StartTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("TaskId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("WorkspaceId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TaskId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("TaskTimeEntries");
                 });
 
             modelBuilder.Entity("Touchpointe.Domain.Entities.TaskWatcher", b =>
@@ -1036,6 +1178,21 @@ namespace Touchpointe.Infrastructure.Migrations
                     b.ToTable("WorkspaceMembers");
                 });
 
+            modelBuilder.Entity("TagTaskItem", b =>
+                {
+                    b.HasOne("Touchpointe.Domain.Entities.Tag", null)
+                        .WithMany()
+                        .HasForeignKey("TagsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Touchpointe.Domain.Entities.TaskItem", null)
+                        .WithMany()
+                        .HasForeignKey("TasksId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Touchpointe.Domain.Entities.AiChatMessage", b =>
                 {
                     b.HasOne("Touchpointe.Domain.Entities.User", "User")
@@ -1093,6 +1250,10 @@ namespace Touchpointe.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Touchpointe.Domain.Entities.User", "SourceUser")
+                        .WithMany()
+                        .HasForeignKey("SourceUserId");
+
                     b.HasOne("Touchpointe.Domain.Entities.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
@@ -1100,6 +1261,8 @@ namespace Touchpointe.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Message");
+
+                    b.Navigation("SourceUser");
 
                     b.Navigation("User");
                 });
@@ -1209,6 +1372,17 @@ namespace Touchpointe.Infrastructure.Migrations
                     b.Navigation("Space");
 
                     b.Navigation("Workspace");
+                });
+
+            modelBuilder.Entity("Touchpointe.Domain.Entities.ListStatus", b =>
+                {
+                    b.HasOne("Touchpointe.Domain.Entities.TaskList", "List")
+                        .WithMany()
+                        .HasForeignKey("ListId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("List");
                 });
 
             modelBuilder.Entity("Touchpointe.Domain.Entities.Meeting", b =>
@@ -1329,9 +1503,7 @@ namespace Touchpointe.Infrastructure.Migrations
                 {
                     b.HasOne("Touchpointe.Domain.Entities.User", "Assignee")
                         .WithMany()
-                        .HasForeignKey("AssigneeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("AssigneeId");
 
                     b.HasOne("Touchpointe.Domain.Entities.TaskItem", "Task")
                         .WithMany()
@@ -1342,6 +1514,17 @@ namespace Touchpointe.Infrastructure.Migrations
                     b.Navigation("Assignee");
 
                     b.Navigation("Task");
+                });
+
+            modelBuilder.Entity("Touchpointe.Domain.Entities.Tag", b =>
+                {
+                    b.HasOne("Touchpointe.Domain.Entities.Workspace", "Workspace")
+                        .WithMany()
+                        .HasForeignKey("WorkspaceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Workspace");
                 });
 
             modelBuilder.Entity("Touchpointe.Domain.Entities.TaskActivity", b =>
@@ -1387,8 +1570,7 @@ namespace Touchpointe.Infrastructure.Migrations
                     b.HasOne("Touchpointe.Domain.Entities.User", "Assignee")
                         .WithMany()
                         .HasForeignKey("AssigneeId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("Touchpointe.Domain.Entities.User", "CreatedBy")
                         .WithMany()
@@ -1447,6 +1629,25 @@ namespace Touchpointe.Infrastructure.Migrations
                 {
                     b.HasOne("Touchpointe.Domain.Entities.TaskItem", "Task")
                         .WithMany("Mentions")
+                        .HasForeignKey("TaskId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Touchpointe.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Task");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Touchpointe.Domain.Entities.TaskTimeEntry", b =>
+                {
+                    b.HasOne("Touchpointe.Domain.Entities.TaskItem", "Task")
+                        .WithMany("TimeEntries")
                         .HasForeignKey("TaskId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1606,6 +1807,8 @@ namespace Touchpointe.Infrastructure.Migrations
                     b.Navigation("Activities");
 
                     b.Navigation("Mentions");
+
+                    b.Navigation("TimeEntries");
 
                     b.Navigation("Watchers");
                 });

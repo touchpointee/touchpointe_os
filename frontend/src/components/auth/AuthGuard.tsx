@@ -36,18 +36,15 @@ export function AuthGuard({ children, requireWorkspace = true }: AuthGuardProps)
             }
 
             try {
-                // 2. Load User if not present
-                if (!user) {
-                    await fetchUser();
-                    // If fetchUser fails (401), api.ts handles redirect
-                    const currentUser = useUserStore.getState().user;
-                    if (!currentUser) {
-                        // User cleared or failed?
-                        console.error('AuthGuard: User fetch failed. Clearing token.');
-                        logout();
-                        setIsInitializing(false);
-                        return;
-                    }
+                // 2. ALWAYS verify user with backend (don't trust cached user)
+                // This catches stale tokens where user was deleted from DB
+                await fetchUser();
+                const currentUser = useUserStore.getState().user;
+                if (!currentUser) {
+                    // User fetch failed - token was cleared by store
+                    console.log('AuthGuard: User verification failed - redirecting to login');
+                    setIsInitializing(false);
+                    return;
                 }
 
                 // 3. Load Workspaces if not bootstrapped
@@ -59,23 +56,33 @@ export function AuthGuard({ children, requireWorkspace = true }: AuthGuardProps)
                     if (fetched.length === 0) {
                         // Double check store to be safe
                         if (useWorkspaces.getState().workspaces.length === 0) {
-                            await createWorkspace('My Workspace');
+                            try {
+                                await createWorkspace('My Workspace');
+                            } catch (wsError: any) {
+                                // If workspace creation fails due to user not found, logout
+                                if (wsError.message?.includes('User not found') || wsError.message?.includes('not found')) {
+                                    console.error('AuthGuard: Workspace creation failed - user not valid');
+                                    logout();
+                                    setIsInitializing(false);
+                                    return;
+                                }
+                                throw wsError;
+                            }
                         }
                     }
                 }
 
-            } catch (error) {
+            } catch (error: any) {
                 console.error('AuthGuard initialization failed:', error);
-                // Usually api.ts handles 401s. For other errors, we might want to show error or retry.
-                // But if it's critical enough to prevent loading, logout.
-                logout();
+                // If user-related error, force logout
+                if (error.message?.includes('User not found') || error.message?.includes('401') || error.message?.includes('Unauthorized')) {
+                    logout();
+                }
             } finally {
                 setIsInitializing(false);
             }
         };
 
-        init();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
         init();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []); // Run once on mount

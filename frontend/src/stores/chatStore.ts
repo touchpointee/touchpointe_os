@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { apiGet, apiPost } from '@/lib/api';
+import { apiGet, apiPost, apiDelete } from '@/lib/api';
 
 export interface Channel {
     id: string;
@@ -31,6 +31,17 @@ export interface Message {
     content: string;
     createdAt: string;
     isOptimistic?: boolean;
+    replyToMessageId?: string | null;
+    replyPreviewSenderName?: string | null;
+    replyPreviewText?: string | null;
+    reactions: {
+        id: string;
+        messageId: string;
+        userId: string;
+        userName: string;
+        emoji: string;
+        createdAt: string;
+    }[];
 }
 
 export interface UserDto {
@@ -64,8 +75,14 @@ interface ChatState {
 
     fetchMessages: (workspaceId: string, id: string, isDm?: boolean) => Promise<void>;
 
-    postMessage: (workspaceId: string, content: string, currentUserId: string, currentUserName: string) => Promise<void>;
+    postMessage: (workspaceId: string, content: string, currentUserId: string, currentUserName: string, replyToMessageId?: string) => Promise<void>;
     addMessage: (message: Message) => void;
+
+    addReaction: (workspaceId: string, messageId: string, emoji: string) => Promise<void>;
+    removeReaction: (workspaceId: string, messageId: string, emoji: string) => Promise<void>;
+
+    handleReactionAdded: (reaction: any) => void;
+    handleReactionRemoved: (messageId: string, userId: string, emoji: string) => void;
 
     createChannel: (workspaceId: string, name: string, isPrivate: boolean, description: string) => Promise<boolean>;
     createDmGroup: (workspaceId: string, userIds: string[]) => Promise<string | null>;
@@ -84,7 +101,7 @@ export const useChatStore = create<ChatState>()((set, get) => ({
     fetchChannels: async (workspaceId) => {
         set({ isLoading: true, error: null });
         try {
-            const channels = await apiGet<Channel[]>(`/${workspaceId}/chat/channels`);
+            const channels = await apiGet<Channel[]>(`/workspaces/${workspaceId}/chat/channels`);
             set({ channels, isLoading: false });
 
             // Auto-select general if nothing active
@@ -102,7 +119,7 @@ export const useChatStore = create<ChatState>()((set, get) => ({
 
     fetchDmGroups: async (workspaceId) => {
         try {
-            const dmGroups = await apiGet<DmGroup[]>(`/${workspaceId}/chat/dm`);
+            const dmGroups = await apiGet<DmGroup[]>(`/workspaces/${workspaceId}/chat/dm`);
             set({ dmGroups });
         } catch (e: any) {
             console.error("Failed to fetch DMs", e);
@@ -111,7 +128,7 @@ export const useChatStore = create<ChatState>()((set, get) => ({
 
     fetchWorkspaceMembers: async (workspaceId) => {
         try {
-            const members = await apiGet<UserDto[]>(`/${workspaceId}/chat/users`);
+            const members = await apiGet<UserDto[]>(`/workspaces/${workspaceId}/chat/users`);
             set({ members });
         } catch (e: any) {
             console.error("Failed to fetch members", e);
@@ -130,8 +147,8 @@ export const useChatStore = create<ChatState>()((set, get) => ({
         // Don't wipe existing messages to avoid flicker, just append/replace
         try {
             const endpoint = isDm
-                ? `/${workspaceId}/chat/dm/${id}/messages`
-                : `/${workspaceId}/chat/channels/${id}/messages`;
+                ? `/workspaces/${workspaceId}/chat/dm/${id}/messages`
+                : `/workspaces/${workspaceId}/chat/channels/${id}/messages`;
 
             const newMessages = await apiGet<Message[]>(endpoint);
 
@@ -146,7 +163,7 @@ export const useChatStore = create<ChatState>()((set, get) => ({
         }
     },
 
-    postMessage: async (workspaceId, content, currentUserId, currentUserName) => {
+    postMessage: async (workspaceId, content, currentUserId, currentUserName, replyToMessageId) => {
         const { activeChannelId, activeDmGroupId } = get();
         const targetId = activeChannelId || activeDmGroupId;
         if (!targetId) return;
@@ -164,7 +181,10 @@ export const useChatStore = create<ChatState>()((set, get) => ({
             senderName: currentUserName,
             content,
             createdAt: new Date().toISOString(),
-            isOptimistic: true
+            isOptimistic: true,
+            replyToMessageId: replyToMessageId || undefined,
+            // We'll trust backend to resolve name/text. For optimistic UI, we could look it up locally if we wanted.
+            reactions: []
         };
 
         set(state => ({
@@ -176,10 +196,10 @@ export const useChatStore = create<ChatState>()((set, get) => ({
 
         try {
             const endpoint = isDm
-                ? `/${workspaceId}/chat/dm/${targetId}/messages`
-                : `/${workspaceId}/chat/channels/${targetId}/messages`;
+                ? `/workspaces/${workspaceId}/chat/dm/${targetId}/messages`
+                : `/workspaces/${workspaceId}/chat/channels/${targetId}/messages`;
 
-            const realMessage = await apiPost<Message>(endpoint, { content });
+            const realMessage = await apiPost<Message>(endpoint, { content, replyToMessageId });
 
             // Replace optimistic
             set(state => {
@@ -247,7 +267,7 @@ export const useChatStore = create<ChatState>()((set, get) => ({
     createChannel: async (workspaceId, name, isPrivate, description) => {
         // ...
         try {
-            const newChannel = await apiPost<Channel>(`/${workspaceId}/chat/channels`, { name, isPrivate, description });
+            const newChannel = await apiPost<Channel>(`/workspaces/${workspaceId}/chat/channels`, { name, isPrivate, description });
             set(state => ({
                 channels: [...state.channels, newChannel],
                 activeChannelId: newChannel.id,
@@ -262,7 +282,7 @@ export const useChatStore = create<ChatState>()((set, get) => ({
 
     createDmGroup: async (workspaceId, userIds) => {
         try {
-            const group = await apiPost<DmGroup>(`/${workspaceId}/chat/dm`, { userIds });
+            const group = await apiPost<DmGroup>(`/workspaces/${workspaceId}/chat/dm`, { userIds });
             set(state => {
                 // Check if already in list
                 const exists = state.dmGroups.some(g => g.id === group.id);
@@ -277,5 +297,77 @@ export const useChatStore = create<ChatState>()((set, get) => ({
             set({ error: e.message });
             return null;
         }
+    },
+
+    addReaction: async (workspaceId, messageId, emoji) => {
+        try {
+            await apiPost(`/workspaces/${workspaceId}/chat/messages/${messageId}/reactions`, { emoji });
+        } catch (e: any) {
+            console.error("Failed to react", e);
+        }
+    },
+
+    removeReaction: async (workspaceId, messageId, emoji) => {
+        try {
+            await apiDelete(`/workspaces/${workspaceId}/chat/messages/${messageId}/reactions/${emoji}`);
+        } catch (e: any) {
+            console.error("Failed to remove reaction", e);
+        }
+    },
+
+    // I need to properly implement removeReaction with DELETE
+    // I'll just leave it empty for a moment and check api.ts
+
+    handleReactionAdded: (reaction: any) => {
+        set(state => {
+            const newState: Partial<ChatState> = { messages: { ...state.messages } };
+
+            // We unfortunately have to search for the message since we don't have the channelId
+            // This is okay as we don't expect thousands of active channel entries
+            let found = false;
+            for (const key of Object.keys(newState.messages!)) {
+                if (found) break;
+                const list = newState.messages![key];
+
+                const msgIndex = list.findIndex(m => m.id === reaction.messageId);
+                if (msgIndex !== -1) {
+                    const msg = list[msgIndex];
+                    // Dedupe
+                    if (!msg.reactions.some(r => r.id === reaction.id)) {
+                        const newList = [...list];
+                        newList[msgIndex] = { ...msg, reactions: [...msg.reactions, reaction] };
+                        newState.messages![key] = newList;
+                    }
+                    found = true;
+                }
+            }
+            return found ? newState : state;
+        });
+    },
+
+    handleReactionRemoved: (messageId: string, userId: string, emoji: string) => {
+        set(state => {
+            const newState: Partial<ChatState> = { messages: { ...state.messages } };
+            let found = false;
+
+            for (const key of Object.keys(newState.messages!)) {
+                if (found) break;
+                const list = newState.messages![key];
+
+                const msgIndex = list.findIndex(m => m.id === messageId);
+                if (msgIndex !== -1) {
+                    const msg = list[msgIndex];
+                    const newList = [...list];
+                    newList[msgIndex] = {
+                        ...msg,
+                        reactions: msg.reactions.filter(r => !(r.userId === userId && r.emoji === emoji))
+                    };
+                    newState.messages![key] = newList;
+                    found = true;
+                }
+            }
+            return found ? newState : state;
+        });
     }
+
 }));

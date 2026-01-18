@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import type { SpaceHierarchyDto, CreateSpaceRequest, CreateFolderRequest, CreateListRequest, UpdateSpaceRequest, UpdateFolderRequest, UpdateListRequest } from '@/types/hierarchy';
-import { apiGet, apiPost, apiPut, apiDelete } from '@/lib/api';
+import { apiGet, apiPost, apiPut, apiDelete, apiPatch } from '@/lib/api';
 
 interface HierarchyState {
     spaces: SpaceHierarchyDto[];
@@ -23,6 +23,11 @@ interface HierarchyState {
 
     updateList: (workspaceId: string, listId: string, request: UpdateListRequest) => Promise<void>;
     deleteList: (workspaceId: string, listId: string) => Promise<void>;
+
+    updateStatus: (workspaceId: string, statusId: string, request: { name?: string; color?: string }) => Promise<void>;
+    createStatus: (workspaceId: string, listId: string, request: { name: string; color: string; category: string }) => Promise<void>;
+    deleteStatus: (workspaceId: string, statusId: string) => Promise<void>;
+
     toggleSpace: (spaceId: string) => void;
     toggleFolder: (folderId: string) => void;
 }
@@ -37,7 +42,7 @@ export const useHierarchyStore = create<HierarchyState>((set, get) => ({
     fetchHierarchy: async (workspaceId) => {
         set({ loading: true, error: null });
         try {
-            const spaces = await apiGet<SpaceHierarchyDto[]>(`/${workspaceId}/hierarchy`);
+            const spaces = await apiGet<SpaceHierarchyDto[]>(`/workspaces/${workspaceId}/hierarchy`);
             set({ spaces, loading: false });
         } catch (e) {
             set({ error: (e as Error).message, loading: false });
@@ -46,7 +51,7 @@ export const useHierarchyStore = create<HierarchyState>((set, get) => ({
 
     createSpace: async (workspaceId, request) => {
         try {
-            await apiPost(`/${workspaceId}/hierarchy/spaces`, request);
+            await apiPost(`/workspaces/${workspaceId}/hierarchy/spaces`, request);
             await get().fetchHierarchy(workspaceId);
         } catch (e) {
             set({ error: (e as Error).message });
@@ -55,7 +60,7 @@ export const useHierarchyStore = create<HierarchyState>((set, get) => ({
 
     createFolder: async (workspaceId, request) => {
         try {
-            await apiPost(`/${workspaceId}/hierarchy/folders`, request);
+            await apiPost(`/workspaces/${workspaceId}/hierarchy/folders`, request);
             await get().fetchHierarchy(workspaceId);
         } catch (e) {
             set({ error: (e as Error).message });
@@ -64,7 +69,7 @@ export const useHierarchyStore = create<HierarchyState>((set, get) => ({
 
     createList: async (workspaceId, request) => {
         try {
-            await apiPost(`/${workspaceId}/hierarchy/lists`, request);
+            await apiPost(`/workspaces/${workspaceId}/hierarchy/lists`, request);
             await get().fetchHierarchy(workspaceId);
         } catch (e) {
             set({ error: (e as Error).message });
@@ -73,7 +78,7 @@ export const useHierarchyStore = create<HierarchyState>((set, get) => ({
 
     updateSpace: async (workspaceId, spaceId, request) => {
         try {
-            await apiPut(`/${workspaceId}/hierarchy/spaces/${spaceId}`, request);
+            await apiPut(`/workspaces/${workspaceId}/hierarchy/spaces/${spaceId}`, request);
             await get().fetchHierarchy(workspaceId);
         } catch (e) {
             set({ error: (e as Error).message });
@@ -82,7 +87,7 @@ export const useHierarchyStore = create<HierarchyState>((set, get) => ({
 
     deleteSpace: async (workspaceId, spaceId) => {
         try {
-            await apiDelete(`/${workspaceId}/hierarchy/spaces/${spaceId}`);
+            await apiDelete(`/workspaces/${workspaceId}/hierarchy/spaces/${spaceId}`);
             await get().fetchHierarchy(workspaceId);
         } catch (e) {
             set({ error: (e as Error).message });
@@ -91,7 +96,7 @@ export const useHierarchyStore = create<HierarchyState>((set, get) => ({
 
     updateFolder: async (workspaceId, folderId, request) => {
         try {
-            await apiPut(`/${workspaceId}/hierarchy/folders/${folderId}`, request);
+            await apiPut(`/workspaces/${workspaceId}/hierarchy/folders/${folderId}`, request);
             await get().fetchHierarchy(workspaceId);
         } catch (e) {
             set({ error: (e as Error).message });
@@ -100,7 +105,7 @@ export const useHierarchyStore = create<HierarchyState>((set, get) => ({
 
     deleteFolder: async (workspaceId, folderId) => {
         try {
-            await apiDelete(`/${workspaceId}/hierarchy/folders/${folderId}`);
+            await apiDelete(`/workspaces/${workspaceId}/hierarchy/folders/${folderId}`);
             await get().fetchHierarchy(workspaceId);
         } catch (e) {
             set({ error: (e as Error).message });
@@ -109,7 +114,7 @@ export const useHierarchyStore = create<HierarchyState>((set, get) => ({
 
     updateList: async (workspaceId, listId, request) => {
         try {
-            await apiPut(`/${workspaceId}/hierarchy/lists/${listId}`, request);
+            await apiPut(`/workspaces/${workspaceId}/hierarchy/lists/${listId}`, request);
             await get().fetchHierarchy(workspaceId);
         } catch (e) {
             set({ error: (e as Error).message });
@@ -118,7 +123,34 @@ export const useHierarchyStore = create<HierarchyState>((set, get) => ({
 
     deleteList: async (workspaceId, listId) => {
         try {
-            await apiDelete(`/${workspaceId}/hierarchy/lists/${listId}`);
+            await apiDelete(`/workspaces/${workspaceId}/hierarchy/lists/${listId}`);
+            await get().fetchHierarchy(workspaceId);
+        } catch (e) {
+            set({ error: (e as Error).message });
+        }
+    },
+
+    updateStatus: async (workspaceId, statusId, request) => {
+        try {
+            await apiPatch(`/workspaces/${workspaceId}/task-statuses/${statusId}`, request);
+            await get().fetchHierarchy(workspaceId);
+        } catch (e) {
+            set({ error: (e as Error).message });
+        }
+    },
+
+    createStatus: async (workspaceId, listId, request) => {
+        try {
+            await apiPost(`/workspaces/${workspaceId}/lists/${listId}/statuses`, request);
+            await get().fetchHierarchy(workspaceId);
+        } catch (e) {
+            set({ error: (e as Error).message });
+        }
+    },
+
+    deleteStatus: async (workspaceId, statusId) => {
+        try {
+            await apiDelete(`/workspaces/${workspaceId}/task-statuses/${statusId}`);
             await get().fetchHierarchy(workspaceId);
         } catch (e) {
             set({ error: (e as Error).message });

@@ -38,13 +38,15 @@ namespace Touchpointe.Domain.Entities
         
         public string? SubDescription { get; set; }
 
-        public TaskStatus Status { get; set; } = TaskStatus.TODO;
+        public TaskStatus Status { get; set; } = TaskStatus.TODO; // Acts as Category (TODO, ACTIVE, DONE)
+
+        public string? CustomStatus { get; set; } // The actual status name (e.g. "Ready for QA")
 
         public TaskPriority Priority { get; set; } = TaskPriority.NONE;
 
-        // MANDATORY: Task must have an assignee
-        public Guid AssigneeId { get; set; }
-        public User Assignee { get; set; } = null!;
+        // OPTIONAL: Task may not have an assignee
+        public Guid? AssigneeId { get; set; }
+        public User? Assignee { get; set; }
 
         public Guid CreatedById { get; set; }
         public User CreatedBy { get; set; } = null!;
@@ -60,5 +62,7 @@ namespace Touchpointe.Domain.Entities
         public ICollection<TaskActivity> Activities { get; set; } = new List<TaskActivity>();
         public ICollection<TaskWatcher> Watchers { get; set; } = new List<TaskWatcher>();
         public ICollection<TaskMention> Mentions { get; set; } = new List<TaskMention>();
+        public ICollection<Tag> Tags { get; set; } = new List<Tag>();
+        public ICollection<TaskTimeEntry> TimeEntries { get; set; } = new List<TaskTimeEntry>();
     }
 }

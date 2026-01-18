@@ -1,4 +1,12 @@
-// Hierarchy types matching backend DTOs
+export interface TaskStatusDto {
+    id: string;
+    listId: string;
+    name: string;
+    color: string;
+    category: 'NotStarted' | 'Active' | 'Closed';
+    order: number;
+}
+
 export interface ListDto {
     id: string;
     spaceId: string;
@@ -6,6 +14,7 @@ export interface ListDto {
     name: string;
     orderIndex: number;
     createdAt: string;
+    statuses?: TaskStatusDto[];
 }
 
 export interface FolderHierarchyDto {

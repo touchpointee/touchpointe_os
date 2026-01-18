@@ -40,7 +40,7 @@ export const useDashboardStore = create<DashboardState>()((set) => ({
     fetchDashboardData: async (workspaceId: string) => {
         set({ isLoading: true, error: null });
         try {
-            const data = await apiGet<any>(`/${workspaceId}/dashboard`);
+            const data = await apiGet<any>(`/workspaces/${workspaceId}/dashboard`);
             // Map API response to state
             set({
                 stats: data.stats,

@@ -10,7 +10,7 @@ export function SubtaskList({ subtasks, onAdd, onToggle, canAdd, currentUserId, 
     onToggle: (id: string) => Promise<void>,
     canAdd: boolean,
     currentUserId?: string,
-    parentAssigneeId: string
+    parentAssigneeId?: string
 }) {
     const { members } = useTeamStore();
 

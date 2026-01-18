@@ -11,7 +11,7 @@ using Touchpointe.Domain.Entities;
 namespace Touchpointe.API.Controllers
 {
     [ApiController]
-    [Route("api/{workspaceId}/team")]
+    [Route("api/workspaces/{workspaceId}/team")]
     [Authorize]
     public class TeamController : ControllerBase
     {

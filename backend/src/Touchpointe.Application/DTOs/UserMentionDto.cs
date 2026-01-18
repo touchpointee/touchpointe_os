@@ -31,5 +31,8 @@ namespace Touchpointe.Application.DTOs
         // Additional Context
         public string? TaskTitle { get; set; }
         public string? ChannelName { get; set; }
+
+        public string SubType { get; set; } = "mention"; // "mention", "reply", "reaction"
+        public string? Info { get; set; } // e.g. emoji
     }
 }

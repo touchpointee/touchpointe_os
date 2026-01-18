@@ -90,7 +90,7 @@ export const useCrmStore = create<CrmStore>()((set, get) => ({
     fetchCompanies: async (workspaceId) => {
         set({ isLoading: true, error: null });
         try {
-            const data = await apiGet<Company[]>(`/${workspaceId}/crm/companies`);
+            const data = await apiGet<Company[]>(`/workspaces/${workspaceId}/crm/companies`);
             set({ companies: data });
         } catch (e: any) {
             set({ error: e.message || 'Failed to fetch companies' });
@@ -101,7 +101,7 @@ export const useCrmStore = create<CrmStore>()((set, get) => ({
 
     createCompany: async (workspaceId, companyData) => {
         try {
-            const data = await apiPost<Company>(`/${workspaceId}/crm/companies`, companyData);
+            const data = await apiPost<Company>(`/workspaces/${workspaceId}/crm/companies`, companyData);
             set((state) => ({ companies: [...state.companies, data] }));
         } catch (e: any) {
             throw e;
@@ -110,7 +110,7 @@ export const useCrmStore = create<CrmStore>()((set, get) => ({
 
     updateCompany: async (workspaceId, id, companyData) => {
         try {
-            const data = await apiPut<Company>(`/${workspaceId}/crm/companies/${id}`, companyData);
+            const data = await apiPut<Company>(`/workspaces/${workspaceId}/crm/companies/${id}`, companyData);
             set((state) => ({
                 companies: state.companies.map((c) => (c.id === id ? data : c)),
             }));
@@ -121,7 +121,7 @@ export const useCrmStore = create<CrmStore>()((set, get) => ({
 
     deleteCompany: async (workspaceId, id) => {
         try {
-            await apiDelete(`/${workspaceId}/crm/companies/${id}`);
+            await apiDelete(`/workspaces/${workspaceId}/crm/companies/${id}`);
             set((state) => ({
                 companies: state.companies.filter((c) => c.id !== id),
             }));
@@ -133,7 +133,7 @@ export const useCrmStore = create<CrmStore>()((set, get) => ({
     fetchContacts: async (workspaceId) => {
         set({ isLoading: true, error: null });
         try {
-            const data = await apiGet<Contact[]>(`/${workspaceId}/crm/contacts`);
+            const data = await apiGet<Contact[]>(`/workspaces/${workspaceId}/crm/contacts`);
             set({ contacts: data });
         } catch (e: any) {
             set({ error: e.message || 'Failed to fetch contacts' });
@@ -144,7 +144,7 @@ export const useCrmStore = create<CrmStore>()((set, get) => ({
 
     createContact: async (workspaceId, contactData) => {
         try {
-            const data = await apiPost<Contact>(`/${workspaceId}/crm/contacts`, contactData);
+            const data = await apiPost<Contact>(`/workspaces/${workspaceId}/crm/contacts`, contactData);
             set((state) => ({ contacts: [...state.contacts, data] }));
         } catch (e: any) {
             throw e;
@@ -153,7 +153,7 @@ export const useCrmStore = create<CrmStore>()((set, get) => ({
 
     updateContact: async (workspaceId, id, contactData) => {
         try {
-            const data = await apiPut<Contact>(`/${workspaceId}/crm/contacts/${id}`, contactData);
+            const data = await apiPut<Contact>(`/workspaces/${workspaceId}/crm/contacts/${id}`, contactData);
             set((state) => ({
                 contacts: state.contacts.map((c) => (c.id === id ? data : c)),
             }));
@@ -164,7 +164,7 @@ export const useCrmStore = create<CrmStore>()((set, get) => ({
 
     deleteContact: async (workspaceId, id) => {
         try {
-            await apiDelete(`/${workspaceId}/crm/contacts/${id}`);
+            await apiDelete(`/workspaces/${workspaceId}/crm/contacts/${id}`);
             set((state) => ({
                 contacts: state.contacts.filter((c) => c.id !== id),
             }));
@@ -176,7 +176,7 @@ export const useCrmStore = create<CrmStore>()((set, get) => ({
     fetchDeals: async (workspaceId) => {
         set({ isLoading: true, error: null });
         try {
-            const data = await apiGet<Deal[]>(`/${workspaceId}/crm/deals`);
+            const data = await apiGet<Deal[]>(`/workspaces/${workspaceId}/crm/deals`);
             set({ deals: data });
         } catch (e: any) {
             set({ error: e.message || 'Failed to fetch deals' });
@@ -187,7 +187,7 @@ export const useCrmStore = create<CrmStore>()((set, get) => ({
 
     createDeal: async (workspaceId, dealData) => {
         try {
-            const data = await apiPost<Deal>(`/${workspaceId}/crm/deals`, dealData);
+            const data = await apiPost<Deal>(`/workspaces/${workspaceId}/crm/deals`, dealData);
             set((state) => ({ deals: [...state.deals, data] }));
         } catch (e: any) {
             throw e;
@@ -196,7 +196,7 @@ export const useCrmStore = create<CrmStore>()((set, get) => ({
 
     updateDeal: async (workspaceId, id, dealData) => {
         try {
-            const data = await apiPut<Deal>(`/${workspaceId}/crm/deals/${id}`, dealData);
+            const data = await apiPut<Deal>(`/workspaces/${workspaceId}/crm/deals/${id}`, dealData);
             set((state) => ({
                 deals: state.deals.map((d) => (d.id === id ? data : d)),
             }));
@@ -219,7 +219,7 @@ export const useCrmStore = create<CrmStore>()((set, get) => ({
 
         try {
             // Call API
-            const data = await apiPut<Deal>(`/${workspaceId}/crm/deals/${id}/stage`, { stage, orderIndex });
+            const data = await apiPut<Deal>(`/workspaces/${workspaceId}/crm/deals/${id}/stage`, { stage, orderIndex });
 
             // Update with confirmed data from server
             set((state) => ({
@@ -234,7 +234,7 @@ export const useCrmStore = create<CrmStore>()((set, get) => ({
 
     deleteDeal: async (workspaceId, id) => {
         try {
-            await apiDelete(`/${workspaceId}/crm/deals/${id}`);
+            await apiDelete(`/workspaces/${workspaceId}/crm/deals/${id}`);
             set((state) => ({
                 deals: state.deals.filter((d) => d.id !== id),
             }));
@@ -257,7 +257,7 @@ export const useCrmStore = create<CrmStore>()((set, get) => ({
             if (entityType) params.append('entityType', entityType);
 
             const query = params.toString() ? `?${params.toString()}` : '';
-            const data = await apiGet<CrmActivity[]>(`/${workspaceId}/crm/activities${query}`);
+            const data = await apiGet<CrmActivity[]>(`/workspaces/${workspaceId}/crm/activities${query}`);
 
             set({ activities: data });
         } catch (e: any) {

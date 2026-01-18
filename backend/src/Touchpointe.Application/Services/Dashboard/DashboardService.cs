@@ -41,6 +41,7 @@ namespace Touchpointe.Application.Services.Dashboard
             // 2. My Tasks (Top 30 due soon)
             var myTasks = await _context.Tasks
                 .Include(t => t.Assignee)
+                .Include(t => t.Tags)
                 .Where(t => t.WorkspaceId == workspaceId && t.AssigneeId == userId && t.Status != Touchpointe.Domain.Entities.TaskStatus.DONE)
                 .OrderBy(t => t.DueDate ?? DateTime.MaxValue)
                 .ThenByDescending(t => t.Priority)
@@ -62,7 +63,9 @@ namespace Touchpointe.Application.Services.Dashboard
                     t.OrderIndex,
                     t.CreatedAt,
                     t.UpdatedAt,
-                    t.SubDescription
+                    t.SubDescription,
+                    t.CustomStatus,
+                    t.Tags.Select(tg => new TagDto(tg.Id, tg.Name, tg.Color)).ToList()
                 ))
                 .ToListAsync();
 

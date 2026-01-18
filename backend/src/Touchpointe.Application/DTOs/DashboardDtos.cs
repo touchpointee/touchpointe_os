@@ -21,6 +21,7 @@ namespace Touchpointe.Application.DTOs
         public string LinkId { get; set; } = string.Empty; // TaskId or DealId
     }
 
+
     public class DashboardDataDto
     {
         public DashboardStatsDto Stats { get; set; } = new();

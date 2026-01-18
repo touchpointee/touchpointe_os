@@ -7,7 +7,7 @@ using Touchpointe.Application.DTOs;
 namespace Touchpointe.API.Controllers
 {
     [ApiController]
-    [Route("api/{workspaceId}/hierarchy")]
+    [Route("api/workspaces/{workspaceId}/hierarchy")]
     [Authorize]
     public class HierarchyController : ControllerBase
     {

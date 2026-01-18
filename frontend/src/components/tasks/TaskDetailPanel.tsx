@@ -1,21 +1,23 @@
-import { useEffect, useState } from 'react';
-import { X, Copy, MoreHorizontal, Calendar as CalendarIcon, Flag, ChevronDown, Check, Trash2 } from 'lucide-react';
+import { useEffect, useState, useMemo } from 'react';
+import { X, Copy, MoreHorizontal, Calendar as CalendarIcon, Flag, ChevronDown, Check, Trash2, Plus } from 'lucide-react';
 import { useTaskStore } from '@/stores/taskStore';
+import { useTagStore } from '@/stores/tagStore';
 import { useWorkspaces, isValidUUID } from '@/stores/workspaceStore';
 import { useTeamStore } from '@/stores/teamStore';
+import { useHierarchyStore } from '@/stores/hierarchyStore';
 import { useUserStore } from '@/stores/userStore';
 import { cn } from '@/lib/utils';
 import { SubtaskList } from './SubtaskList';
 import { TaskComments } from './TaskComments';
 import { TaskActivityTimeline } from './TaskActivityTimeline';
-import type { TaskStatus, TaskPriority } from '@/types/task';
+import type { TaskPriority } from '@/types/task';
+import { TimeTrackingPanel } from './TimeTrackingPanel';
 
-const statusOptions: { value: TaskStatus; label: string; color: string }[] = [
-    { value: 'TODO', label: 'To Do', color: 'bg-zinc-400' },
-    { value: 'IN_PROGRESS', label: 'In Progress', color: 'bg-blue-500' },
-    { value: 'IN_REVIEW', label: 'In Review', color: 'bg-yellow-500' },
-    { value: 'DONE', label: 'Done', color: 'bg-green-500' },
-];
+interface StatusOption {
+    value: string;
+    label: string;
+    color: string;
+}
 
 const priorityOptions: { value: TaskPriority; label: string; color: string }[] = [
     { value: 'NONE', label: 'None', color: 'text-zinc-400' },
@@ -40,6 +42,7 @@ export function TaskDetailPanel() {
     const { activeWorkspace } = useWorkspaces();
     const { members, fetchMembers } = useTeamStore();
     const { user } = useUserStore();
+    const { spaces } = useHierarchyStore();
 
     const workspaceId = activeWorkspace?.id;
 
@@ -48,11 +51,16 @@ export function TaskDetailPanel() {
     const [statusOpen, setStatusOpen] = useState(false);
     const [priorityOpen, setPriorityOpen] = useState(false);
     const [assigneeOpen, setAssigneeOpen] = useState(false);
+    const [tagSearch, setTagSearch] = useState('');
+    const [tagPickerOpen, setTagPickerOpen] = useState(false);
+
+    const { tags, fetchTags, createTag } = useTagStore();
 
     useEffect(() => {
         if (activeTaskId && isDetailPanelOpen && workspaceId && isValidUUID(workspaceId)) {
             fetchTaskDetails(workspaceId, activeTaskId);
             fetchMembers(workspaceId);
+            fetchTags(workspaceId);
         }
     }, [activeTaskId, isDetailPanelOpen, workspaceId]);
 
@@ -62,55 +70,98 @@ export function TaskDetailPanel() {
             setStatusOpen(false);
             setPriorityOpen(false);
             setAssigneeOpen(false);
+            setTagPickerOpen(false);
         };
-        if (statusOpen || priorityOpen || assigneeOpen) {
+        if (statusOpen || priorityOpen || assigneeOpen || tagPickerOpen) {
             document.addEventListener('click', handleClick);
             return () => document.removeEventListener('click', handleClick);
         }
-    }, [statusOpen, priorityOpen, assigneeOpen]);
+    }, [statusOpen, priorityOpen, assigneeOpen, tagPickerOpen]);
 
+    // Get detail and task - may be null
+    const detail = activeTaskId ? taskDetails[activeTaskId] : null;
+    const task = detail?.task;
+    const subtasks = detail?.subtasks || [];
+    const activities = detail?.activities || [];
+
+    // Get Dynamic Status Options - MUST be before any conditional returns (Rules of Hooks)
+    const statusOptions: StatusOption[] = useMemo(() => {
+        if (!task) return [];
+
+        let currentList = null;
+        for (const space of spaces) {
+            const list = space.lists.find(l => l.id === task.listId);
+            if (list) { currentList = list; break; }
+            for (const folder of space.folders) {
+                const fList = folder.lists.find(l => l.id === task.listId);
+                if (fList) { currentList = fList; break; }
+            }
+        }
+
+        if (currentList?.statuses) {
+            return currentList.statuses.map(d => ({
+                value: d.id,
+                label: d.name,
+                color: d.color
+            }));
+        }
+        return [];
+    }, [spaces, task?.listId]);
+
+    const currentStatusOption = useMemo(() => {
+        if (!task || !statusOptions.length) return null;
+        return statusOptions.find((s: StatusOption) => s.value === task.customStatus)
+            || statusOptions[0];
+    }, [statusOptions, task]);
+
+    // Permission Check
+    // ClickUp Model: "Any workspace member who has access to the task’s List can edit..."
+    // Since we don't have granular List permissions yet, we assume access = edit.
+    const canEdit = useMemo(() => {
+        return !!user && !!task;
+    }, [user, task]);
+
+    // Early returns AFTER all hooks
     if (!isDetailPanelOpen || !activeTaskId) return null;
     if (!workspaceId || !isValidUUID(workspaceId)) return null;
-
-    const detail = taskDetails[activeTaskId];
-    if (!detail) return (
+    if (!detail || !task) return (
         <div className="fixed inset-y-0 right-0 w-[60%] bg-background border-l border-border shadow-2xl z-50 p-8 flex items-center justify-center">
             Loading...
         </div>
     );
 
-    const { task, subtasks, activities } = detail;
-
-    // Permission Check
-    const canEdit = user && task && (user.id === task.assigneeId || user.id === task.createdById);
-
     // Handlers
     const handleTitleBlur = (e: React.FocusEvent<HTMLTextAreaElement>) => {
+        if (!canEdit) return;
         if (e.target.value !== task.title) {
             updateTask(workspaceId, task.id, task.listId, { title: e.target.value });
         }
     };
 
     const handleDescriptionBlur = (e: React.FocusEvent<HTMLTextAreaElement>) => {
+        if (!canEdit) return;
         if (e.target.value !== task.description) {
             updateTask(workspaceId, task.id, task.listId, { description: e.target.value });
         }
     };
 
     const handleSubDescriptionBlur = (e: React.FocusEvent<HTMLTextAreaElement>) => {
+        if (!canEdit) return;
         if (e.target.value !== task.subDescription) {
             updateTask(workspaceId, task.id, task.listId, { subDescription: e.target.value });
         }
     };
 
-    const handleStatusChange = (newStatus: TaskStatus) => {
-        if (newStatus !== task.status) {
-            updateTask(workspaceId, task.id, task.listId, { status: newStatus });
+    const handleStatusChange = (newStatusId: string) => {
+        if (!canEdit) return;
+        if (newStatusId !== task.customStatus) {
+            updateTask(workspaceId, task.id, task.listId, { customStatus: newStatusId });
         }
         setStatusOpen(false);
     };
 
     const handlePriorityChange = (newPriority: TaskPriority) => {
+        if (!canEdit) return;
         if (newPriority !== task.priority) {
             updateTask(workspaceId, task.id, task.listId, { priority: newPriority });
         }
@@ -118,6 +169,7 @@ export function TaskDetailPanel() {
     };
 
     const handleAssigneeChange = (userId: string) => {
+        if (!canEdit) return;
         if (userId !== task.assigneeId) {
             updateTask(workspaceId, task.id, task.listId, { assigneeId: userId });
         }
@@ -125,8 +177,34 @@ export function TaskDetailPanel() {
     };
 
     const handleDueDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!canEdit) return;
         const newDate = e.target.value ? e.target.value : null;
         updateTask(workspaceId, task.id, task.listId, { dueDate: newDate });
+    };
+
+    const handleTagToggle = async (tagId: string) => {
+        if (!canEdit) return;
+        const currentTagIds = task.tags.map(t => t.id);
+        const newTagIds = currentTagIds.includes(tagId)
+            ? currentTagIds.filter(id => id !== tagId)
+            : [...currentTagIds, tagId];
+
+        await updateTask(workspaceId, task.id, task.listId, { tagIds: newTagIds });
+    };
+
+    const handleCreateTag = async () => {
+        if (!canEdit) return;
+        if (!tagSearch.trim()) return;
+
+        // Random color from a preset list
+        const colors = ['#ef4444', '#f97316', '#f59e0b', '#84cc16', '#10b981', '#06b6d4', '#3b82f6', '#8b5cf6', '#d946ef', '#f43f5e'];
+        const randomColor = colors[Math.floor(Math.random() * colors.length)];
+
+        const newTag = await createTag(workspaceId, tagSearch.trim(), randomColor);
+        if (newTag) {
+            await handleTagToggle(newTag.id);
+            setTagSearch('');
+        }
     };
 
     return (
@@ -146,7 +224,7 @@ export function TaskDetailPanel() {
                     </div>
                     <div className="flex items-center gap-2">
                         <button className="p-2 hover:bg-muted rounded-md text-muted-foreground"><Copy className="w-4 h-4" /></button>
-                        <button
+                        {canEdit && <button
                             onClick={() => {
                                 if (window.confirm('Are you sure you want to delete this task?')) {
                                     deleteTask(workspaceId, task.id);
@@ -156,7 +234,7 @@ export function TaskDetailPanel() {
                             title="Delete Task"
                         >
                             <Trash2 className="w-4 h-4" />
-                        </button>
+                        </button>}
                         <button className="p-2 hover:bg-muted rounded-md text-muted-foreground"><MoreHorizontal className="w-4 h-4" /></button>
                         <button onClick={closeTaskDetail} className="p-2 hover:bg-muted rounded-md text-muted-foreground"><X className="w-4 h-4" /></button>
                     </div>
@@ -204,14 +282,24 @@ export function TaskDetailPanel() {
                                 <div className="space-y-1 w-full md:w-1/4 relative">
                                     <div className="text-muted-foreground text-xs uppercase font-semibold">Status</div>
                                     <button
-                                        onClick={(e) => { e.stopPropagation(); setStatusOpen(!statusOpen); setPriorityOpen(false); setAssigneeOpen(false); }}
-                                        className="flex items-center gap-2 px-2 py-1.5 bg-muted rounded w-full hover:bg-muted/80 transition-colors"
+                                        onClick={(e) => {
+                                            if (!canEdit) return;
+                                            e.stopPropagation(); setStatusOpen(!statusOpen); setPriorityOpen(false); setAssigneeOpen(false);
+                                        }}
+                                        className={cn(
+                                            "flex items-center gap-2 px-2 py-1.5 bg-muted rounded w-full hover:bg-muted/80 transition-colors",
+                                            !canEdit && "opacity-70 cursor-not-allowed"
+                                        )}
+                                        disabled={!canEdit}
                                     >
-                                        <div className={cn("w-2 h-2 rounded-full", statusOptions.find(s => s.value === task.status)?.color)} />
-                                        <span className="flex-1 text-left text-sm">{statusOptions.find(s => s.value === task.status)?.label}</span>
-                                        <ChevronDown className="w-3 h-3 text-muted-foreground" />
+                                        <div
+                                            className="w-2 h-2 rounded-full"
+                                            style={{ backgroundColor: currentStatusOption?.color || '#999' }}
+                                        />
+                                        <span className="flex-1 text-left text-sm">{currentStatusOption?.label || task.status}</span>
+                                        {canEdit && <ChevronDown className="w-3 h-3 text-muted-foreground" />}
                                     </button>
-                                    {statusOpen && (
+                                    {statusOpen && canEdit && (
                                         <div className="absolute top-full left-0 mt-1 w-full bg-background border border-border rounded-lg shadow-xl z-50 py-1">
                                             {statusOptions.map(opt => (
                                                 <button
@@ -219,9 +307,9 @@ export function TaskDetailPanel() {
                                                     onClick={(e) => { e.stopPropagation(); handleStatusChange(opt.value); }}
                                                     className="flex items-center gap-2 w-full px-3 py-2 hover:bg-muted transition-colors"
                                                 >
-                                                    <div className={cn("w-2 h-2 rounded-full", opt.color)} />
+                                                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: opt.color }} />
                                                     <span className="flex-1 text-left text-sm">{opt.label}</span>
-                                                    {task.status === opt.value && <Check className="w-4 h-4 text-primary" />}
+                                                    {currentStatusOption?.value === opt.value && <Check className="w-4 h-4 text-primary" />}
                                                 </button>
                                             ))}
                                         </div>
@@ -232,16 +320,23 @@ export function TaskDetailPanel() {
                                 <div className="space-y-1 w-full md:w-1/4 relative">
                                     <div className="text-muted-foreground text-xs uppercase font-semibold">Assignee</div>
                                     <button
-                                        onClick={(e) => { e.stopPropagation(); setAssigneeOpen(!assigneeOpen); setStatusOpen(false); setPriorityOpen(false); }}
-                                        className="flex items-center gap-2 px-2 py-1.5 rounded w-full hover:bg-muted transition-colors"
+                                        onClick={(e) => {
+                                            if (!canEdit) return;
+                                            e.stopPropagation(); setAssigneeOpen(!assigneeOpen); setStatusOpen(false); setPriorityOpen(false);
+                                        }}
+                                        className={cn(
+                                            "flex items-center gap-2 px-2 py-1.5 rounded w-full hover:bg-muted transition-colors",
+                                            !canEdit && "opacity-70 cursor-not-allowed"
+                                        )}
+                                        disabled={!canEdit}
                                     >
                                         <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-[10px] font-bold text-primary">
                                             {task.assigneeName?.charAt(0) || '?'}
                                         </div>
                                         <span className="flex-1 text-left text-sm truncate">{task.assigneeName}</span>
-                                        <ChevronDown className="w-3 h-3 text-muted-foreground" />
+                                        {canEdit && <ChevronDown className="w-3 h-3 text-muted-foreground" />}
                                     </button>
-                                    {assigneeOpen && (
+                                    {assigneeOpen && canEdit && (
                                         <div className="absolute top-full left-0 mt-1 w-48 bg-background border border-border rounded-lg shadow-xl z-50 py-1 max-h-48 overflow-y-auto">
                                             {members.map(member => (
                                                 <button
@@ -264,14 +359,21 @@ export function TaskDetailPanel() {
                                 <div className="space-y-1 w-full md:w-1/4 relative">
                                     <div className="text-muted-foreground text-xs uppercase font-semibold">Priority</div>
                                     <button
-                                        onClick={(e) => { e.stopPropagation(); setPriorityOpen(!priorityOpen); setStatusOpen(false); setAssigneeOpen(false); }}
-                                        className="flex items-center gap-2 px-2 py-1.5 rounded w-full hover:bg-muted transition-colors"
+                                        onClick={(e) => {
+                                            if (!canEdit) return;
+                                            e.stopPropagation(); setPriorityOpen(!priorityOpen); setStatusOpen(false); setAssigneeOpen(false);
+                                        }}
+                                        className={cn(
+                                            "flex items-center gap-2 px-2 py-1.5 rounded w-full hover:bg-muted transition-colors",
+                                            !canEdit && "opacity-70 cursor-not-allowed"
+                                        )}
+                                        disabled={!canEdit}
                                     >
                                         <Flag className={cn("w-4 h-4", priorityOptions.find(p => p.value === task.priority)?.color)} />
                                         <span className="flex-1 text-left text-sm">{priorityOptions.find(p => p.value === task.priority)?.label}</span>
-                                        <ChevronDown className="w-3 h-3 text-muted-foreground" />
+                                        {canEdit && <ChevronDown className="w-3 h-3 text-muted-foreground" />}
                                     </button>
-                                    {priorityOpen && (
+                                    {priorityOpen && canEdit && (
                                         <div className="absolute top-full left-0 mt-1 w-full bg-background border border-border rounded-lg shadow-xl z-50 py-1">
                                             {priorityOptions.map(opt => (
                                                 <button
@@ -289,17 +391,90 @@ export function TaskDetailPanel() {
                                 </div>
 
                                 {/* DUE DATE - Input */}
-                                <div className="space-y-1 w-full md:w-1/4">
+                                <div className="space-y-1 w-full md:w-1/4 relative">
                                     <div className="text-muted-foreground text-xs uppercase font-semibold">Due Date</div>
-                                    <div className="flex items-center gap-2 px-2 py-1 rounded hover:bg-muted transition-colors">
+                                    <div className={cn("flex items-center gap-2 px-2 py-1 rounded hover:bg-muted transition-colors", !canEdit && "opacity-70")}>
                                         <CalendarIcon className="w-4 h-4 text-muted-foreground shrink-0" />
                                         <input
                                             type="date"
                                             value={task.dueDate ? task.dueDate.split('T')[0] : ''}
                                             onChange={handleDueDateChange}
-                                            onClick={(e) => e.currentTarget.showPicker()}
-                                            className="flex-1 bg-transparent outline-none text-sm w-full cursor-pointer [color-scheme:dark]"
+                                            onClick={(e) => canEdit && e.currentTarget.showPicker()}
+                                            disabled={!canEdit}
+                                            className={cn(
+                                                "flex-1 bg-transparent outline-none text-sm w-full [color-scheme:dark]",
+                                                canEdit ? "cursor-pointer" : "cursor-not-allowed"
+                                            )}
                                         />
+                                    </div>
+                                </div>
+
+                                {/* TIME TRACKING */}
+                                <div className="space-y-1 w-full md:w-1/4 relative">
+                                    {/* Label moved inside component or handled by UI design (User requested specific look) */}
+                                    {/* <div className="text-muted-foreground text-xs uppercase font-semibold">Time</div> */}
+                                    <TimeTrackingPanel workspaceId={workspaceId} taskId={task.id} />
+                                </div>
+                            </div>
+                            {/* TAGS SECTION */}
+                            <div className="space-y-2">
+                                <div className="text-muted-foreground text-xs uppercase font-semibold">Tags</div>
+                                <div className="flex flex-wrap gap-2 items-center">
+                                    {task.tags.map(tag => (
+                                        <span
+                                            key={tag.id}
+                                            className="flex items-center gap-1.5 px-2.5 py-1 rounded text-[10px] font-bold text-white uppercase shadow-sm group"
+                                            style={{ backgroundColor: tag.color }}
+                                        >
+                                            {tag.name}
+                                            <button
+                                                onClick={() => handleTagToggle(tag.id)}
+                                                className="hover:scale-110 opacity-0 group-hover:opacity-100 transition-all"
+                                            >
+                                                <X size={10} />
+                                            </button>
+                                        </span>
+                                    ))}
+                                    <div className="relative">
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); setTagPickerOpen(!tagPickerOpen); }}
+                                            className="p-1 px-2 border border-dashed border-border rounded text-[10px] font-bold text-muted-foreground hover:border-primary hover:text-primary transition-all flex items-center gap-1"
+                                        >
+                                            <Plus size={12} /> Add Tag
+                                        </button>
+                                        {tagPickerOpen && (
+                                            <div className="absolute top-full left-0 mt-2 w-64 bg-card border border-border shadow-2xl rounded-xl p-3 z-50">
+                                                <input
+                                                    placeholder="Search or create tag..."
+                                                    value={tagSearch}
+                                                    onChange={e => setTagSearch(e.target.value)}
+                                                    onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleCreateTag())}
+                                                    className="w-full bg-muted border-none rounded-lg px-2.5 py-1.5 text-xs mb-3 outline-none focus:ring-1 focus:ring-primary"
+                                                    autoFocus
+                                                />
+                                                <div className="max-h-40 overflow-y-auto space-y-1 pr-1 custom-scrollbar">
+                                                    {(tags[workspaceId] || []).filter(t => t.name.toLowerCase().includes(tagSearch.toLowerCase())).map(t => (
+                                                        <button
+                                                            key={t.id}
+                                                            onClick={(e) => { e.stopPropagation(); handleTagToggle(t.id); }}
+                                                            className="w-full flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted text-xs transition-colors"
+                                                        >
+                                                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: t.color }} />
+                                                            <span className="flex-1 text-left font-medium">{t.name}</span>
+                                                            {task.tags.some(xt => xt.id === t.id) && <Check size={12} className="text-primary" />}
+                                                        </button>
+                                                    ))}
+                                                    {tagSearch && !(tags[workspaceId] || []).some(t => t.name.toLowerCase() === tagSearch.toLowerCase()) && (
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); handleCreateTag(); }}
+                                                            className="w-full flex items-center gap-2 px-2 py-1.5 rounded hover:bg-primary/5 text-primary text-xs transition-all font-bold border border-dashed border-primary/20"
+                                                        >
+                                                            <Plus size={12} /> Create "{tagSearch}"
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -323,7 +498,7 @@ export function TaskDetailPanel() {
                             onToggle={(id) => toggleSubtask(workspaceId, id)}
                             canAdd={!!canEdit}
                             currentUserId={user?.id}
-                            parentAssigneeId={task.assigneeId}
+                            parentAssigneeId={task.assigneeId ?? undefined}
                         />
 
                         {/* Split View: Activity & Comments */}
@@ -336,7 +511,7 @@ export function TaskDetailPanel() {
                         </div>
                     </div>
                 </div>
-            </div>
+            </div >
         </>
     );
 }

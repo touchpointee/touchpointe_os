@@ -61,7 +61,7 @@ export const useTeamStore = create<TeamState>()((set, get) => ({
     fetchMembers: async (workspaceId) => {
         set({ isLoading: true, error: null });
         try {
-            const members = await apiGet<TeamMember[]>(`/${workspaceId}/team/members`);
+            const members = await apiGet<TeamMember[]>(`/workspaces/${workspaceId}/team/members`);
 
             // Parse roles ensure they are numbers
             const parsedMembers = members.map(m => ({
@@ -79,7 +79,7 @@ export const useTeamStore = create<TeamState>()((set, get) => ({
     inviteMember: async (workspaceId, emailOrUsername, role) => {
         set({ isLoading: true, error: null });
         try {
-            await apiPost(`/${workspaceId}/team/invite`, { emailOrUsername, role });
+            await apiPost(`/workspaces/${workspaceId}/team/invite`, { emailOrUsername, role });
             set({ isLoading: false });
             // Refresh invitations list
             get().fetchInvitations(workspaceId);
@@ -92,7 +92,7 @@ export const useTeamStore = create<TeamState>()((set, get) => ({
 
     updateRole: async (workspaceId, memberId, newRole) => {
         try {
-            await apiPut(`/${workspaceId}/team/member/${memberId}/role`, { newRole });
+            await apiPut(`/workspaces/${workspaceId}/team/member/${memberId}/role`, { newRole });
             // Optimistic update
             set(state => ({
                 members: state.members.map(m => m.memberId === memberId ? { ...m, role: newRole } : m)
@@ -107,7 +107,7 @@ export const useTeamStore = create<TeamState>()((set, get) => ({
 
     removeMember: async (workspaceId, memberId) => {
         try {
-            await apiDelete(`/${workspaceId}/team/member/${memberId}`);
+            await apiDelete(`/workspaces/${workspaceId}/team/member/${memberId}`);
             set(state => ({
                 members: state.members.filter(m => m.memberId !== memberId)
             }));
@@ -122,7 +122,7 @@ export const useTeamStore = create<TeamState>()((set, get) => ({
     invitations: [],
     fetchInvitations: async (workspaceId) => {
         try {
-            const invitations = await apiGet<any[]>(`/${workspaceId}/team/invitations`);
+            const invitations = await apiGet<any[]>(`/workspaces/${workspaceId}/team/invitations`);
             // Map to internal interface if needed, or use DTO directly
             set({
                 invitations: invitations.map(i => ({
@@ -146,7 +146,7 @@ export const useTeamStore = create<TeamState>()((set, get) => ({
 
     revokeInvitation: async (workspaceId: string, invitationId: string) => {
         try {
-            await apiDelete(`/${workspaceId}/team/invitations/${invitationId}`);
+            await apiDelete(`/workspaces/${workspaceId}/team/invitations/${invitationId}`);
             set(state => ({
                 invitations: state.invitations.filter(i => i.id !== invitationId)
             }));

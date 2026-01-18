@@ -1,9 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import {
     CheckCircle2,
     Circle,
-    HelpCircle,
     AlertCircle,
     ArrowUp,
     ArrowDown
@@ -12,17 +11,11 @@ import { cn } from '@/lib/utils';
 import { useTaskStore } from '@/stores/taskStore';
 import { useWorkspaces, isValidUUID } from '@/stores/workspaceStore';
 import { useTeamStore } from '@/stores/teamStore';
-import type { TaskDto, TaskStatus, TaskPriority } from '@/types/task';
+import { useHierarchyStore } from '@/stores/hierarchyStore';
+import type { TaskDto, TaskPriority } from '@/types/task';
+import type { TaskStatusDto } from '@/types/hierarchy';
 
-// Status Config
-const statusConfig: Record<TaskStatus, { color: string; icon: React.ElementType }> = {
-    TODO: { color: 'bg-[#C62828] text-white', icon: Circle },
-    IN_PROGRESS: { color: 'bg-[#F57C00] text-white', icon: ArrowUp },
-    IN_REVIEW: { color: 'bg-[#FBC02D] text-white', icon: HelpCircle },
-    DONE: { color: 'bg-[#388E3C] text-white', icon: CheckCircle2 },
-};
-
-// Priority Config
+// Priority Config (priority is not list-specific, remains hardcoded)
 const priorityConfig: Record<TaskPriority, { color: string; icon: React.ElementType }> = {
     NONE: { color: 'text-[#9E9E9E]', icon: Circle },
     LOW: { color: 'text-[#6B7280]', icon: ArrowDown },
@@ -36,8 +29,24 @@ export function TaskListView() {
     const { tasks, loading, fetchTasks, updateTask, openTaskDetail } = useTaskStore();
     const { activeWorkspace } = useWorkspaces();
     const { fetchMembers, members } = useTeamStore();
+    const { spaces } = useHierarchyStore();
 
     const workspaceId = activeWorkspace?.id;
+
+    // Get dynamic status config from list
+    const statusDefs = useMemo(() => {
+        if (!listId) return [];
+        for (const space of spaces) {
+            const list = space.lists.find(l => l.id === listId);
+            if (list) return list.statuses || [];
+
+            for (const folder of space.folders) {
+                const fList = folder.lists.find(l => l.id === listId);
+                if (fList) return fList.statuses || [];
+            }
+        }
+        return [];
+    }, [spaces, listId]);
 
     useEffect(() => {
         if (listId && workspaceId && isValidUUID(workspaceId)) {
@@ -83,6 +92,7 @@ export function TaskListView() {
                         key={task.id}
                         task={task}
                         members={members}
+                        statusDefs={statusDefs}
                         onUpdate={(req) => updateTask(workspaceId, task.id, task.listId, req)}
                         onClick={() => openTaskDetail(task.id)}
                     />
@@ -95,19 +105,33 @@ export function TaskListView() {
 function TaskRow({
     task,
     members,
+    statusDefs,
     onUpdate,
     onClick
 }: {
     task: TaskDto,
     members: any[],
+    statusDefs: TaskStatusDto[],
     onUpdate: (req: any) => void,
     onClick: () => void
 }) {
     const [openDropdown, setOpenDropdown] = useState<'status' | 'priority' | 'assignee' | null>(null);
 
-    // Derived values
-    const StatusIcon = statusConfig[task.status].icon;
-    const PriorityIcon = priorityConfig[task.priority].icon;
+    // Find current status from dynamic defs
+    const currentStatusDef = statusDefs.find(s => s.id === task.customStatus)
+        || statusDefs[0];
+
+    // Priority config remains hardcoded (priority is not list-specific)
+    const priorityCfg = priorityConfig[task.priority as TaskPriority] || priorityConfig.NONE;
+    const PriorityIcon = priorityCfg.icon;
+
+    // Status icon based on category
+    const getStatusIcon = (category: string) => {
+        if (category === 'Closed') return CheckCircle2;
+        if (category === 'Active') return ArrowUp;
+        return Circle;
+    };
+    const StatusIcon = getStatusIcon(currentStatusDef?.category || 'NotStarted');
 
     // Handle click outside
     useEffect(() => {
@@ -135,8 +159,24 @@ function TaskRow({
                 </div>
 
                 {/* 2. Title (Click to open detail) */}
-                <div className="font-medium text-foreground truncate cursor-pointer hover:underline hover:text-primary pr-4 flex-1 md:text-sm text-base" onClick={onClick}>
-                    {task.title}
+                <div className="flex-1 flex flex-col min-w-0 pr-4">
+                    <div className="font-medium text-foreground truncate cursor-pointer hover:underline hover:text-primary md:text-sm text-base" onClick={onClick}>
+                        {task.title}
+                    </div>
+                    {/* Tags */}
+                    {task.tags && task.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-1">
+                            {task.tags.map(tag => (
+                                <span
+                                    key={tag.id}
+                                    className="px-1.5 py-0.5 rounded-[4px] text-[9px] font-bold text-white uppercase tracking-wider"
+                                    style={{ backgroundColor: tag.color }}
+                                >
+                                    {tag.name}
+                                </span>
+                            ))}
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -200,7 +240,7 @@ function TaskRow({
                     <div
                         className={cn(
                             "flex items-center gap-1.5 px-2 py-1 rounded text-xs w-auto md:w-full max-w-[100px] cursor-pointer border border-transparent hover:border-border transition-all dropdown-trigger",
-                            priorityConfig[task.priority].color
+                            priorityCfg.color
                         )}
                         onClick={(e) => { e.stopPropagation(); setOpenDropdown(openDropdown === 'priority' ? null : 'priority'); }}
                     >
@@ -235,34 +275,39 @@ function TaskRow({
                 {/* 5. Status Dropdown */}
                 <div className="relative shrink-0">
                     <div
-                        className={cn(
-                            "flex items-center gap-1.5 px-2 py-1 rounded text-xs w-auto md:w-full max-w-[120px] cursor-pointer hover:opacity-80 transition-opacity dropdown-trigger",
-                            statusConfig[task.status].color
-                        )}
+                        className="flex items-center gap-1.5 px-2 py-1 rounded text-xs w-auto md:w-full max-w-[120px] cursor-pointer hover:opacity-80 transition-opacity dropdown-trigger"
+                        style={{
+                            backgroundColor: currentStatusDef?.color || '#87909e',
+                            color: '#fff'
+                        }}
                         onClick={(e) => { e.stopPropagation(); setOpenDropdown(openDropdown === 'status' ? null : 'status'); }}
                     >
                         <StatusIcon className="w-3.5 h-3.5" />
-                        <span>{task.status.replace('_', ' ')}</span>
+                        <span>{currentStatusDef?.name || 'Unknown'}</span>
                     </div>
 
                     {/* Status Menu */}
                     {openDropdown === 'status' && (
-                        <div className="absolute top-full right-0 z-50 w-40 mt-1 bg-popover border text-popover-foreground rounded-md shadow-md py-1 dropdown-content animate-in fade-in zoom-in-95 duration-100 flex flex-col gap-0.5 p-1">
-                            {(Object.keys(statusConfig) as TaskStatus[]).map((s) => {
-                                const SIcon = statusConfig[s].icon;
+                        <div className="absolute top-full right-0 z-50 w-44 mt-1 bg-popover border text-popover-foreground rounded-md shadow-md py-1 dropdown-content animate-in fade-in zoom-in-95 duration-100 flex flex-col gap-0.5 p-1">
+                            {statusDefs.map((status) => {
+                                const SIcon = getStatusIcon(status.category);
+                                const isActive = currentStatusDef?.id === status.id;
                                 return (
                                     <div
-                                        key={s}
+                                        key={status.id}
                                         className={cn(
                                             "flex items-center gap-2 px-2 py-1.5 hover:bg-accent/50 cursor-pointer text-xs rounded-sm transition-colors",
                                         )}
-                                        onClick={(e) => { e.stopPropagation(); onUpdate({ status: s }); setOpenDropdown(null); }}
+                                        onClick={(e) => { e.stopPropagation(); onUpdate({ customStatus: status.id }); setOpenDropdown(null); }}
                                     >
-                                        <div className={cn("p-1 rounded-full", statusConfig[s].color)}>
-                                            <SIcon className="w-3 h-3" />
+                                        <div
+                                            className="p-1 rounded-full"
+                                            style={{ backgroundColor: status.color }}
+                                        >
+                                            <SIcon className="w-3 h-3 text-white" />
                                         </div>
-                                        <span className="">{s.replace('_', ' ')}</span>
-                                        {task.status === s && <CheckCircle2 className="w-3 h-3 ml-auto opacity-50" />}
+                                        <span>{status.name}</span>
+                                        {isActive && <CheckCircle2 className="w-3 h-3 ml-auto opacity-50" />}
                                     </div>
                                 );
                             })}

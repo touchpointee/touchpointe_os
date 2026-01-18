@@ -14,6 +14,7 @@ import { useHierarchyStore } from '@/stores/hierarchyStore';
 import type { SpaceHierarchyDto, FolderHierarchyDto, ListDto } from '@/types/hierarchy';
 import { cn } from '@/lib/utils';
 import { useWorkspaces } from '@/stores/workspaceStore';
+import { CreateListModal } from './CreateListModal';
 
 interface TasksSidebarProps {
     workspaceId: string;
@@ -23,6 +24,7 @@ export function TasksSidebar({ workspaceId }: TasksSidebarProps) {
     const { spaces, loading, fetchHierarchy, expandedSpaces, expandedFolders, toggleSpace, toggleFolder, createSpace } = useHierarchyStore();
     const [showNewSpace, setShowNewSpace] = useState(false);
     const [newSpaceName, setNewSpaceName] = useState('');
+    const [createListModalState, setCreateListModalState] = useState<{ isOpen: boolean, spaceId?: string, folderId?: string }>({ isOpen: false });
 
     const { activeWorkspace } = useWorkspaces();
     const location = useLocation();
@@ -112,9 +114,17 @@ export function TasksSidebar({ workspaceId }: TasksSidebarProps) {
                         onToggleFolder={toggleFolder}
                         canManageStructure={canManageStructure}
                         activeListId={activeListId}
+                        onCreateList={(spaceId, folderId) => setCreateListModalState({ isOpen: true, spaceId, folderId })}
                     />
                 ))}
             </nav>
+
+            <CreateListModal
+                isOpen={createListModalState.isOpen}
+                onClose={() => setCreateListModalState(prev => ({ ...prev, isOpen: false }))}
+                defaultSpaceId={createListModalState.spaceId}
+                defaultFolderId={createListModalState.folderId}
+            />
         </div>
     );
 }
@@ -129,10 +139,11 @@ interface SpaceItemProps {
     onToggleFolder: (folderId: string) => void;
     canManageStructure: boolean;
     activeListId?: string;
+    onCreateList: (spaceId: string, folderId?: string) => void;
 }
 
-function SpaceItem({ space, workspaceId, isExpanded, expandedFolders, onToggle, onToggleFolder, canManageStructure, activeListId }: SpaceItemProps) {
-    const { createFolder, createList, updateSpace, deleteSpace } = useHierarchyStore();
+function SpaceItem({ space, workspaceId, isExpanded, expandedFolders, onToggle, onToggleFolder, canManageStructure, activeListId, onCreateList }: SpaceItemProps) {
+    const { createFolder, updateSpace, deleteSpace } = useHierarchyStore();
 
     // Calculate Highlight State
     const isChildFolderExpanded = space.folders.some(f => expandedFolders.has(f.id));
@@ -152,9 +163,8 @@ function SpaceItem({ space, workspaceId, isExpanded, expandedFolders, onToggle, 
         if (!newItemName.trim()) return;
         if (showNewItem === 'folder') {
             await createFolder(workspaceId, { spaceId: space.id, name: newItemName });
-        } else if (showNewItem === 'list') {
-            await createList(workspaceId, { spaceId: space.id, name: newItemName });
         }
+        // 'list' creates are handled via modal now, but we keep this for consistency if we ever want inline list creation back or for folder
         setNewItemName('');
         setShowNewItem(null);
     };
@@ -236,7 +246,7 @@ function SpaceItem({ space, workspaceId, isExpanded, expandedFolders, onToggle, 
                             onRename={() => setIsEditing(true)}
                             onDelete={handleDelete}
                             onAddFolder={() => setShowNewItem('folder')}
-                            onAddList={() => setShowNewItem('list')}
+                            onAddList={() => onCreateList(space.id)}
                         />
                     )}
                 </div>
@@ -283,6 +293,7 @@ function SpaceItem({ space, workspaceId, isExpanded, expandedFolders, onToggle, 
                             onToggle={() => onToggleFolder(folder.id)}
                             canManageStructure={canManageStructure}
                             activeListId={activeListId}
+                            onCreateList={onCreateList} // Pass down
                         />
                     ))}
                     {space.lists.map((list) => (
@@ -308,10 +319,11 @@ interface FolderItemProps {
     onToggle: () => void;
     canManageStructure: boolean;
     activeListId?: string;
+    onCreateList: (spaceId: string, folderId?: string) => void;
 }
 
-function FolderItem({ folder, spaceId, workspaceId, isExpanded, onToggle, canManageStructure, activeListId }: FolderItemProps) {
-    const { createList, updateFolder, deleteFolder } = useHierarchyStore();
+function FolderItem({ folder, spaceId, workspaceId, isExpanded, onToggle, canManageStructure, activeListId, onCreateList }: FolderItemProps) {
+    const { updateFolder, deleteFolder } = useHierarchyStore();
 
     // Calculate Highlight State
     const isChildListActive = folder.lists.some(l => l.id === activeListId);
@@ -321,16 +333,6 @@ function FolderItem({ folder, spaceId, workspaceId, isExpanded, onToggle, canMan
 
     const [isEditing, setIsEditing] = useState(false);
     const [editName, setEditName] = useState(folder.name);
-    const [showNewList, setShowNewList] = useState(false);
-    const [newListName, setNewListName] = useState('');
-
-    const handleCreateList = async () => {
-        if (newListName.trim()) {
-            await createList(workspaceId, { spaceId, folderId: folder.id, name: newListName });
-            setNewListName('');
-            setShowNewList(false);
-        }
-    };
 
     const handleRename = async () => {
         if (editName.trim() && editName !== folder.name) {
@@ -402,7 +404,7 @@ function FolderItem({ folder, spaceId, workspaceId, isExpanded, onToggle, canMan
                 <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
                     {/* Add List Button - Visible to everyone */}
                     <button
-                        onClick={(e) => { e.stopPropagation(); setShowNewList(true); }}
+                        onClick={(e) => { e.stopPropagation(); onCreateList(spaceId, folder.id); }}
                         className="p-1 hover:bg-background rounded text-muted-foreground hover:text-foreground"
                         title="Add List"
                     >
@@ -419,28 +421,7 @@ function FolderItem({ folder, spaceId, workspaceId, isExpanded, onToggle, canMan
                 </div>
             </div>
 
-            {showNewList && (
-                <div className="ml-8 mt-1 mb-2 pr-2 relative group/input">
-                    <input
-                        type="text"
-                        value={newListName}
-                        onChange={(e) => setNewListName(e.target.value)}
-                        placeholder="List name..."
-                        className="w-full px-2 py-1 text-xs border border-border rounded bg-background outline-none focus:ring-1 focus:ring-primary pr-6"
-                        onKeyDown={(e) => {
-                            if (e.key === 'Enter') handleCreateList();
-                            if (e.key === 'Escape') setShowNewList(false);
-                        }}
-                        autoFocus
-                    />
-                    <button
-                        onClick={() => setShowNewList(false)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-0.5"
-                    >
-                        <X className="w-3 h-3" />
-                    </button>
-                </div>
-            )}
+
 
             {isExpanded && (
                 <div className="relative ml-3 pl-1 flex flex-col gap-0.5 mt-0.5">

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import {
     DndContext,
@@ -12,51 +12,48 @@ import type { DragEndEvent, DragStartEvent } from '@dnd-kit/core';
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useTaskStore } from '@/stores/taskStore';
+import { useHierarchyStore } from '@/stores/hierarchyStore';
 import { useWorkspaces, isValidUUID } from '@/stores/workspaceStore';
-import type { TaskDto, TaskStatus } from '@/types/task';
+import type { TaskDto } from '@/types/task';
+import type { TaskStatusDto } from '@/types/hierarchy';
 import { cn } from '@/lib/utils';
-import { Circle, ArrowUp, HelpCircle, CheckCircle2, Plus, MoreHorizontal } from 'lucide-react';
+import { Circle, ArrowUp, CheckCircle2, Plus, MoreHorizontal, Palette, Trash2, Edit2, User, Calendar, Flag } from 'lucide-react';
 
-const statuses: TaskStatus[] = ['TODO', 'IN_PROGRESS', 'IN_REVIEW', 'DONE'];
-
-// Exact match to ClickUp style: Solid colored pills for header, colored Add Task buttons
-const statusConfig: Record<TaskStatus, {
-    headerPill: string;
-    addTaskColor: string;
-    icon: React.ElementType;
-    label: string
-}> = {
-    TODO: {
-        headerPill: 'bg-[#C62828] text-white border border-red-900/50',
-        addTaskColor: 'text-[#C62828] hover:bg-red-500/10',
-        icon: Circle,
-        label: 'TO DO'
-    },
-    IN_PROGRESS: {
-        headerPill: 'bg-[#F57C00] text-white border-transparent shadow-md shadow-orange-900/20',
-        addTaskColor: 'text-[#F57C00] hover:bg-orange-500/10',
-        icon: ArrowUp,
-        label: 'IN PROGRESS'
-    },
-    IN_REVIEW: {
-        headerPill: 'bg-[#FBC02D] text-white border-transparent shadow-md shadow-yellow-900/20',
-        addTaskColor: 'text-[#FBC02D] hover:bg-yellow-500/10',
-        icon: HelpCircle,
-        label: 'IN REVIEW'
-    },
-    DONE: {
-        headerPill: 'bg-[#388E3C] text-white border-transparent shadow-md shadow-green-900/20',
-        addTaskColor: 'text-[#388E3C] hover:bg-green-500/10',
-        icon: CheckCircle2,
-        label: 'DONE'
-    },
-};
+const PRESET_COLORS = [
+    '#6B7280', // Gray
+    '#2563EB', // Blue
+    '#16A34A', // Green
+    '#F59E0B', // Yellow
+    '#DC2626', // Red
+    '#7C3AED', // Violet
+    '#DB2777', // Pink
+    '#0891B2', // Cyan
+];
 
 export function TaskBoardView() {
     const { listId } = useParams<{ listId: string }>();
     const { activeWorkspace } = useWorkspaces();
     const workspaceId = activeWorkspace?.id;
     const { tasks, updateTask, openTaskDetail, createTask } = useTaskStore();
+    const { spaces, updateStatus, createStatus, deleteStatus } = useHierarchyStore();
+
+    // Find the current list configuration
+    const currentList = useMemo(() => {
+        if (!listId) return null;
+        for (const space of spaces) {
+            const list = space.lists.find(l => l.id === listId);
+            if (list) return list;
+            for (const folder of space.folders) {
+                const fList = folder.lists.find(l => l.id === listId);
+                if (fList) return fList;
+            }
+        }
+        return null;
+    }, [spaces, listId]);
+
+    const statusDefs = useMemo(() => {
+        return currentList?.statuses || [];
+    }, [currentList]);
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -66,30 +63,87 @@ export function TaskBoardView() {
         })
     );
 
+    // All useState hooks MUST be before any conditional returns (Rules of Hooks)
+    const [activeId, setActiveId] = useState<string | null>(null);
+    const [isAddingGroup, setIsAddingGroup] = useState(false);
+    const [newGroupName, setNewGroupName] = useState('');
+
+    // Early return AFTER all hooks
     if (!workspaceId || !isValidUUID(workspaceId)) {
         return <div className="h-full flex items-center justify-center text-muted-foreground">Loading workspace...</div>;
     }
 
     const listTasks = tasks[listId || ''] || [];
-    const [activeId, setActiveId] = useState<string | null>(null);
 
+    // Group tasks by dynamic status ID
     const tasksByStatus = useMemo(() => {
-        const grouped: Record<TaskStatus, TaskDto[]> = {
-            TODO: [],
-            IN_PROGRESS: [],
-            IN_REVIEW: [],
-            DONE: []
-        };
+        const grouped: Record<string, TaskDto[]> = {};
+
+        // Initialize groups
+        statusDefs.forEach(def => {
+            grouped[def.id] = [];
+        });
+
+        const firstStatusId = statusDefs[0]?.id;
+
         listTasks.forEach(task => {
-            if (grouped[task.status]) {
-                grouped[task.status].push(task);
+            // Priority:
+            // 1. Valid customStatus
+            // 2. Map legacy status to first appropriate dynamic status
+            // 3. First status in the list
+
+            let statusKey = task.customStatus;
+
+            if (statusKey && grouped[statusKey]) {
+                grouped[statusKey].push(task);
+            } else {
+                // Try fallback to first status
+                if (firstStatusId) {
+                    grouped[firstStatusId].push(task);
+                }
             }
         });
+
         Object.keys(grouped).forEach(key => {
-            grouped[key as TaskStatus].sort((a, b) => a.orderIndex - b.orderIndex);
+            grouped[key].sort((a, b) => a.orderIndex - b.orderIndex);
         });
         return grouped;
-    }, [listTasks]);
+    }, [listTasks, statusDefs]);
+
+    const handleAddStatus = async () => {
+        if (!newGroupName.trim() || !currentList || !workspaceId) return;
+
+        try {
+            await createStatus(workspaceId, currentList.id, {
+                name: newGroupName,
+                color: '#6B7280',
+                category: 'Active'
+            });
+            setIsAddingGroup(false);
+            setNewGroupName('');
+        } catch (e) {
+            console.error("Failed to add status", e);
+        }
+    };
+
+    const handleUpdateStatus = async (statusId: string, updates: { name?: string; color?: string }) => {
+        if (!workspaceId) return;
+        try {
+            await updateStatus(workspaceId, statusId, updates);
+        } catch (e) {
+            console.error("Failed to update status", e);
+        }
+    };
+
+    const handleDeleteStatus = async (statusId: string) => {
+        if (!workspaceId) return;
+        if (!confirm('Are you sure you want to delete this status? Tasks in this status will be moved to To Do.')) return;
+        try {
+            await deleteStatus(workspaceId, statusId);
+        } catch (e) {
+            console.error("Failed to delete status", e);
+        }
+    };
 
     function handleDragStart(event: DragStartEvent) {
         setActiveId(event.active.id as string);
@@ -105,22 +159,22 @@ export function TaskBoardView() {
         if (!activeTask) return;
 
         const overId = over.id as string;
-        let newStatus: TaskStatus | null = null;
+        let newStatusId: string | null = null;
 
-        // 1. Dropped directly on a Column (empty space)
-        if (statuses.includes(overId as TaskStatus)) {
-            newStatus = overId as TaskStatus;
+        // 1. Dropped on a Column (checking against statusDefs IDs)
+        if (statusDefs.some(s => s.id === overId)) {
+            newStatusId = overId;
         }
         // 2. Dropped on another Task
         else {
             const overTask = listTasks.find(t => t.id === overId);
             if (overTask) {
-                newStatus = overTask.status as TaskStatus;
+                newStatusId = overTask.customStatus || 'todo'; // mapping fallback
             }
         }
 
-        if (newStatus && newStatus !== activeTask.status) {
-            updateTask(workspaceId!, activeTask.id, activeTask.listId, { status: newStatus });
+        if (newStatusId && newStatusId !== (activeTask.customStatus || 'todo')) {
+            updateTask(workspaceId!, activeTask.id, activeTask.listId, { customStatus: newStatusId });
         }
     }
 
@@ -128,19 +182,15 @@ export function TaskBoardView() {
         openTaskDetail(taskId);
     };
 
-    const handleAddTask = async (status: TaskStatus) => {
+    const handleAddTask = async (statusId: string) => {
         if (!workspaceId || !listId) return;
         try {
             const newTask = await createTask(workspaceId, {
                 listId,
                 title: 'New Task',
-                priority: 'NONE',
+                customStatus: statusId
             });
             if (newTask) {
-                // If created in a specific column (not default TODO), update status immediately
-                if (status !== 'TODO') {
-                    await updateTask(workspaceId, newTask.id, listId, { status });
-                }
                 openTaskDetail(newTask.id);
             }
         } catch (error) {
@@ -152,17 +202,63 @@ export function TaskBoardView() {
 
     return (
         <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-            {/* FULL HEIGHT container - columns fill width equally */}
             <div className="flex h-full gap-4 p-4 items-stretch min-h-0 min-w-0 overflow-x-auto snap-x snap-mandatory md:snap-none selection:bg-black selection:text-white dark:selection:bg-white dark:selection:text-black">
-                {statuses.map(status => (
+                {statusDefs.map(status => (
                     <BoardColumn
-                        key={status}
-                        status={status}
-                        tasks={tasksByStatus[status]}
+                        key={status.id}
+                        statusDef={status}
+                        tasks={tasksByStatus[status.id] || []}
                         onTaskClick={handleTaskClick}
-                        onAddTask={() => handleAddTask(status)}
+                        onAddTask={() => handleAddTask(status.id)}
+                        onUpdateStatus={(updates) => handleUpdateStatus(status.id, updates)}
+                        onDeleteStatus={() => handleDeleteStatus(status.id)}
                     />
                 ))}
+
+                {/* Fallback 'Unknown' column if dirty data */}
+                {(tasksByStatus['unknown']?.length > 0) && (
+                    <BoardColumn
+                        key="unknown"
+                        statusDef={{ id: 'unknown', listId: listId || '', name: 'Unknown', color: '#999', category: 'NotStarted', order: 99 }}
+                        tasks={tasksByStatus['unknown']}
+                        onTaskClick={handleTaskClick}
+                        onAddTask={() => { }}
+                        onUpdateStatus={() => { }}
+                        onDeleteStatus={() => { }}
+                    />
+                )}
+
+                {/* Create New Group Column */}
+                <div className="min-w-[200px] pt-1">
+                    {!isAddingGroup ? (
+                        <button
+                            onClick={() => setIsAddingGroup(true)}
+                            className="flex items-center gap-2 text-muted-foreground hover:text-foreground hover:bg-muted/50 px-3 py-2 rounded-lg transition-colors text-sm w-full"
+                        >
+                            <Plus className="w-4 h-4" /> Add group
+                        </button>
+                    ) : (
+                        <div className="bg-card border border-border rounded-lg p-3 animate-in fade-in w-[280px]">
+                            <input
+                                type="text"
+                                value={newGroupName}
+                                onChange={e => setNewGroupName(e.target.value)}
+                                placeholder="Group name"
+                                className="w-full bg-background border border-input px-2 py-1.5 rounded text-sm mb-2 focus:ring-1 focus:ring-primary outline-none"
+                                autoFocus
+                                onKeyDown={e => {
+                                    if (e.key === 'Enter') handleAddStatus();
+                                    if (e.key === 'Escape') setIsAddingGroup(false);
+                                }}
+                            />
+                            <div className="flex gap-2">
+                                <button onClick={handleAddStatus} className="bg-primary text-primary-foreground px-3 py-1 rounded text-xs font-medium">Add</button>
+                                <button onClick={() => setIsAddingGroup(false)} className="hover:bg-accent px-2 py-1 rounded text-xs">Cancel</button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
             </div>
             <DragOverlay>
                 {activeTask ? <TaskCard task={activeTask} isOverlay /> : null}
@@ -171,51 +267,144 @@ export function TaskBoardView() {
     );
 }
 
-function BoardColumn({ status, tasks, onTaskClick, onAddTask }: {
-    status: TaskStatus;
+function BoardColumn({ statusDef, tasks, onTaskClick, onAddTask, onUpdateStatus, onDeleteStatus }: {
+    statusDef: TaskStatusDto;
     tasks: TaskDto[];
     onTaskClick: (id: string) => void;
     onAddTask: () => void;
+    onUpdateStatus: (updates: { name?: string; color?: string }) => void;
+    onDeleteStatus: () => void;
 }) {
-    const { setNodeRef, isOver } = useDroppable({ id: status });
-    const config = statusConfig[status];
-    const Icon = config.icon;
+    const { setNodeRef, isOver } = useDroppable({ id: statusDef.id });
+    const [isEditingName, setIsEditingName] = useState(false);
+    const [editName, setEditName] = useState(statusDef.name);
+    const [showMenu, setShowMenu] = useState(false);
+
+    // Sync state when prop changes
+    useEffect(() => {
+        setEditName(statusDef.name);
+    }, [statusDef.name]);
+
+    // Choose icon based on Category
+    const Icon = statusDef.category === 'Closed' ? CheckCircle2 : (statusDef.category === 'Active' ? ArrowUp : Circle);
+
+    const handleSaveName = () => {
+        if (editName.trim() && editName !== statusDef.name) {
+            onUpdateStatus({ name: editName });
+        }
+        setIsEditingName(false);
+    };
 
     return (
         <div
             ref={setNodeRef}
             className={cn(
-                // FULL HEIGHT column, WITH BORDER AND BACKGROUND
                 "flex flex-col flex-1 min-w-[85vw] md:min-w-[280px] h-full transition-colors group/col snap-center",
-                "border border-border/40 bg-card/30 rounded-xl overflow-hidden", // Added overflow-hidden for border radius
+                "border border-border/40 bg-card/30 rounded-xl overflow-hidden",
                 isOver && "bg-card/60 ring-1 ring-primary/10"
             )}
         >
-            {/* Header: Exact Match to Screenshot + Border Separator */}
+            {/* Header */}
             <div className="p-3 pb-3 flex items-center gap-3 shrink-0 border-b border-white/5 mx-1 mb-1 relative">
-                {/* Status Pill */}
-                <div className={cn(
-                    "flex items-center gap-1.5 px-2.5 py-1 rounded-sm max-w-max text-[11px] font-bold uppercase tracking-wide",
-                    config.headerPill
-                )}>
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-sm max-w-max text-[11px] font-bold uppercase tracking-wide transition-opacity"
+                    style={{
+                        backgroundColor: statusDef.category === 'NotStarted' ? 'transparent' : statusDef.color,
+                        color: statusDef.category === 'NotStarted' ? statusDef.color : '#fff',
+                        border: statusDef.category === 'NotStarted' ? `1px solid ${statusDef.color}50` : 'none'
+                    }}
+                >
                     <Icon className="w-3 h-3" />
-                    <span className="translate-y-[0.5px]">{config.label}</span>
+
+                    {isEditingName ? (
+                        <input
+                            autoFocus
+                            value={editName}
+                            onChange={(e) => setEditName(e.target.value)}
+                            onBlur={handleSaveName}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') handleSaveName();
+                                if (e.key === 'Escape') setIsEditingName(false);
+                            }}
+                            onClick={e => e.stopPropagation()}
+                            className="bg-transparent text-inherit outline-none w-[100px]"
+                        />
+                    ) : (
+                        <span className="translate-y-[0.5px]" onClick={(e) => {
+                            e.stopPropagation();
+                            setIsEditingName(true);
+                        }}>{statusDef.name}</span>
+                    )}
                 </div>
 
-                {/* Count */}
                 <span className="text-muted-foreground/50 text-xs font-medium">{tasks.length}</span>
 
-                {/* Hover Actions */}
-                <div className="ml-auto flex gap-1 opacity-0 group-hover/col:opacity-100 transition-opacity">
+                <div className="ml-auto flex gap-1 items-center">
                     <button
                         onClick={(e) => { e.stopPropagation(); onAddTask(); }}
                         className="text-muted-foreground/50 hover:text-foreground hover:bg-muted/50 rounded p-1 transition-colors"
                     >
                         <Plus className="w-4 h-4" />
                     </button>
-                    <button className="text-muted-foreground/50 hover:text-foreground hover:bg-muted/50 rounded p-1 transition-colors">
-                        <MoreHorizontal className="w-4 h-4" />
-                    </button>
+
+                    <div className="relative">
+                        <button
+                            onClick={() => setShowMenu(!showMenu)}
+                            className={cn(
+                                "text-muted-foreground/50 hover:text-foreground hover:bg-muted/50 rounded p-1 transition-colors",
+                                showMenu && "bg-muted text-foreground"
+                            )}
+                        >
+                            <MoreHorizontal className="w-4 h-4" />
+                        </button>
+
+                        {showMenu && (
+                            <>
+                                <div
+                                    className="fixed inset-0 z-40"
+                                    onClick={() => setShowMenu(false)}
+                                />
+                                <div className="absolute top-full right-0 mt-1 w-48 bg-card border border-border shadow-xl rounded-lg py-1 z-50 animate-in fade-in zoom-in-95 duration-100">
+                                    <button
+                                        onClick={() => { setShowMenu(false); setIsEditingName(true); }}
+                                        className="flex items-center gap-2 w-full px-3 py-1.5 text-xs hover:bg-muted transition-colors"
+                                    >
+                                        <Edit2 className="w-3.5 h-3.5" /> Rename
+                                    </button>
+
+                                    <div className="px-3 py-2 border-t border-border">
+                                        <div className="flex items-center gap-2 mb-2 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                                            <Palette className="w-3 h-3" /> Color
+                                        </div>
+                                        <div className="grid grid-cols-4 gap-1.5">
+                                            {PRESET_COLORS.map(c => (
+                                                <button
+                                                    key={c}
+                                                    onClick={() => {
+                                                        onUpdateStatus({ color: c });
+                                                        setShowMenu(false);
+                                                    }}
+                                                    className={cn(
+                                                        "w-6 h-6 rounded-md border border-white/10 hover:scale-110 transition-transform",
+                                                        statusDef.color === c && "ring-2 ring-primary ring-offset-1 ring-offset-card"
+                                                    )}
+                                                    style={{ backgroundColor: c }}
+                                                />
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div className="border-t border-border mt-1 pt-1">
+                                        <button
+                                            onClick={() => { setShowMenu(false); onDeleteStatus(); }}
+                                            className="flex items-center gap-2 w-full px-3 py-1.5 text-xs text-red-500 hover:bg-red-500/10 transition-colors"
+                                        >
+                                            <Trash2 className="w-3.5 h-3.5" /> Delete
+                                        </button>
+                                    </div>
+                                </div>
+                            </>
+                        )}
+                    </div>
                 </div>
             </div>
 
@@ -231,13 +420,10 @@ function BoardColumn({ status, tasks, onTaskClick, onAddTask }: {
                     ))}
                 </SortableContext>
 
-                {/* Add Task Button (At Bottom) */}
                 <button
                     onClick={onAddTask}
-                    className={cn(
-                        "flex items-center gap-2 px-2 py-1.5 text-sm font-medium rounded-md transition-colors mt-1 opacity-60 hover:opacity-100 w-full text-left",
-                        config.addTaskColor
-                    )}
+                    className="flex items-center gap-2 px-2 py-1.5 text-sm font-medium rounded-md transition-colors mt-1 opacity-60 hover:opacity-100 w-full text-left hover:bg-muted/50"
+                    style={{ color: statusDef.color }}
                 >
                     <Plus className="w-4 h-4" />
                     <span>Add Task</span>
@@ -293,29 +479,46 @@ function TaskCard({ task, isOverlay }: { task: TaskDto; isOverlay?: boolean }) {
                 isOverlay && "shadow-xl ring-2 ring-primary rotate-1 scale-105"
             )}
         >
-            <div className="flex justify-between items-start mb-2 gap-2">
+            <div className="flex justify-between items-start mb-1 gap-2">
                 <div className="text-sm font-medium leading-tight line-clamp-2">{task.title}</div>
             </div>
 
-            <div className="flex items-center gap-3 mt-3 text-muted-foreground">
+            {/* Tags */}
+            {task.tags && task.tags.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-2">
+                    {task.tags.map(tag => (
+                        <div
+                            key={tag.id}
+                            className="w-4 h-1 rounded-full"
+                            style={{ backgroundColor: tag.color }}
+                            title={tag.name}
+                        />
+                    ))}
+                </div>
+            )}
 
-                {/* Assignee Avatar */}
-                <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center text-[10px] text-primary font-bold shrink-0">
-                    {task.assigneeName?.charAt(0) || '?'}
+            <div className="flex items-center gap-3 mt-3 text-muted-foreground">
+                <div className={cn(
+                    "w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 shadow-inner",
+                    task.assigneeId ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground/30 border border-dashed border-border"
+                )}>
+                    {task.assigneeName?.charAt(0) || <User className="w-3 h-3" />}
                 </div>
 
-                {/* Due Date */}
                 {task.dueDate && (
                     <div className="flex items-center gap-1 text-[10px] hover:text-foreground transition-colors">
-                        <span>📅</span>
-                        {new Date(task.dueDate).toLocaleDateString(undefined, { month: 'numeric', day: 'numeric', year: '2-digit' })}
+                        <Calendar className="w-2.5 h-2.5" />
+                        {new Date(task.dueDate).toLocaleDateString(undefined, { month: 'numeric', day: 'numeric' })}
                     </div>
                 )}
 
-                {/* Priority Flag */}
-                <div className={cn("text-[10px] font-medium ml-auto flex items-center gap-1", priorityColors[task.priority] || priorityColors.NONE)}>
-                    <span>⚑</span>
-                    {task.priority !== 'NONE' && task.priority}
+                <div className={cn("text-[10px] font-bold ml-auto flex items-center gap-1 opacity-80", priorityColors[task.priority] || priorityColors.NONE)}>
+                    {task.priority !== 'NONE' && (
+                        <>
+                            <Flag className="w-2.5 h-2.5 fill-current" />
+                            <span className="uppercase tracking-tighter">{task.priority}</span>
+                        </>
+                    )}
                 </div>
             </div>
         </div>

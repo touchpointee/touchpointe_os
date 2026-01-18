@@ -22,6 +22,9 @@ namespace Touchpointe.Application
             services.AddScoped<IDashboardService, Services.Dashboard.DashboardService>();
             services.AddScoped<IAiService, Services.AI.AiService>();
             services.AddScoped<Services.LiveKit.ILiveKitTokenService, Services.LiveKit.LiveKitTokenService>();
+            services.AddScoped<ITagService, Services.Tasks.TagService>();
+            services.AddScoped<Services.Tasks.ListStatusService>();
+            services.AddScoped<ITimeTrackingService, Services.TimeTrackingService>();
 
             return services;
         }

@@ -25,6 +25,7 @@ namespace Touchpointe.Application.Services.Tasks
             var tasks = await _context.Tasks
                 .Include(t => t.Assignee)
                 .Include(t => t.CreatedBy)
+                .Include(t => t.Tags)
                 .Where(t => t.WorkspaceId == workspaceId && t.ListId == listId)
                 .OrderBy(t => t.OrderIndex)
                 .ToListAsync();
@@ -34,25 +35,36 @@ namespace Touchpointe.Application.Services.Tasks
 
         public async Task<TaskDto> CreateTaskAsync(Guid workspaceId, Guid userId, CreateTaskRequest request)
         {
-            // Validate Assignee is in Workspace
-            var isMember = await _context.WorkspaceMembers
-                .AnyAsync(wm => wm.WorkspaceId == workspaceId && wm.UserId == request.AssigneeId);
-
-            if (!isMember)
+            // 1. Validate Assignee (if provided)
+            if (request.AssigneeId.HasValue && request.AssigneeId.Value != userId)
             {
-                throw new Exception("Assignee is not a member of this workspace.");
+                var isMember = await _context.WorkspaceMembers
+                    .AnyAsync(wm => wm.WorkspaceId == workspaceId && wm.UserId == request.AssigneeId.Value);
+
+                if (!isMember)
+                {
+                    throw new Exception("Assignee is not a member of this workspace.");
+                }
             }
 
-            // Get Max Order
+            // 2. Get Max Order
             var maxOrder = await _context.Tasks
                 .Where(t => t.ListId == request.ListId)
                 .MaxAsync(t => (int?)t.OrderIndex) ?? 0;
 
-            // Convert DueDate to UTC if present (PostgreSQL requires UTC)
-            DateTime? dueDateUtc = request.DueDate.HasValue 
-                ? DateTime.SpecifyKind(request.DueDate.Value, DateTimeKind.Utc)
-                : null;
+            // 3. Status Defaulting
+            var customStatus = request.CustomStatus;
+            if (string.IsNullOrEmpty(customStatus))
+            {
+                var firstStatus = await _context.ListStatuses
+                    .Where(s => s.ListId == request.ListId)
+                    .OrderBy(s => s.Order)
+                    .FirstOrDefaultAsync();
+                
+                customStatus = firstStatus?.Id.ToString();
+            }
 
+            // 4. Create Task Entity
             var task = new TaskItem
             {
                 WorkspaceId = workspaceId,
@@ -61,43 +73,53 @@ namespace Touchpointe.Application.Services.Tasks
                 Description = request.Description,
                 SubDescription = request.SubDescription,
                 Status = TaskStatus.TODO,
-                Priority = (TaskPriority)request.Priority,
+                CustomStatus = customStatus,
+                Priority = (TaskPriority)(request.Priority ?? TaskPriorityDto.NONE),
                 AssigneeId = request.AssigneeId,
                 CreatedById = userId,
-                DueDate = dueDateUtc,
+                DueDate = request.DueDate.HasValue ? DateTime.SpecifyKind(request.DueDate.Value, DateTimeKind.Utc) : null,
                 OrderIndex = maxOrder + 1,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             }; 
 
+            // 5. Handle Tags (if any)
+            if (request.TagIds != null && request.TagIds.Any())
+            {
+                var tags = await _context.Tags
+                    .Where(tg => tg.WorkspaceId == workspaceId && request.TagIds.Contains(tg.Id))
+                    .ToListAsync();
+                foreach (var tag in tags) task.Tags.Add(tag);
+            }
+
             _context.Tasks.Add(task);
             
-            // Log Activity
-            var activity = new TaskActivity
+            // 6. Log Activity
+            _context.TaskActivities.Add(new TaskActivity
             {
                 TaskId = task.Id,
                 ActivityType = ActivityType.CREATED,
                 ChangedById = userId,
                 NewValue = task.Title,
                 Timestamp = DateTime.UtcNow
-            };
-            _context.TaskActivities.Add(activity);
+            });
 
-            _context.TaskActivities.Add(activity);
+            // 7. Auto-watch: Creator
+            _context.TaskWatchers.Add(new TaskWatcher { TaskId = task.Id, UserId = userId });
 
-            // Auto-watch: Creator and Assignee
-            if (userId != request.AssigneeId)
+            // 8. Auto-watch: Assignee (if different from creator)
+            if (task.AssigneeId.HasValue && task.AssigneeId.Value != userId)
             {
-                _context.TaskWatchers.Add(new TaskWatcher { TaskId = task.Id, UserId = userId });
+                _context.TaskWatchers.Add(new TaskWatcher { TaskId = task.Id, UserId = task.AssigneeId.Value });
             }
-            _context.TaskWatchers.Add(new TaskWatcher { TaskId = task.Id, UserId = request.AssigneeId });
 
             await _context.SaveChangesAsync(CancellationToken.None);
 
-            // Fetch again to include navigation props
+            // Fetch again with navigation props
             var createdTask = await _context.Tasks
                 .Include(t => t.Assignee)
                 .Include(t => t.CreatedBy)
+                .Include(t => t.Tags)
                 .FirstAsync(t => t.Id == task.Id);
 
             return MapToDto(createdTask);
@@ -108,6 +130,7 @@ namespace Touchpointe.Application.Services.Tasks
             var task = await _context.Tasks
                 .Include(t => t.Assignee)
                 .Include(t => t.CreatedBy)
+                .Include(t => t.Tags)
                 .FirstOrDefaultAsync(t => t.Id == taskId && t.WorkspaceId == workspaceId);
 
             if (task == null) throw new Exception("Task not found.");
@@ -119,6 +142,20 @@ namespace Touchpointe.Application.Services.Tasks
             }
 
             // Log changes
+            if (request.CustomStatus != null && task.CustomStatus != request.CustomStatus)
+            {
+                _context.TaskActivities.Add(new TaskActivity
+                {
+                    TaskId = task.Id,
+                    ActivityType = ActivityType.STATUS_CHANGED,
+                    OldValue = task.CustomStatus ?? task.Status.ToString(),
+                    NewValue = request.CustomStatus,
+                    ChangedById = userId,
+                    Timestamp = DateTime.UtcNow
+                });
+                task.CustomStatus = request.CustomStatus;
+            }
+
             if (request.Status.HasValue && task.Status != (TaskStatus)request.Status.Value)
             {
                 _context.TaskActivities.Add(new TaskActivity
@@ -147,30 +184,28 @@ namespace Touchpointe.Application.Services.Tasks
                 task.Priority = (TaskPriority)request.Priority.Value;
             }
 
-            if (request.AssigneeId.HasValue && task.AssigneeId != request.AssigneeId.Value)
+            // Handle Assignee Change (Nullable)
+            if (request.AssigneeId != task.AssigneeId)
             {
-                // Validate new assignee
-                var isMember = await _context.WorkspaceMembers
-                    .AnyAsync(wm => wm.WorkspaceId == workspaceId && wm.UserId == request.AssigneeId.Value);
-                if (!isMember) throw new Exception("New assignee is not a member of this workspace.");
+                if (request.AssigneeId.HasValue)
+                {
+                    var isMember = await _context.WorkspaceMembers
+                        .AnyAsync(wm => wm.WorkspaceId == workspaceId && wm.UserId == request.AssigneeId.Value);
+                    if (!isMember) throw new Exception("New assignee is not a member of this workspace.");
+
+                    _context.TaskWatchers.Add(new TaskWatcher { TaskId = task.Id, UserId = request.AssigneeId.Value });
+                }
 
                 _context.TaskActivities.Add(new TaskActivity
                 {
                     TaskId = task.Id,
                     ActivityType = ActivityType.ASSIGNEE_CHANGED,
-                    OldValue = task.AssigneeId.ToString(),
-                    NewValue = request.AssigneeId.Value.ToString(),
+                    OldValue = task.AssigneeId?.ToString() ?? "Unassigned",
+                    NewValue = request.AssigneeId?.ToString() ?? "Unassigned",
                     ChangedById = userId,
                     Timestamp = DateTime.UtcNow
                 });
-                task.AssigneeId = request.AssigneeId.Value;
-
-                // Auto-watch new Assignee
-                var alreadyWatcher = await _context.TaskWatchers.AnyAsync(w => w.TaskId == task.Id && w.UserId == request.AssigneeId.Value);
-                if (!alreadyWatcher)
-                {
-                    _context.TaskWatchers.Add(new TaskWatcher { TaskId = task.Id, UserId = request.AssigneeId.Value });
-                }
+                task.AssigneeId = request.AssigneeId;
             }
 
             if (request.Title != null && task.Title != request.Title)
@@ -189,7 +224,6 @@ namespace Touchpointe.Application.Services.Tasks
             
             if (request.Description != null && task.Description != request.Description)
             {
-                 // Typically don't log description changes or store full text, but tracking the event
                  _context.TaskActivities.Add(new TaskActivity
                 {
                     TaskId = task.Id,
@@ -205,7 +239,7 @@ namespace Touchpointe.Application.Services.Tasks
                 _context.TaskActivities.Add(new TaskActivity
                 {
                     TaskId = task.Id,
-                    ActivityType = ActivityType.DESCRIPTION_CHANGED, // Reusing existing type
+                    ActivityType = ActivityType.DESCRIPTION_CHANGED,
                     ChangedById = userId,
                     Timestamp = DateTime.UtcNow
                 });
@@ -214,7 +248,6 @@ namespace Touchpointe.Application.Services.Tasks
             
             if (request.DueDate != task.DueDate)
             {
-                // Convert to UTC for PostgreSQL
                 DateTime? dueDateUtc = request.DueDate.HasValue 
                     ? DateTime.SpecifyKind(request.DueDate.Value, DateTimeKind.Utc)
                     : null;
@@ -234,6 +267,16 @@ namespace Touchpointe.Application.Services.Tasks
             if (request.OrderIndex.HasValue)
             {
                 task.OrderIndex = request.OrderIndex.Value;
+            }
+
+            // Tags Update
+            if (request.TagIds != null)
+            {
+                task.Tags.Clear();
+                var tags = await _context.Tags
+                    .Where(tg => tg.WorkspaceId == workspaceId && request.TagIds.Contains(tg.Id))
+                    .ToListAsync();
+                foreach (var tag in tags) task.Tags.Add(tag);
             }
 
             task.UpdatedAt = DateTime.UtcNow;
@@ -267,6 +310,7 @@ namespace Touchpointe.Application.Services.Tasks
             var task = await _context.Tasks
                 .Include(t => t.Assignee)
                 .Include(t => t.CreatedBy)
+                .Include(t => t.Tags)
                 .FirstOrDefaultAsync(t => t.Id == taskId && t.WorkspaceId == workspaceId);
 
             if (task == null) throw new Exception("Task not found.");
@@ -341,7 +385,7 @@ namespace Touchpointe.Application.Services.Tasks
             // Fetch again to get Assignee name
              var createdSubtask = await _context.Subtasks.Include(s => s.Assignee).FirstAsync(s => s.Id == subtask.Id);
 
-            return new SubtaskDto(createdSubtask.Id, createdSubtask.Title, createdSubtask.IsCompleted, createdSubtask.AssigneeId, createdSubtask.Assignee.FullName, createdSubtask.OrderIndex);
+            return new SubtaskDto(createdSubtask.Id, createdSubtask.Title, createdSubtask.IsCompleted, createdSubtask.AssigneeId, createdSubtask.Assignee?.FullName, createdSubtask.OrderIndex);
         }
 
         public async Task<SubtaskDto> ToggleSubtaskAsync(Guid workspaceId, Guid userId, Guid subtaskId)
@@ -374,7 +418,7 @@ namespace Touchpointe.Application.Services.Tasks
 
 
             
-            return new SubtaskDto(subtask.Id, subtask.Title, subtask.IsCompleted, subtask.AssigneeId, subtask.Assignee.FullName, subtask.OrderIndex);
+            return new SubtaskDto(subtask.Id, subtask.Title, subtask.IsCompleted, subtask.AssigneeId, subtask.Assignee?.FullName, subtask.OrderIndex);
         }
 
         public async Task<TaskCommentDto> AddCommentAsync(Guid workspaceId, Guid userId, Guid taskId, CreateCommentRequest request)
@@ -426,18 +470,20 @@ namespace Touchpointe.Application.Services.Tasks
                 t.ListId,
                 t.Title,
                 t.Description,
-                t.Status.ToString(),
+                t.CustomStatus ?? "", 
                 t.Priority.ToString(),
                 t.AssigneeId,
-                t.Assignee != null ? t.Assignee.FullName : "",
-                null, // Avatar
+                t.Assignee?.FullName,
+                t.Assignee?.AvatarUrl,
                 t.CreatedById,
-                t.CreatedBy != null ? t.CreatedBy.FullName : "",
+                t.CreatedBy?.FullName ?? "Unknown",
                 t.DueDate,
                 t.OrderIndex,
                 t.CreatedAt,
                 t.UpdatedAt,
-                t.SubDescription
+                t.SubDescription,
+                t.CustomStatus,
+                t.Tags.Select(tg => new TagDto(tg.Id, tg.Name, tg.Color)).ToList()
             );
         }
 
@@ -527,6 +573,7 @@ namespace Touchpointe.Application.Services.Tasks
                 .Include(t => t.Assignee)
                 .Include(t => t.Watchers)
                 .Include(t => t.Mentions)
+                .Include(t => t.Tags)
                 .Include(t => t.Activities) // For LastActivity
                 // .Include(t => t.Subtasks) // If we need subtask counts, handled via Select/Count usually better
                 .Where(t => t.WorkspaceId == workspaceId)
@@ -556,11 +603,12 @@ namespace Touchpointe.Application.Services.Tasks
                     WorkspaceName = t.Workspace?.Name ?? "",
                     SpaceName = t.List?.Space?.Name ?? "",
                     ListName = t.List?.Name ?? "",
-                    Status = t.Status.ToString(),
+                    Status = t.CustomStatus ?? t.Status.ToString(),
                     Priority = t.Priority.ToString(),
                     DueDate = t.DueDate,
                     AssigneeName = t.Assignee?.FullName ?? "",
                     AssigneeAvatarUrl = t.Assignee?.AvatarUrl ?? "",
+                    Tags = t.Tags.Select(tg => new TagDto(tg.Id, tg.Name, tg.Color)).ToList(),
                     
                     SubtaskCount = await _context.Subtasks.CountAsync(s => s.TaskId == t.Id), // Consider optimizing to GroupBy
                     CompletedSubtasks = await _context.Subtasks.CountAsync(s => s.TaskId == t.Id && s.IsCompleted),

@@ -14,6 +14,11 @@ namespace Touchpointe.Domain.Entities
         public string Content { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+        // Snapshot-based Reply
+        public Guid? ReplyToMessageId { get; set; }
+        public string? ReplyPreviewSenderName { get; set; }
+        public string? ReplyPreviewText { get; set; }
+
         // Navigation properties
         public Channel? Channel { get; set; }
         public DirectMessageGroup? DirectMessageGroup { get; set; }

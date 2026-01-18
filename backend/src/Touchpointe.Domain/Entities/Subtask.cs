@@ -12,8 +12,8 @@ namespace Touchpointe.Domain.Entities
         public string Title { get; set; } = string.Empty;
         public bool IsCompleted { get; set; }
         
-        public Guid AssigneeId { get; set; }
-        public User Assignee { get; set; } = null!;
+        public Guid? AssigneeId { get; set; }
+        public User? Assignee { get; set; }
 
         public int OrderIndex { get; set; }
 

@@ -8,10 +8,12 @@ namespace Touchpointe.Application.Services.Hierarchy
     public class TaskHierarchyService : ITaskHierarchyService
     {
         private readonly IApplicationDbContext _context;
+        private readonly Tasks.ListStatusService _listStatusService;
 
-        public TaskHierarchyService(IApplicationDbContext context)
+        public TaskHierarchyService(IApplicationDbContext context, Tasks.ListStatusService listStatusService)
         {
             _context = context;
+            _listStatusService = listStatusService;
         }
 
         // === GET HIERARCHY ===
@@ -25,6 +27,31 @@ namespace Touchpointe.Application.Services.Hierarchy
                 .Include(s => s.Lists.Where(l => l.FolderId == null).OrderBy(l => l.OrderIndex))
                 .ToListAsync();
 
+            // Collect all list IDs to fetch their statuses
+            var allListIds = spaces
+                .SelectMany(s => s.Lists.Select(l => l.Id))
+                .Concat(spaces.SelectMany(s => s.Folders.SelectMany(f => f.Lists.Select(l => l.Id))))
+                .Distinct()
+                .ToList();
+
+            // Fetch all statuses for these lists in one query
+            var allStatuses = await _context.ListStatuses
+                .Where(st => allListIds.Contains(st.ListId))
+                .OrderBy(st => st.Order)
+                .ToListAsync();
+
+            // Group by ListId for efficient lookup
+            var statusesByList = allStatuses
+                .GroupBy(st => st.ListId)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Select(st => new ListStatusDto(st.Id, st.ListId, st.Name, st.Color, st.Category.ToString(), st.Order)).ToList()
+                );
+
+            // Helper to get statuses for a list
+            List<ListStatusDto> GetStatusesForList(Guid listId) => 
+                statusesByList.TryGetValue(listId, out var statuses) ? statuses : new List<ListStatusDto>();
+
             return spaces.Select(s => new SpaceHierarchyDto(
                 s.Id,
                 s.Name,
@@ -35,9 +62,9 @@ namespace Touchpointe.Application.Services.Hierarchy
                     f.Name,
                     f.Icon,
                     f.OrderIndex,
-                    f.Lists.Select(l => new ListDto(l.Id, l.SpaceId, l.FolderId, l.Name, l.OrderIndex, l.CreatedAt)).ToList()
+                    f.Lists.Select(l => new ListDto(l.Id, l.SpaceId, l.FolderId, l.Name, l.OrderIndex, l.CreatedAt, GetStatusesForList(l.Id))).ToList()
                 )).ToList(),
-                s.Lists.Where(l => l.FolderId == null).Select(l => new ListDto(l.Id, l.SpaceId, l.FolderId, l.Name, l.OrderIndex, l.CreatedAt)).ToList()
+                s.Lists.Where(l => l.FolderId == null).Select(l => new ListDto(l.Id, l.SpaceId, l.FolderId, l.Name, l.OrderIndex, l.CreatedAt, GetStatusesForList(l.Id))).ToList()
             )).ToList();
         }
 
@@ -159,7 +186,13 @@ namespace Touchpointe.Application.Services.Hierarchy
             _context.TaskLists.Add(list);
             await _context.SaveChangesAsync(CancellationToken.None);
 
-            return new ListDto(list.Id, list.SpaceId, list.FolderId, list.Name, list.OrderIndex, list.CreatedAt);
+            // Create default statuses for the new list
+            await _listStatusService.CreateDefaultStatusesAsync(list.Id);
+
+            // Fetch the statuses we just created
+            var statuses = await _listStatusService.GetStatusesByListIdAsync(list.Id);
+
+            return new ListDto(list.Id, list.SpaceId, list.FolderId, list.Name, list.OrderIndex, list.CreatedAt, statuses);
         }
 
         public async Task<ListDto> UpdateListAsync(Guid workspaceId, Guid listId, UpdateListRequest request)

@@ -10,7 +10,7 @@ using Touchpointe.Application.DTOs;
 namespace Touchpointe.API.Controllers
 {
     [ApiController]
-    [Route("api/{workspaceId}/chat")]
+    [Route("api/workspaces/{workspaceId}/chat")]
     [Authorize]
     public class ChatController : ControllerBase
     {

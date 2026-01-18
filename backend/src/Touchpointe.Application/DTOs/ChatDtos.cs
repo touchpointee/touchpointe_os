@@ -16,14 +16,17 @@ namespace Touchpointe.Application.DTOs
         string SenderName, 
         string Content, 
         DateTime CreatedAt,
-        List<MessageReactionDto> Reactions
+        List<MessageReactionDto> Reactions,
+        Guid? ReplyToMessageId = null,
+        string? ReplyPreviewSenderName = null,
+        string? ReplyPreviewText = null
     );
 
     public record MessageReactionDto(Guid Id, Guid MessageId, Guid UserId, string UserName, string Emoji, DateTime CreatedAt);
     public record AddReactionRequest(string Emoji);
     public record MarkReadRequest(Guid MessageId);
 
-    public record PostMessageRequest(string Content);
+    public record PostMessageRequest(string Content, Guid? ReplyToMessageId = null);
 
     public record DmGroupDto(Guid Id, Guid WorkspaceId, List<UserDto> Members);
     

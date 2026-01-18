@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { apiGet, apiPost, apiPut, apiDelete } from '@/lib/api';
 import type { TaskDto, CreateTaskRequest, UpdateTaskRequest, TaskActivityDto, TaskDetailDto } from '@/types/task';
+import type { TimeEntryDto, StartTimerRequest, ManualTimeRequest } from '@/types/timeTracking';
 
 interface TaskState {
     tasks: Record<string, TaskDto[]>; // keyed by listId
@@ -12,12 +13,20 @@ interface TaskState {
     activeTaskId: string | null;
     isDetailPanelOpen: boolean;
     taskDetails: Record<string, TaskDetailDto>; // Cache details
+    timeEntries: Record<string, TimeEntryDto[]>; // keyed by taskId
 
     // Actions
     fetchTasks: (workspaceId: string, listId: string) => Promise<void>;
     createTask: (workspaceId: string, request: CreateTaskRequest) => Promise<TaskDto>;
     updateTask: (workspaceId: string, taskId: string, listId: string, request: UpdateTaskRequest) => Promise<void>;
     fetchActivities: (workspaceId: string, taskId: string) => Promise<void>;
+
+    // Time Tracking
+    fetchTimeEntries: (workspaceId: string, taskId: string) => Promise<void>;
+    startTimer: (workspaceId: string, taskId: string, request?: StartTimerRequest) => Promise<void>;
+    stopTimer: (workspaceId: string, taskId: string) => Promise<void>;
+    logManualTime: (workspaceId: string, taskId: string, request: ManualTimeRequest) => Promise<void>;
+    deleteTimeEntry: (workspaceId: string, entryId: string) => Promise<void>;
 
     // Detail Actions
     openTaskDetail: (taskId: string) => void;
@@ -33,6 +42,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
     tasks: {},
     activities: {},
     taskDetails: {},
+    timeEntries: {},
     activeTaskId: null,
     isDetailPanelOpen: false,
     loading: false,
@@ -64,21 +74,21 @@ export const useTaskStore = create<TaskState>((set, get) => ({
 
     updateTask: async (workspaceId, taskId, listId, request) => {
         try {
-            // Find existing task to preserve existing values (Backend treats missing fields as null/wipe)
-            const listTasks = get().tasks[listId] || [];
-            const existingTask = listTasks.find(t => t.id === taskId);
+            // Only send fields that were explicitly provided in the request
+            // The backend handles partial updates - we don't need to merge with existing values
+            const fullRequest: Partial<UpdateTaskRequest> = {};
 
-            // Construct full payload by merging existing values with request
-            const fullRequest: UpdateTaskRequest = {
-                title: request.title !== undefined ? request.title : existingTask?.title,
-                description: request.description !== undefined ? request.description : existingTask?.description,
-                status: request.status !== undefined ? request.status : existingTask?.status as any,
-                priority: request.priority !== undefined ? request.priority : existingTask?.priority,
-                assigneeId: request.assigneeId !== undefined ? request.assigneeId : existingTask?.assigneeId,
-                dueDate: request.dueDate !== undefined ? request.dueDate : existingTask?.dueDate,
-                orderIndex: request.orderIndex,
-                subDescription: request.subDescription !== undefined ? request.subDescription : existingTask?.subDescription
-            };
+            if (request.title !== undefined) fullRequest.title = request.title;
+            if (request.description !== undefined) fullRequest.description = request.description;
+            if (request.subDescription !== undefined) fullRequest.subDescription = request.subDescription;
+            if (request.status !== undefined) fullRequest.status = request.status;
+            if (request.priority !== undefined) fullRequest.priority = request.priority;
+            if (request.assigneeId !== undefined) fullRequest.assigneeId = request.assigneeId;
+            if (request.dueDate !== undefined) fullRequest.dueDate = request.dueDate;
+            if (request.orderIndex !== undefined) fullRequest.orderIndex = request.orderIndex;
+            if (request.orderIndex !== undefined) fullRequest.orderIndex = request.orderIndex;
+            if (request.customStatus !== undefined) fullRequest.customStatus = request.customStatus;
+            if (request.tagIds !== undefined) fullRequest.tagIds = request.tagIds;
 
             set(state => {
                 const listTasks = state.tasks[listId] || [];
@@ -182,6 +192,59 @@ export const useTaskStore = create<TaskState>((set, get) => ({
                     taskDetails: restDetails,
                     tasks: updatedTasks
                 };
+            });
+        } catch (e) {
+            set({ error: (e as Error).message });
+        }
+    },
+
+    fetchTimeEntries: async (workspaceId, taskId) => {
+        try {
+            const entries = await apiGet<TimeEntryDto[]>(`/workspaces/${workspaceId}/tasks/${taskId}/time`);
+            set(state => ({
+                timeEntries: { ...state.timeEntries, [taskId]: entries }
+            }));
+        } catch (e) {
+            console.error(e);
+        }
+    },
+
+    startTimer: async (workspaceId, taskId, request) => {
+        try {
+            await apiPost(`/workspaces/${workspaceId}/tasks/${taskId}/time/start`, request || {});
+            await get().fetchTimeEntries(workspaceId, taskId);
+        } catch (e) {
+            set({ error: (e as Error).message });
+        }
+    },
+
+    stopTimer: async (workspaceId, taskId) => {
+        try {
+            await apiPost(`/workspaces/${workspaceId}/tasks/${taskId}/time/stop`, {});
+            await get().fetchTimeEntries(workspaceId, taskId);
+        } catch (e) {
+            set({ error: (e as Error).message });
+        }
+    },
+
+    logManualTime: async (workspaceId, taskId, request) => {
+        try {
+            await apiPost(`/workspaces/${workspaceId}/tasks/${taskId}/time/manual`, request);
+            await get().fetchTimeEntries(workspaceId, taskId);
+        } catch (e) {
+            set({ error: (e as Error).message });
+        }
+    },
+
+    deleteTimeEntry: async (workspaceId, entryId) => {
+        try {
+            await apiDelete(`/workspaces/${workspaceId}/time/${entryId}`);
+            set(state => {
+                const newEntries = { ...state.timeEntries };
+                for (const tid in newEntries) {
+                    newEntries[tid] = newEntries[tid].filter(e => e.id !== entryId);
+                }
+                return { timeEntries: newEntries };
             });
         } catch (e) {
             set({ error: (e as Error).message });

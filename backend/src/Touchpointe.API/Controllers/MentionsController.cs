@@ -73,6 +73,7 @@ namespace Touchpointe.API.Controllers
                 .Include(cm => cm.Message.Sender)
                 .Include(cm => cm.Message.Channel)
                 .Include(cm => cm.Message.DirectMessageGroup)
+                .Include(cm => cm.SourceUser)
                 .Where(cm => cm.UserId == userId)
                 .Select(cm => new UserMentionDto
                 {
@@ -84,8 +85,14 @@ namespace Touchpointe.API.Controllers
                     ChannelId = cm.Message.ChannelId,
                     DmGroupId = cm.Message.DirectMessageGroupId,
                     ChannelName = cm.Message.Channel != null ? cm.Message.Channel.Name : "Direct Message",
-                    ActorName = cm.Message.Sender.FullName,
-                    ActorAvatar = cm.Message.Sender.AvatarUrl
+                    ActorName = cm.SourceUserId.HasValue 
+                        ? (cm.SourceUser != null ? cm.SourceUser.FullName : cm.Message.Sender.FullName)
+                        : cm.Message.Sender.FullName,
+                    ActorAvatar = cm.SourceUserId.HasValue 
+                        ? (cm.SourceUser != null ? cm.SourceUser.AvatarUrl : cm.Message.Sender.AvatarUrl)
+                        : cm.Message.Sender.AvatarUrl,
+                    SubType = cm.Type,
+                    Info = cm.Info
                 });
 
             // Union and Sort

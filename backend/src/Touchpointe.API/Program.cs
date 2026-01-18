@@ -6,6 +6,7 @@ using Touchpointe.Infrastructure;
 using Touchpointe.Infrastructure.Middleware;
 using Microsoft.EntityFrameworkCore;
 using Touchpointe.Infrastructure.Persistence;
+using Touchpointe.Infrastructure.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
 

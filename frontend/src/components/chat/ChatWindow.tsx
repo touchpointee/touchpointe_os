@@ -5,15 +5,17 @@ import { useChatStore } from '@/stores/chatStore';
 import { useWorkspaces } from '@/stores/workspaceStore';
 import { useRealtimeStore } from '@/stores/realtimeStore';
 import { getCurrentUser } from '@/lib/auth';
-import { Hash, User } from 'lucide-react';
+import { ChatMessageItem } from './ChatMessageItem';
 import { MentionSuggestion } from '../shared/MentionSuggestion';
-import { MentionRenderer } from '../shared/MentionRenderer';
+import { format, isToday, isYesterday } from 'date-fns';
+import { X, CornerDownRight, Hash, User } from 'lucide-react';
 
 export function ChatWindow() {
     const {
         activeChannelId, activeDmGroupId,
         channels, dmGroups, messages, members,
         fetchMessages, postMessage, fetchWorkspaceMembers,
+        addReaction, removeReaction,
         isLoading, error
     } = useChatStore();
     const {
@@ -31,7 +33,7 @@ export function ChatWindow() {
     const [mentionQuery, setMentionQuery] = useState<string | null>(null);
     const [mentionPosition, setMentionPosition] = useState<{ top?: number, bottom?: number, left: number }>({ left: 0 });
     const [hasContent, setHasContent] = useState(false);
-    const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null);
+    const [replyingTo, setReplyingTo] = useState<any | null>(null); // Type Message
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLDivElement>(null);
@@ -77,9 +79,7 @@ export function ChatWindow() {
             const el = document.getElementById(messageId);
             if (el) {
                 el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                setHighlightedMessageId(messageId);
-                // Remove highlight after 2s
-                setTimeout(() => setHighlightedMessageId(null), 2000);
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
             } else {
                 // Fallback: Scroll to bottom if not found (or should we fetch?)
                 // For now, default behavior handles bottom scroll if we don't interfere
@@ -240,11 +240,13 @@ export function ChatWindow() {
         if (!content) return;
 
         setIsSending(true);
+        setIsSending(true);
         try {
-            await postMessage(activeWorkspace.id, content, currentUser.id, currentUser.name || currentUser.email);
+            await postMessage(activeWorkspace.id, content, currentUser.id, currentUser.name || currentUser.email, replyingTo?.id);
             inputRef.current.innerHTML = '';
             setHasContent(false);
             setMentionQuery(null);
+            setReplyingTo(null);
         } catch (err) {
             console.error("Failed to send", err);
         } finally {
@@ -302,28 +304,50 @@ export function ChatWindow() {
                     currentMessages.map((msg, idx) => {
                         const isMe = msg.senderId === currentUser?.id;
                         const showHeader = idx === 0 || currentMessages[idx - 1].senderId !== msg.senderId || (new Date(msg.createdAt).getTime() - new Date(currentMessages[idx - 1].createdAt).getTime() > 60000 * 5);
-                        const isHighlighted = msg.id === highlightedMessageId;
+
+                        // Date Separator Logic
+                        let dateSeparator = null;
+                        if (idx === 0) {
+                            dateSeparator = new Date(msg.createdAt);
+                        } else {
+                            const prevDate = new Date(currentMessages[idx - 1].createdAt);
+                            const currDate = new Date(msg.createdAt);
+                            if (prevDate.getDate() !== currDate.getDate() || prevDate.getMonth() !== currDate.getMonth() || prevDate.getFullYear() !== currDate.getFullYear()) {
+                                dateSeparator = currDate;
+                            }
+                        }
+
+                        let dateLabel = '';
+                        if (dateSeparator) {
+                            if (isToday(dateSeparator)) dateLabel = 'Today';
+                            else if (isYesterday(dateSeparator)) dateLabel = 'Yesterday';
+                            else dateLabel = format(dateSeparator, 'MMMM d, yyyy');
+                        }
 
                         return (
-                            <div
-                                key={msg.id}
-                                id={msg.id}
-                                className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} ${msg.isOptimistic ? 'animate-pulse' : ''} ${isHighlighted ? 'bg-yellow-500/20 -mx-4 px-4 py-2 transition-colors duration-500' : ''}`}
-                            >
-                                {showHeader && (
-                                    <div className="flex items-center gap-2 mb-1 mt-2">
-                                        <span className="text-xs font-semibold text-foreground/80">{msg.senderName}</span>
-                                        <span className="text-[10px] text-muted-foreground">{new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                            <div key={msg.id} className="flex flex-col">
+                                {dateSeparator && (
+                                    <div className="flex items-center justify-center my-4">
+                                        <div className="bg-muted/50 text-xs text-muted-foreground px-3 py-1 rounded-full">{dateLabel}</div>
                                     </div>
                                 )}
-                                <div
-                                    className={`px-3 py-2 rounded-2xl max-w-[70%] text-sm shadow-sm transition-all duration-200 hover:shadow-md ${isMe
-                                        ? 'bg-primary text-primary-foreground rounded-tr-sm'
-                                        : 'bg-muted text-foreground rounded-tl-sm'
-                                        }`}
-                                >
-                                    <MentionRenderer content={msg.content} />
-                                </div>
+
+                                <ChatMessageItem
+                                    message={msg}
+                                    currentUser={currentUser ? { id: currentUser.id, name: currentUser.name, email: currentUser.email || '' } : null}
+                                    isMe={isMe}
+                                    showHeader={showHeader}
+                                    onReply={(m) => {
+                                        setReplyingTo(m);
+                                        inputRef.current?.focus();
+                                    }}
+                                    onReact={(mid, emoji) => {
+                                        if (activeWorkspace) addReaction(activeWorkspace.id, mid, emoji);
+                                    }}
+                                    onRemoveReaction={(mid, emoji) => {
+                                        if (activeWorkspace) removeReaction(activeWorkspace.id, mid, emoji);
+                                    }}
+                                />
                             </div>
                         );
                     })
@@ -340,6 +364,20 @@ export function ChatWindow() {
                             ? `${currentTypingUsers[0].userName} is typing...`
                             : `${currentTypingUsers.length} people are typing...`
                         }
+                    </div>
+                )}
+
+                {/* Reply Banner */}
+                {replyingTo && (
+                    <div className="flex items-center justify-between bg-muted/40 p-2 rounded-t-lg border-x border-t border-border/50 text-sm">
+                        <div className="flex items-center gap-2 text-muted-foreground truncate">
+                            <CornerDownRight className="w-4 h-4 shrink-0" />
+                            <span>Replying to <span className="font-semibold text-foreground">{replyingTo.senderName}</span></span>
+                            <span className="truncate opacity-70">- {replyingTo.content}</span>
+                        </div>
+                        <button onClick={() => setReplyingTo(null)} className="p-1 hover:bg-muted rounded-full">
+                            <X className="w-4 h-4" />
+                        </button>
                     </div>
                 )}
 

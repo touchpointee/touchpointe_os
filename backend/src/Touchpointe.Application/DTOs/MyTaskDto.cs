@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace Touchpointe.Application.DTOs
 {
@@ -19,6 +20,7 @@ namespace Touchpointe.Application.DTOs
         
         public string AssigneeName { get; set; } = string.Empty;
         public string AssigneeAvatarUrl { get; set; } = string.Empty;
+        public List<TagDto> Tags { get; set; } = new();
 
         public int SubtaskCount { get; set; }
         public int CompletedSubtasks { get; set; }

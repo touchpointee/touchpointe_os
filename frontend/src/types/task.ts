@@ -1,26 +1,34 @@
-export type TaskStatus = 'TODO' | 'IN_PROGRESS' | 'IN_REVIEW' | 'DONE';
+export type TaskStatus = string;
 export type TaskPriority = 'NONE' | 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
 
 export type Task = TaskDto;
+
+export interface TagDto {
+    id: string;
+    name: string;
+    color: string;
+}
 
 export interface TaskDto {
     id: string;
     workspaceId: string;
     listId: string;
     title: string;
-    description?: string;
-    subDescription?: string;
-    status: TaskStatus;
-    priority: TaskPriority;
-    assigneeId: string;
-    assigneeName: string;
-    assigneeAvatar?: string;
+    description: string | null;
+    status: string;
+    priority: string;
+    assigneeId: string | null;
+    assigneeName: string | null;
+    assigneeAvatarUrl: string | null;
     createdById: string;
     createdByName: string;
-    dueDate?: string;
+    dueDate: string | null;
     orderIndex: number;
     createdAt: string;
     updatedAt: string;
+    subDescription: string | null;
+    customStatus: string | null;
+    tags: TagDto[];
 }
 
 export interface TaskActivityDto {
@@ -63,18 +71,22 @@ export interface CreateTaskRequest {
     title: string;
     description?: string;
     subDescription?: string;
-    priority: TaskPriority;
+    customStatus?: string;
+    priority?: string;
     assigneeId?: string;
     dueDate?: string;
+    tagIds?: string[];
 }
 
 export interface UpdateTaskRequest {
     title?: string;
     description?: string;
     subDescription?: string;
-    status?: TaskStatus;
-    priority?: TaskPriority;
-    assigneeId?: string;
+    status?: string;
+    customStatus?: string;
+    priority?: TaskPriority | string;
+    assigneeId?: string | null;
     dueDate?: string | null;
     orderIndex?: number;
+    tagIds?: string[];
 }

@@ -15,7 +15,15 @@ namespace Touchpointe.Application.DTOs
     // Lists
     public record CreateListRequest(Guid SpaceId, Guid? FolderId, string Name);
     public record UpdateListRequest(string Name, int OrderIndex, Guid? FolderId);
-    public record ListDto(Guid Id, Guid SpaceId, Guid? FolderId, string Name, int OrderIndex, DateTime CreatedAt);
+    public record ListDto(
+        Guid Id, 
+        Guid SpaceId, 
+        Guid? FolderId, 
+        string Name, 
+        int OrderIndex, 
+        DateTime CreatedAt, 
+        List<ListStatusDto>? Statuses = null
+    );
 
     // Hierarchy response
     public record SpaceHierarchyDto(

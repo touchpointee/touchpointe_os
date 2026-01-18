@@ -35,7 +35,10 @@ export const useUserStore = create<UserState>()(
                     const user = await apiGet<User>('/auth/me');
                     set({ user, isLoading: false });
                 } catch (e: any) {
-                    set({ error: e.message, isLoading: false });
+                    // Clear cached user on any fetch failure (token expired, user deleted, etc.)
+                    set({ user: null, error: e.message, isLoading: false });
+                    // Also clear token since user is not valid
+                    localStorage.removeItem('token');
                 }
             },
 

@@ -10,6 +10,7 @@ import { TaskDetailPanel } from '@/components/tasks/TaskDetailPanel';
 import { CreateTaskModal } from '@/components/tasks/CreateTaskModal';
 import { useWorkspaces, isValidUUID } from '@/stores/workspaceStore';
 import { useTaskStore } from '@/stores/taskStore';
+import type { CreateTaskRequest } from '@/types/task';
 
 const VIEW_STORAGE_KEY = 'tasks-view-preference';
 
@@ -52,23 +53,14 @@ export function TasksPage() {
     }
 
     // Handle task creation from modal
-    const handleCreateTask = async (data: {
-        title: string;
-        subDescription?: string;
-        assigneeId: string;
-        dueDate: string;
-        priority: 'NONE' | 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
-    }) => {
+    const handleCreateTask = async (data: Partial<CreateTaskRequest>) => {
         if (!listId) throw new Error('No list selected');
 
         await createTask(workspaceId, {
-            title: data.title,
-            subDescription: data.subDescription,
-            listId: listId,
-            assigneeId: data.assigneeId,
-            dueDate: data.dueDate,
-            priority: data.priority
-        });
+            ...data,
+            listId: listId
+        } as CreateTaskRequest);
+
         toast.success(`Task Created`, `Task '${data.title}' created successfully.`);
     };
 

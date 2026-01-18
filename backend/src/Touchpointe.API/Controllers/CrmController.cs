@@ -11,7 +11,7 @@ using Touchpointe.Domain.Entities; // for enums if needed
 namespace Touchpointe.API.Controllers
 {
     [ApiController]
-    [Route("api/{workspaceId}/crm")]
+    [Route("api/workspaces/{workspaceId}/crm")]
     [Authorize]
     public class CrmController : ControllerBase
     {

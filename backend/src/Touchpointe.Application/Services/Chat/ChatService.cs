@@ -145,7 +145,10 @@ namespace Touchpointe.Application.Services.Chat
                         r.User.FullName, 
                         r.Emoji, 
                         r.CreatedAt
-                    )).ToList()
+                    )).ToList(),
+                    m.ReplyToMessageId,
+                    m.ReplyPreviewSenderName,
+                    m.ReplyPreviewText
                 ))
                 .ToListAsync();
         }
@@ -178,6 +181,24 @@ namespace Touchpointe.Application.Services.Chat
                 Content = request.Content
             };
 
+            if (request.ReplyToMessageId.HasValue)
+            {
+                var replyTo = await _context.Messages
+                    .Include(m => m.Sender)
+                    .FirstOrDefaultAsync(m => m.Id == request.ReplyToMessageId.Value);
+
+                if (replyTo != null)
+                {
+                    message.ReplyToMessageId = replyTo.Id;
+                    message.ReplyPreviewSenderName = replyTo.Sender.FullName;
+                    
+                    // trim to ~120 chars
+                    var text = replyTo.Content;
+                    if (text.Length > 120) text = text.Substring(0, 117) + "...";
+                    message.ReplyPreviewText = text;
+                }
+            }
+
             _context.Messages.Add(message);
             await _context.SaveChangesAsync(CancellationToken.None);
 
@@ -188,6 +209,49 @@ namespace Touchpointe.Application.Services.Chat
                 $"mentioned you in #{channel.Name}", 
                 message.Id,
                 new { ChannelId = channelId, MessageId = message.Id });
+
+            // Handle Reply Notifications (New)
+            if (request.ReplyToMessageId.HasValue)
+            {
+                 // Re-fetch replyTo to be safe (or use what we found before if confident, but local var scope issue)
+                 // actually I can just capture the needed data before saving
+                 // But wait, I need to know if I should notify.
+                 // Let's rely on looking up again or restructuring.
+                 // Restructuring is cleaner.
+                 // But for minimal diff, I will just do a quick lookup if I didn't store it.
+                 // Checking code above... I loaded `replyTo` but didn't store it outside the scope.
+                 // I'll just check `message.ReplyToMessageId`.
+                 
+                 // However, I need the SenderId of the ORIGINAL message.
+                 // `message` entity has `ReplyToMessageId` but not the navigation property loaded yet after save (unless I attach it).
+                 // So I must query it.
+                 var originalMessage = await _context.Messages.FindAsync(request.ReplyToMessageId.Value);
+                 if (originalMessage != null && originalMessage.SenderId != userId)
+                 {
+                     // Create Mention
+                     var replyMention = new ChatMention
+                     {
+                         Id = Guid.NewGuid(),
+                         MessageId = message.Id,
+                         UserId = originalMessage.SenderId,
+                         CreatedAt = DateTime.UtcNow,
+                         Type = "reply",
+                         SourceUserId = userId
+                     };
+                     _context.ChatMentions.Add(replyMention);
+                     
+                     // Notify
+                     await _notificationService.NotifyUserAsync(
+                        originalMessage.SenderId,
+                        "New Reply",
+                        $"{sender?.FullName ?? "Someone"} replied to you in #{channel.Name}",
+                        2, 
+                        System.Text.Json.JsonSerializer.Serialize(new { ChannelId = channelId, MessageId = message.Id })
+                     );
+                     
+                     await _context.SaveChangesAsync(CancellationToken.None);
+                 }
+            }
             
             var messageDto = new MessageDto(
                 message.Id,
@@ -198,7 +262,10 @@ namespace Touchpointe.Application.Services.Chat
                 sender?.FullName ?? "Unknown",
                 message.Content,
                 message.CreatedAt,
-                new List<MessageReactionDto>()
+                new List<MessageReactionDto>(),
+                message.ReplyToMessageId,
+                message.ReplyPreviewSenderName,
+                message.ReplyPreviewText
             );
 
             // Real-time broadcast
@@ -327,7 +394,10 @@ namespace Touchpointe.Application.Services.Chat
                         r.User.FullName, 
                         r.Emoji, 
                         r.CreatedAt
-                    )).ToList()
+                    )).ToList(),
+                    m.ReplyToMessageId,
+                    m.ReplyPreviewSenderName,
+                    m.ReplyPreviewText
                 ))
                 .ToListAsync();
         }
@@ -351,6 +421,23 @@ namespace Touchpointe.Application.Services.Chat
                 Content = request.Content
             };
 
+            if (request.ReplyToMessageId.HasValue)
+            {
+                var replyTo = await _context.Messages
+                    .Include(m => m.Sender)
+                    .FirstOrDefaultAsync(m => m.Id == request.ReplyToMessageId.Value);
+
+                if (replyTo != null)
+                {
+                    message.ReplyToMessageId = replyTo.Id;
+                    message.ReplyPreviewSenderName = replyTo.Sender.FullName;
+                    
+                    var text = replyTo.Content;
+                    if (text.Length > 120) text = text.Substring(0, 117) + "...";
+                    message.ReplyPreviewText = text;
+                }
+            }
+
             _context.Messages.Add(message);
             await _context.SaveChangesAsync(CancellationToken.None);
 
@@ -368,7 +455,10 @@ namespace Touchpointe.Application.Services.Chat
                 sender?.FullName ?? "Unknown",
                 message.Content,
                 message.CreatedAt,
-                new List<MessageReactionDto>()
+                new List<MessageReactionDto>(),
+                message.ReplyToMessageId,
+                message.ReplyPreviewSenderName,
+                message.ReplyPreviewText
             );
 
             // Real-time broadcast
@@ -482,6 +572,33 @@ namespace Touchpointe.Application.Services.Chat
             await _context.SaveChangesAsync(CancellationToken.None);
 
             var user = await _context.Users.FindAsync(userId);
+
+            // Notify message owner about the reaction (as a ChatMention)
+            if (message.SenderId != userId)
+            {
+                var reactionMention = new ChatMention
+                {
+                    Id = Guid.NewGuid(),
+                    MessageId = messageId,
+                    UserId = message.SenderId,
+                    CreatedAt = DateTime.UtcNow,
+                    Type = "reaction",
+                    Info = emoji,
+                    SourceUserId = userId
+                };
+                _context.ChatMentions.Add(reactionMention);
+                await _context.SaveChangesAsync(CancellationToken.None);
+
+                // Optional: Notify via push/real-time
+                string channelName = message.ChannelId.HasValue ? message.Channel?.Name ?? "a channel" : "Direct Message";
+                await _notificationService.NotifyUserAsync(
+                    message.SenderId,
+                    "New Reaction",
+                    $"{user?.FullName ?? "Someone"} reacted {emoji} to your message in {channelName}",
+                    2,
+                    System.Text.Json.JsonSerializer.Serialize(new { ChannelId = message.ChannelId, DmGroupId = message.DirectMessageGroupId, MessageId = messageId })
+                );
+            }
 
             // Broadcast
             var reactionDto = new MessageReactionDto(reaction.Id, messageId, userId, user?.FullName ?? "Unknown", emoji, reaction.CreatedAt);

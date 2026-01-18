@@ -45,6 +45,9 @@ namespace Touchpointe.Infrastructure.Persistence
         public DbSet<Meeting> Meetings => Set<Meeting>();
         public DbSet<MeetingParticipant> MeetingParticipants => Set<MeetingParticipant>();
         public DbSet<MeetingSession> MeetingSessions => Set<MeetingSession>();
+        public DbSet<ListStatus> ListStatuses => Set<ListStatus>();
+        public DbSet<Tag> Tags => Set<Tag>();
+        public DbSet<TaskTimeEntry> TaskTimeEntries => Set<TaskTimeEntry>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -188,13 +191,18 @@ namespace Touchpointe.Infrastructure.Persistence
                 .HasOne(t => t.Assignee)
                 .WithMany()
                 .HasForeignKey(t => t.AssigneeId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .OnDelete(DeleteBehavior.SetNull);
 
              modelBuilder.Entity<TaskItem>()
                 .HasOne(t => t.CreatedBy)
                 .WithMany()
                 .HasForeignKey(t => t.CreatedById)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<TaskItem>()
+                .HasMany(t => t.Tags)
+                .WithMany(tg => tg.Tasks)
+                .UsingEntity(j => j.ToTable("TaskTags"));
 
             modelBuilder.Entity<TaskItem>()
                 .HasIndex(t => t.WorkspaceId);
@@ -446,7 +454,8 @@ namespace Touchpointe.Infrastructure.Persistence
                 .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<MessageReaction>()
-                .HasIndex(r => new { r.MessageId, r.UserId, r.Emoji }); // Optimization
+                .HasIndex(r => new { r.MessageId, r.UserId, r.Emoji })
+                .IsUnique();
             // AiChatMessage
             modelBuilder.Entity<AiChatMessage>()
                 .HasOne(m => m.User)
@@ -490,6 +499,49 @@ namespace Touchpointe.Infrastructure.Persistence
                 .WithMany(p => p.Sessions)
                 .HasForeignKey(s => s.MeetingParticipantId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            // ListStatus - for database-driven status colors
+            modelBuilder.Entity<ListStatus>()
+                .ToTable("ListStatuses")
+                .HasOne(s => s.List)
+                .WithMany()
+                .HasForeignKey(s => s.ListId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<ListStatus>()
+                .HasIndex(s => s.ListId);
+
+            modelBuilder.Entity<ListStatus>()
+                .Property(s => s.Color)
+                .IsRequired();
+
+            // Tags
+            modelBuilder.Entity<Tag>()
+                .HasIndex(t => t.WorkspaceId);
+
+            modelBuilder.Entity<Tag>()
+                .HasOne(t => t.Workspace)
+                .WithMany()
+                .HasForeignKey(t => t.WorkspaceId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // TaskTimeEntries
+            modelBuilder.Entity<TaskTimeEntry>()
+                .HasOne(t => t.Task)
+                .WithMany(tk => tk.TimeEntries)
+                .HasForeignKey(t => t.TaskId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<TaskTimeEntry>()
+                .HasOne(t => t.User)
+                .WithMany() // User doesn't need nav prop back
+                .HasForeignKey(t => t.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<TaskTimeEntry>()
+                .HasIndex(t => t.TaskId);
+            modelBuilder.Entity<TaskTimeEntry>()
+                .HasIndex(t => t.UserId);
         }
     }
 }

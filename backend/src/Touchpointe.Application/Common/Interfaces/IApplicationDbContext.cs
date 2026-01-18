@@ -39,6 +39,9 @@ namespace Touchpointe.Application.Common.Interfaces
         DbSet<Meeting> Meetings { get; }
         DbSet<MeetingParticipant> MeetingParticipants { get; }
         DbSet<MeetingSession> MeetingSessions { get; }
+        DbSet<ListStatus> ListStatuses { get; }
+        DbSet<Tag> Tags { get; }
+        DbSet<TaskTimeEntry> TaskTimeEntries { get; }
 
         Task<int> SaveChangesAsync(CancellationToken cancellationToken);
     }

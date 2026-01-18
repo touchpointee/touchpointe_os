@@ -68,7 +68,7 @@ export const useAiStore = create<AiState>((set, get) => ({
         set({ isLoadingHistory: true });
 
         try {
-            const history = await apiGet<any[]>(`/${activeWorkspace.id}/ai/history?agentType=${activeAgent}`);
+            const history = await apiGet<any[]>(`/workspaces/${activeWorkspace.id}/ai/history?agentType=${activeAgent}`);
 
             // Map backend entity to frontend card
             const formattedMessages: AgentCard[] = history.map(msg => ({
@@ -123,7 +123,7 @@ export const useAiStore = create<AiState>((set, get) => ({
                     content: msg.content || msg.markdown || ''
                 }));
 
-            const response = await apiPost<any>(`/${activeWorkspace.id}/ai/agent`, {
+            const response = await apiPost<any>(`/workspaces/${activeWorkspace.id}/ai/agent`, {
                 agentType: activeAgent,
                 userQuery: query,
                 intent: 'query',

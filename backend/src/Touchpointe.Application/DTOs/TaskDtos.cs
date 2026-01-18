@@ -22,22 +22,26 @@ namespace Touchpointe.Application.DTOs
     public record CreateTaskRequest(
         Guid ListId,
         string Title,
-        string? Description,
-        TaskPriorityDto Priority = TaskPriorityDto.MEDIUM,
-        Guid AssigneeId = default,
+        string? Description = null,
+        TaskPriorityDto? Priority = null,
+        Guid? AssigneeId = null,
         DateTime? DueDate = null,
-        string? SubDescription = null
+        string? SubDescription = null,
+        string? CustomStatus = null,
+        List<Guid>? TagIds = null
     );
 
     public record UpdateTaskRequest(
-        string? Title,
-        string? Description,
-        TaskStatusDto? Status,
-        TaskPriorityDto? Priority,
-        Guid? AssigneeId,
-        DateTime? DueDate,
-        int? OrderIndex,
-        string? SubDescription = null
+        string? Title = null,
+        string? Description = null,
+        TaskStatusDto? Status = null,
+        TaskPriorityDto? Priority = null,
+        Guid? AssigneeId = null,
+        DateTime? DueDate = null,
+        int? OrderIndex = null,
+        string? SubDescription = null,
+        string? CustomStatus = null,
+        List<Guid>? TagIds = null
     );
 
     public record TaskDto(
@@ -48,8 +52,8 @@ namespace Touchpointe.Application.DTOs
         string? Description,
         string Status, 
         string Priority, 
-        Guid AssigneeId,
-        string AssigneeName,
+        Guid? AssigneeId,
+        string? AssigneeName,
         string? AssigneeAvatarUrl,
         Guid CreatedById,
         string CreatedByName,
@@ -57,15 +61,23 @@ namespace Touchpointe.Application.DTOs
         int OrderIndex,
         DateTime CreatedAt,
         DateTime UpdatedAt,
-        string? SubDescription
+        string? SubDescription,
+        string? CustomStatus,
+        List<TagDto> Tags
+    );
+
+    public record TagDto(
+        Guid Id,
+        string Name,
+        string Color
     );
 
     public record SubtaskDto(
         Guid Id,
         string Title,
         bool IsCompleted,
-        Guid AssigneeId,
-        string AssigneeName,
+        Guid? AssigneeId,
+        string? AssigneeName,
         int OrderIndex
     );
 
@@ -95,6 +107,6 @@ namespace Touchpointe.Application.DTOs
         List<TaskActivityDto> Activities
     );
 
-    public record CreateSubtaskRequest(string Title, Guid AssigneeId = default);
+    public record CreateSubtaskRequest(string Title, Guid? AssigneeId = null);
     public record CreateCommentRequest(string Content);
 }
