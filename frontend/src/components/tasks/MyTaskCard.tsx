@@ -9,7 +9,7 @@ interface TaskCardProps {
     onClick: (taskId: string) => void;
 }
 
-export const MyTaskCard: React.FC<TaskCardProps> = ({ task, onStatusChange, onClick }) => {
+export const MyTaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
 
     const getPriorityColor = (p: string) => {
         switch (p) {

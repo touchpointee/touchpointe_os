@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useChatStore } from '@/stores/chatStore';
 import { useWorkspaces } from '@/stores/workspaceStore';
 import { useTeamStore } from '@/stores/teamStore';
-import { Hash, Plus, Lock, User, Users } from 'lucide-react';
+import { Plus, Lock, User, Users } from 'lucide-react';
 import { getCurrentUser } from '@/lib/auth';
 
 export function ChatSidebar() {
