@@ -41,6 +41,7 @@ BEGIN
     BEGIN
         ALTER TABLE ""Lists"" ADD COLUMN IF NOT EXISTS ""IsDeleted"" boolean NOT NULL DEFAULT FALSE;
         ALTER TABLE ""Lists"" ADD COLUMN IF NOT EXISTS ""DeletedAt"" timestamp with time zone NULL;
+        ALTER TABLE ""Lists"" ADD COLUMN IF NOT EXISTS ""CreatedById"" uuid NULL;
         ALTER TABLE ""Lists"" ADD COLUMN IF NOT EXISTS ""LastModifiedAt"" timestamp with time zone NULL;
         ALTER TABLE ""Lists"" ADD COLUMN IF NOT EXISTS ""LastModifiedById"" uuid NULL;
     EXCEPTION WHEN OTHERS THEN NULL; END;
@@ -49,6 +50,7 @@ BEGIN
     BEGIN
         ALTER TABLE ""Folders"" ADD COLUMN IF NOT EXISTS ""IsDeleted"" boolean NOT NULL DEFAULT FALSE;
         ALTER TABLE ""Folders"" ADD COLUMN IF NOT EXISTS ""DeletedAt"" timestamp with time zone NULL;
+        ALTER TABLE ""Folders"" ADD COLUMN IF NOT EXISTS ""CreatedById"" uuid NULL;
         ALTER TABLE ""Folders"" ADD COLUMN IF NOT EXISTS ""LastModifiedAt"" timestamp with time zone NULL;
         ALTER TABLE ""Folders"" ADD COLUMN IF NOT EXISTS ""LastModifiedById"" uuid NULL;
     EXCEPTION WHEN OTHERS THEN NULL; END;
@@ -57,6 +59,7 @@ BEGIN
     BEGIN
         ALTER TABLE ""Spaces"" ADD COLUMN IF NOT EXISTS ""IsDeleted"" boolean NOT NULL DEFAULT FALSE;
         ALTER TABLE ""Spaces"" ADD COLUMN IF NOT EXISTS ""DeletedAt"" timestamp with time zone NULL;
+        ALTER TABLE ""Spaces"" ADD COLUMN IF NOT EXISTS ""CreatedById"" uuid NULL;
         ALTER TABLE ""Spaces"" ADD COLUMN IF NOT EXISTS ""LastModifiedAt"" timestamp with time zone NULL;
         ALTER TABLE ""Spaces"" ADD COLUMN IF NOT EXISTS ""LastModifiedById"" uuid NULL;
     EXCEPTION WHEN OTHERS THEN NULL; END;
