@@ -168,10 +168,7 @@ if (!string.IsNullOrEmpty(redisConnection))
 }
 else
 {
-    if (isProduction)
-    {
-        throw new InvalidOperationException("Cannot start in Production without Redis configured.");
-    }
+    // No Redis connection string provided - single instance mode
     Console.WriteLine("[REDIS] Start without Redis Backplane (Single Instance Mode)");
 }
 
