@@ -1,0 +1,27 @@
+# Dependencies
+**/node_modules
+**/bin
+**/obj
+
+# IDE
+.vs
+.vscode
+.idea
+*.user
+*.suo
+
+# Git
+.git
+.gitignore
+
+# Tests
+**/TestResults
+
+# Misc
+*.md
+*.txt
+Thumbs.db
+.DS_Store
+
+# DbFix tool (not needed in deployed container)
+src/Touchpointe.DbFix
