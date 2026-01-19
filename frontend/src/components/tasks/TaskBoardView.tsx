@@ -73,7 +73,7 @@ export function TaskBoardView() {
         return <div className="h-full flex items-center justify-center text-muted-foreground">Loading workspace...</div>;
     }
 
-    const listTasks = tasks[listId || ''] || [];
+    const listTasks = tasks[listId || '']?.items || [];
 
     // Group tasks by dynamic status ID
     const tasksByStatus = useMemo(() => {

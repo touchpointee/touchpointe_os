@@ -1,9 +1,13 @@
 using System;
 
+using Touchpointe.Domain.Common;
+
 namespace Touchpointe.Domain.Entities
 {
-    public class TaskComment
+    public class TaskComment : BaseAuditableEntity, ISoftDelete
     {
+        public bool IsDeleted { get; set; }
+        public DateTime? DeletedAt { get; set; }
         public Guid Id { get; set; } = Guid.NewGuid();
 
         public Guid TaskId { get; set; }

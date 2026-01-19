@@ -6,11 +6,14 @@ using Touchpointe.Application.Common.Interfaces;
 using Touchpointe.Application.DTOs.Agent;
 using Touchpointe.Domain.Entities;
 
+using Microsoft.AspNetCore.RateLimiting;
+
 namespace Touchpointe.API.Controllers
 {
     [ApiController]
     [Route("api/workspaces/{workspaceId}/ai")]
     [Authorize]
+    [EnableRateLimiting("AiLimiter")]
     public class AiController : ControllerBase
     {
         private readonly IAiService _aiService;

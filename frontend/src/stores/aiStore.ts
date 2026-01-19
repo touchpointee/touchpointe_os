@@ -32,6 +32,7 @@ interface AiState {
     fetchHistory: () => Promise<void>;
     clearHistory: () => void; // Clear current view
     clearState: () => void;   // Full reset (logout)
+    reset: () => void;
 }
 
 export const useAiStore = create<AiState>((set, get) => ({
@@ -41,6 +42,8 @@ export const useAiStore = create<AiState>((set, get) => ({
     isLoading: false,
     isProcessing: false,
     isLoadingHistory: false,
+
+    reset: () => get().clearState(),
 
     toggleOpen: () => set(state => ({ isOpen: !state.isOpen })),
 

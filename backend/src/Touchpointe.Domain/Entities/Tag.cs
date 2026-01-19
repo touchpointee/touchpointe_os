@@ -2,10 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
+using Touchpointe.Domain.Common;
+
 namespace Touchpointe.Domain.Entities
 {
-    public class Tag
+    public class Tag : BaseAuditableEntity, ISoftDelete
     {
+        public bool IsDeleted { get; set; }
+        public DateTime? DeletedAt { get; set; }
         public Guid Id { get; set; } = Guid.NewGuid();
 
         public Guid WorkspaceId { get; set; }

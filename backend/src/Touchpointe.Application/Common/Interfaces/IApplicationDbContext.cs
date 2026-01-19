@@ -30,6 +30,7 @@ namespace Touchpointe.Application.Common.Interfaces
         DbSet<DealContact> DealContacts { get; }
         DbSet<CrmActivity> CrmActivities { get; }
         DbSet<AiChatMessage> AiChatMessages { get; }
+        DbSet<AuditLog> AuditLogs { get; }
         
         DbSet<TaskWatcher> TaskWatchers { get; }
         DbSet<TaskMention> TaskMentions { get; }

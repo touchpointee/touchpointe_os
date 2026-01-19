@@ -86,6 +86,7 @@ interface ChatState {
 
     createChannel: (workspaceId: string, name: string, isPrivate: boolean, description: string) => Promise<boolean>;
     createDmGroup: (workspaceId: string, userIds: string[]) => Promise<string | null>;
+    reset: () => void;
 }
 
 export const useChatStore = create<ChatState>()((set, get) => ({
@@ -97,6 +98,17 @@ export const useChatStore = create<ChatState>()((set, get) => ({
     messages: {},
     isLoading: false,
     error: null,
+
+    reset: () => set({
+        channels: [],
+        dmGroups: [],
+        members: [],
+        activeChannelId: null,
+        activeDmGroupId: null,
+        messages: {},
+        isLoading: false,
+        error: null
+    }),
 
     fetchChannels: async (workspaceId) => {
         set({ isLoading: true, error: null });

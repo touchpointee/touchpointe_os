@@ -6,7 +6,6 @@ using Touchpointe.Infrastructure;
 using Touchpointe.Infrastructure.Middleware;
 using Microsoft.EntityFrameworkCore;
 using Touchpointe.Infrastructure.Persistence;
-using Touchpointe.Infrastructure.Persistence;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.RateLimiting;
 using FluentValidation.AspNetCore;
@@ -75,6 +74,8 @@ builder.Services.AddRateLimiter(options =>
             });
     });
 
+
+
     // Auth Limit: 10 attempts per minute (Login/Register protection)
     options.AddFixedWindowLimiter("AuthLimiter", opt =>
     {
@@ -82,10 +83,67 @@ builder.Services.AddRateLimiter(options =>
         opt.Window = TimeSpan.FromMinutes(1);
         opt.QueueLimit = 0;
     });
+
+    // Standard API Limit: 60 requests per minute per user (Abuse prevention)
+    options.AddPolicy("ApiLimiter", context =>
+    {
+        var username = context.User.Identity?.IsAuthenticated == true
+            ? context.User.Identity.Name
+            : context.Connection.RemoteIpAddress?.ToString();
+
+        return System.Threading.RateLimiting.RateLimitPartition.GetFixedWindowLimiter(username ?? "anonymous",
+            _ => new System.Threading.RateLimiting.FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 60,
+                Window = TimeSpan.FromMinutes(1),
+                QueueProcessingOrder = System.Threading.RateLimiting.QueueProcessingOrder.OldestFirst,
+                QueueLimit = 5
+            });
+    });
+
+    // AI Endpoint Limit: 10 requests per minute per user (Cost control)
+    options.AddPolicy("AiLimiter", context =>
+    {
+        var username = context.User.Identity?.IsAuthenticated == true
+            ? context.User.Identity.Name
+            : context.Connection.RemoteIpAddress?.ToString();
+
+        return System.Threading.RateLimiting.RateLimitPartition.GetFixedWindowLimiter(username ?? "anonymous",
+            _ => new System.Threading.RateLimiting.FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 10,
+                Window = TimeSpan.FromMinutes(1),
+                QueueProcessingOrder = System.Threading.RateLimiting.QueueProcessingOrder.OldestFirst,
+                QueueLimit = 2
+            });
+    });
+
+    // Search Limit: 30 requests per minute per user (DB load protection)
+    options.AddPolicy("SearchLimiter", context =>
+    {
+        var username = context.User.Identity?.IsAuthenticated == true
+            ? context.User.Identity.Name
+            : context.Connection.RemoteIpAddress?.ToString();
+
+        return System.Threading.RateLimiting.RateLimitPartition.GetFixedWindowLimiter(username ?? "anonymous",
+            _ => new System.Threading.RateLimiting.FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 30,
+                Window = TimeSpan.FromMinutes(1),
+                QueueProcessingOrder = System.Threading.RateLimiting.QueueProcessingOrder.OldestFirst,
+                QueueLimit = 2
+            });
+    });
 });
 
 var redisConnection = Environment.GetEnvironmentVariable("REDIS_CONNECTION");
 var signalRBuilder = builder.Services.AddSignalR();
+var isProduction = builder.Environment.IsProduction();
+
+if (isProduction && string.IsNullOrEmpty(redisConnection))
+{
+    throw new InvalidOperationException("Redis Connection is REQUIRED in Production for SignalR Backplane.");
+}
 
 if (!string.IsNullOrEmpty(redisConnection))
 {
@@ -98,11 +156,19 @@ if (!string.IsNullOrEmpty(redisConnection))
     }
     catch (Exception ex)
     {
-         Console.WriteLine($"[REDIS] Failed to configure Redis: {ex.Message}. Falling back to in-memory.");
+        if (isProduction)
+        {
+             throw new InvalidOperationException($"[REDIS] Failed to configure Redis in Production: {ex.Message}", ex);
+        }
+        Console.WriteLine($"[REDIS] Failed to configure Redis: {ex.Message}. Falling back to in-memory.");
     }
 }
 else
 {
+    if (isProduction)
+    {
+        throw new InvalidOperationException("Cannot start in Production without Redis configured.");
+    }
     Console.WriteLine("[REDIS] Start without Redis Backplane (Single Instance Mode)");
 }
 
@@ -138,6 +204,8 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 var app = builder.Build();
 
 // Apply any pending migrations on startup
+// PHASE 3 HARDENING: Disabled auto-migrations for safety in multi-replica envs.
+// Run migrations manually via CI/CD pipeine.
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
@@ -158,6 +226,9 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.UseForwardedHeaders(); // Must be first!
+
+app.UseMiddleware<GlobalExceptionMiddleware>();
+app.UseMiddleware<SlowRequestMiddleware>();
 
 app.UseSwagger();
 app.UseSwaggerUI();

@@ -77,6 +77,7 @@ interface CrmStore {
     closeDealDetail: () => void;
 
     fetchActivities: (workspaceId: string, entityId?: string, entityType?: string) => Promise<void>;
+    reset: () => void;
 }
 
 export const useCrmStore = create<CrmStore>()((set, get) => ({
@@ -86,6 +87,17 @@ export const useCrmStore = create<CrmStore>()((set, get) => ({
     activities: [],
     isLoading: false,
     error: null,
+
+    reset: () => set({
+        companies: [],
+        contacts: [],
+        deals: [],
+        activities: [],
+        isLoading: false,
+        error: null,
+        activeDealId: null,
+        isDetailPanelOpen: false
+    }),
 
     fetchCompanies: async (workspaceId) => {
         set({ isLoading: true, error: null });

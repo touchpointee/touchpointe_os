@@ -59,7 +59,7 @@ export function TaskListView() {
         return <div className="p-8 text-center text-muted-foreground">Loading workspace...</div>;
     }
 
-    const listTasks = tasks[listId || ''] || [];
+    const listTasks = tasks[listId || '']?.items || [];
 
     if (loading && !listTasks.length) {
         return <div className="p-8 text-center text-muted-foreground">Loading tasks...</div>;

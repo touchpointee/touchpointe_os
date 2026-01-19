@@ -11,6 +11,7 @@ namespace Touchpointe.Infrastructure
     {
         public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
         {
+            services.AddMemoryCache();
             services.Configure<JwtSettings>(configuration.GetSection(JwtSettings.SectionName));
 
             services.AddSingleton<IJwtTokenGenerator, JwtTokenGenerator>();
@@ -45,6 +46,11 @@ namespace Touchpointe.Infrastructure
                 connectionString = dbUrl ?? configuration.GetConnectionString("DefaultConnection");
             }
 
+            if (string.IsNullOrEmpty(connectionString))
+            {
+                throw new InvalidOperationException("Database connection string is missing. Please set 'DATABASE_URL' or 'ConnectionStrings:DefaultConnection'.");
+            }
+
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseNpgsql(connectionString,
                     builder => builder.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName)));
@@ -54,6 +60,7 @@ namespace Touchpointe.Infrastructure
             services.AddSingleton<IPasswordHasher, Touchpointe.Infrastructure.Security.PasswordHasher>();
 
             services.AddScoped<IWorkspaceContext, Touchpointe.Infrastructure.Services.WorkspaceContext>();
+            services.AddScoped<IAuditService, Touchpointe.Infrastructure.Services.AuditService>();
 
             var jwtSettings = new JwtSettings();
             configuration.Bind(JwtSettings.SectionName, jwtSettings);

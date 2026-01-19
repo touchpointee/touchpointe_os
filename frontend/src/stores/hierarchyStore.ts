@@ -30,6 +30,7 @@ interface HierarchyState {
 
     toggleSpace: (spaceId: string) => void;
     toggleFolder: (folderId: string) => void;
+    reset: () => void;
 }
 
 export const useHierarchyStore = create<HierarchyState>((set, get) => ({
@@ -38,6 +39,14 @@ export const useHierarchyStore = create<HierarchyState>((set, get) => ({
     error: null,
     expandedSpaces: new Set(),
     expandedFolders: new Set(),
+
+    reset: () => set({
+        spaces: [],
+        loading: false,
+        error: null,
+        expandedSpaces: new Set(),
+        expandedFolders: new Set()
+    }),
 
     fetchHierarchy: async (workspaceId) => {
         set({ loading: true, error: null });

@@ -28,6 +28,7 @@ interface DashboardState {
     error: string | null;
 
     fetchDashboardData: (workspaceId: string) => Promise<void>;
+    reset: () => void;
 }
 
 export const useDashboardStore = create<DashboardState>()((set) => ({
@@ -36,6 +37,14 @@ export const useDashboardStore = create<DashboardState>()((set) => ({
     recentActivity: [],
     isLoading: false,
     error: null,
+
+    reset: () => set({
+        stats: null,
+        myTasks: [],
+        recentActivity: [],
+        isLoading: false,
+        error: null
+    }),
 
     fetchDashboardData: async (workspaceId: string) => {
         set({ isLoading: true, error: null });

@@ -1,7 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using Touchpointe.Domain.Entities;
 
+using Touchpointe.Domain.Common;
 using Touchpointe.Application.Common.Interfaces;
+using System.Reflection;
+using System.Linq.Expressions;
 
 namespace Touchpointe.Infrastructure.Persistence
 {
@@ -10,6 +13,25 @@ namespace Touchpointe.Infrastructure.Persistence
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
         {
+        }
+
+        public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            foreach (var entry in ChangeTracker.Entries<ISoftDelete>())
+            {
+                if (entry.State == EntityState.Deleted)
+                {
+                    entry.State = EntityState.Modified;
+                    entry.Entity.IsDeleted = true;
+                    entry.Entity.DeletedAt = DateTime.UtcNow;
+                }
+            }
+            return await base.SaveChangesAsync(cancellationToken);
+        }
+
+        private static void SetGlobalQueryFilter<T>(ModelBuilder builder) where T : class, ISoftDelete
+        {
+            builder.Entity<T>().HasQueryFilter(e => !e.IsDeleted);
         }
 
         public DbSet<User> Users { get; set; }
@@ -41,6 +63,7 @@ namespace Touchpointe.Infrastructure.Persistence
         public DbSet<DealContact> DealContacts => Set<DealContact>();
         public DbSet<CrmActivity> CrmActivities => Set<CrmActivity>();
         public DbSet<AiChatMessage> AiChatMessages => Set<AiChatMessage>();
+        public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
 
         public DbSet<Meeting> Meetings => Set<Meeting>();
         public DbSet<MeetingParticipant> MeetingParticipants => Set<MeetingParticipant>();
@@ -53,7 +76,22 @@ namespace Touchpointe.Infrastructure.Persistence
         {
             base.OnModelCreating(modelBuilder);
 
+            // Global Query Filter for Soft Deletes
+            foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+            {
+                if (typeof(ISoftDelete).IsAssignableFrom(entityType.ClrType))
+                {
+                    var method = typeof(ApplicationDbContext)
+                        .GetMethod(nameof(SetGlobalQueryFilter), BindingFlags.NonPublic | BindingFlags.Static)
+                        ?.MakeGenericMethod(entityType.ClrType);
+                    method?.Invoke(null, new object[] { modelBuilder });
+                }
+            }
+
             // User
+            modelBuilder.Entity<User>()
+                .HasKey(u => u.Id);
+
             modelBuilder.Entity<User>()
                 .HasIndex(u => u.Email)
                 .IsUnique();

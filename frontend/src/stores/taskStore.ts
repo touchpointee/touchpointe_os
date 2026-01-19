@@ -4,7 +4,12 @@ import type { TaskDto, CreateTaskRequest, UpdateTaskRequest, TaskActivityDto, Ta
 import type { TimeEntryDto, StartTimerRequest, ManualTimeRequest } from '@/types/timeTracking';
 
 interface TaskState {
-    tasks: Record<string, TaskDto[]>; // keyed by listId
+    tasks: Record<string, {
+        items: TaskDto[];
+        page: number;
+        hasMore: boolean;
+        totalCount: number;
+    }>; // keyed by listId
     activities: Record<string, TaskActivityDto[]>; // keyed by taskId
     loading: boolean;
     error: string | null;
@@ -16,7 +21,7 @@ interface TaskState {
     timeEntries: Record<string, TimeEntryDto[]>; // keyed by taskId
 
     // Actions
-    fetchTasks: (workspaceId: string, listId: string) => Promise<void>;
+    fetchTasks: (workspaceId: string, listId: string, page?: number) => Promise<void>;
     createTask: (workspaceId: string, request: CreateTaskRequest) => Promise<TaskDto>;
     updateTask: (workspaceId: string, taskId: string, listId: string, request: UpdateTaskRequest) => Promise<void>;
     fetchActivities: (workspaceId: string, taskId: string) => Promise<void>;
@@ -36,6 +41,7 @@ interface TaskState {
     toggleSubtask: (workspaceId: string, subtaskId: string) => Promise<void>;
     addComment: (workspaceId: string, taskId: string, content: string) => Promise<void>;
     deleteTask: (workspaceId: string, taskId: string) => Promise<void>;
+    reset: () => void;
 }
 
 export const useTaskStore = create<TaskState>((set, get) => ({
@@ -48,14 +54,45 @@ export const useTaskStore = create<TaskState>((set, get) => ({
     loading: false,
     error: null,
 
-    fetchTasks: async (workspaceId, listId) => {
-        set({ loading: true, error: null });
+    reset: () => set({
+        tasks: {},
+        activities: {},
+        taskDetails: {},
+        timeEntries: {},
+        activeTaskId: null,
+        isDetailPanelOpen: false,
+        loading: false,
+        error: null
+    }),
+
+    fetchTasks: async (workspaceId, listId, page = 1) => {
+        set({ loading: page === 1, error: null }); // Only full loading on first page
         try {
-            const tasks = await apiGet<TaskDto[]>(`/workspaces/${workspaceId}/tasks/list/${listId}`);
-            set(state => ({
-                tasks: { ...state.tasks, [listId]: tasks },
-                loading: false
-            }));
+            const response = await apiGet<any>(`/workspaces/${workspaceId}/tasks/list/${listId}?page=${page}&pageSize=50`);
+            // Handle PaginatedList response: { items, pageNumber, totalPages, totalCount, hasNextPage }
+
+            set(state => {
+                const existing = state.tasks[listId];
+                const newItems = response.items || [];
+
+                let combinedItems = newItems;
+                if (page > 1 && existing) {
+                    combinedItems = [...existing.items, ...newItems];
+                }
+
+                return {
+                    tasks: {
+                        ...state.tasks,
+                        [listId]: {
+                            items: combinedItems,
+                            page: response.pageNumber,
+                            hasMore: response.hasNextPage,
+                            totalCount: response.totalCount
+                        }
+                    },
+                    loading: false
+                };
+            });
         } catch (e) {
             set({ error: (e as Error).message, loading: false });
         }
@@ -91,12 +128,18 @@ export const useTaskStore = create<TaskState>((set, get) => ({
             if (request.tagIds !== undefined) fullRequest.tagIds = request.tagIds;
 
             set(state => {
-                const listTasks = state.tasks[listId] || [];
-                const updatedTasks = listTasks.map(t =>
+                const listTasks = state.tasks[listId];
+                const updatedItems = (listTasks?.items || []).map((t: TaskDto) =>
                     t.id === taskId ? { ...t, ...request } : t
                 ) as TaskDto[];
                 return {
-                    tasks: { ...state.tasks, [listId]: updatedTasks }
+                    tasks: {
+                        ...state.tasks,
+                        [listId]: {
+                            ...listTasks,
+                            items: updatedItems
+                        }
+                    }
                 };
             });
 
@@ -181,9 +224,12 @@ export const useTaskStore = create<TaskState>((set, get) => ({
                 const { [taskId]: _, ...restDetails } = state.taskDetails;
 
                 // Remove task from all lists in the tasks cache
-                const updatedTasks: Record<string, any[]> = {};
-                for (const [listId, taskList] of Object.entries(state.tasks)) {
-                    updatedTasks[listId] = taskList.filter(t => t.id !== taskId);
+                const updatedTasks: Record<string, any> = {};
+                for (const [listId, taskData] of Object.entries(state.tasks)) {
+                    updatedTasks[listId] = {
+                        ...taskData,
+                        items: taskData.items.filter(t => t.id !== taskId)
+                    };
                 }
 
                 return {

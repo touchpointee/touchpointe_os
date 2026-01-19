@@ -1,9 +1,13 @@
 using System;
 
+using Touchpointe.Domain.Common;
+
 namespace Touchpointe.Domain.Entities
 {
-    public class Message
+    public class Message : BaseAuditableEntity, ISoftDelete
     {
+        public bool IsDeleted { get; set; }
+        public DateTime? DeletedAt { get; set; }
         public Guid Id { get; set; }
         public Guid WorkspaceId { get; set; }
         

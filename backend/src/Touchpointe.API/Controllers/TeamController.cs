@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Touchpointe.Application.Common.Interfaces;
 using Touchpointe.Application.DTOs;
 using Touchpointe.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace Touchpointe.API.Controllers
 {
@@ -16,10 +17,14 @@ namespace Touchpointe.API.Controllers
     public class TeamController : BaseController
     {
         private readonly ITeamService _teamService;
+        private readonly IAuditService _auditService;
+        private readonly IApplicationDbContext _context;
 
-        public TeamController(ITeamService teamService)
+        public TeamController(ITeamService teamService, IAuditService auditService, IApplicationDbContext context)
         {
             _teamService = teamService;
+            _auditService = auditService;
+            _context = context;
         }
 
         [HttpGet("members")]
@@ -58,10 +63,28 @@ namespace Touchpointe.API.Controllers
         {
             try
             {
-                await _teamService.UpdateMemberRoleAsync(workspaceId, GetUserId(), memberId, request.NewRole);
+                var userId = GetUserId();
+                await _teamService.UpdateMemberRoleAsync(workspaceId, userId, memberId, request.NewRole);
+
+                // Audit Log
+                try 
+                {
+                    var member = await _context.WorkspaceMembers
+                        .AsNoTracking()
+                        .FirstOrDefaultAsync(m => m.WorkspaceId == workspaceId && m.UserId == userId);
+                    
+                    var role = member != null ? member.Role.ToString() : "Unknown";
+
+                    await _auditService.LogAsync(userId, workspaceId, role, "Team.RoleChange", memberId.ToString(), HttpContext.Connection.RemoteIpAddress?.ToString() ?? "Unknown", new { NewRole = request.NewRole });
+                }
+                catch 
+                {
+                    // Audit failure should not crash the request
+                }
+
                 return Ok();
             }
-             catch (UnauthorizedAccessException)
+            catch (UnauthorizedAccessException)
             {
                 return Forbid();
             }

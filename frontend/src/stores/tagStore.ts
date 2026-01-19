@@ -16,12 +16,19 @@ interface TagState {
     createTag: (workspaceId: string, name: string, color: string) => Promise<TagDto>;
     updateTag: (workspaceId: string, tagId: string, name: string, color: string) => Promise<void>;
     deleteTag: (workspaceId: string, tagId: string) => Promise<void>;
+    reset: () => void;
 }
 
 export const useTagStore = create<TagState>((set, get) => ({
     tags: {},
     loading: false,
     error: null,
+
+    reset: () => set({
+        tags: {},
+        loading: false,
+        error: null
+    }),
 
     fetchTags: async (workspaceId) => {
         set({ loading: true, error: null });

@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Touchpointe.Application.Common.Interfaces;
 
 namespace Touchpointe.Infrastructure.Middleware
@@ -14,7 +15,7 @@ namespace Touchpointe.Infrastructure.Middleware
             _next = next;
         }
 
-        public async Task InvokeAsync(HttpContext context, IApplicationDbContext dbContext, IWorkspaceContext workspaceContext)
+        public async Task InvokeAsync(HttpContext context, IApplicationDbContext dbContext, IWorkspaceContext workspaceContext, IMemoryCache cache)
         {
             // Skip for non-workspace routes (auth, health, etc.)
             var path = context.Request.Path.Value?.ToLower() ?? "";
@@ -62,9 +63,25 @@ namespace Touchpointe.Infrastructure.Middleware
                 return;
             }
 
-            // Verify user is a member of the workspace
-            var isMember = await dbContext.WorkspaceMembers
-                .AnyAsync(m => m.WorkspaceId == workspaceId && m.UserId == userId);
+            // Cache Key
+            var cacheKey = $"auth:ws:{workspaceId}:user:{userId}";
+
+            // Check Cache
+            if (!cache.TryGetValue(cacheKey, out bool isMember))
+            {
+                // Verify user is a member of the workspace
+                isMember = await dbContext.WorkspaceMembers
+                    .AnyAsync(m => m.WorkspaceId == workspaceId && m.UserId == userId);
+
+                // Cache result for 5 minutes
+                // We handle both True and False outcomes? 
+                // Creating a cache stampede protection might be needed for high load but simple set is fine for now.
+                // We cache 'false' too to prevent hammering on denied requests? Yes.
+                var cacheEntryOptions = new MemoryCacheEntryOptions()
+                    .SetAbsoluteExpiration(TimeSpan.FromMinutes(5));
+
+                cache.Set(cacheKey, isMember, cacheEntryOptions);
+            }
 
             if (!isMember)
             {

@@ -7,12 +7,19 @@ interface MentionState {
     isLoading: boolean;
     error: string | null;
     fetchMentions: () => Promise<void>;
+    reset: () => void;
 }
 
 export const useMentionStore = create<MentionState>((set) => ({
     mentions: [],
     isLoading: false,
     error: null,
+
+    reset: () => set({
+        mentions: [],
+        isLoading: false,
+        error: null
+    }),
 
     fetchMentions: async () => {
         set({ isLoading: true, error: null });

@@ -1,4 +1,4 @@
-using System;
+using Touchpointe.Domain.Common;
 using System.ComponentModel.DataAnnotations;
 
 namespace Touchpointe.Domain.Entities
@@ -21,8 +21,10 @@ namespace Touchpointe.Domain.Entities
         URGENT
     }
 
-    public class TaskItem
+    public class TaskItem : ISoftDelete
     {
+        public bool IsDeleted { get; set; }
+        public DateTime? DeletedAt { get; set; }
         public Guid Id { get; set; } = Guid.NewGuid();
 
         public Guid WorkspaceId { get; set; }

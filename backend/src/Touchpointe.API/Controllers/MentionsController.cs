@@ -6,11 +6,14 @@ using Touchpointe.Application.Common.Interfaces;
 using Touchpointe.Application.DTOs;
 using Touchpointe.Domain.Entities;
 
+using Microsoft.AspNetCore.RateLimiting;
+
 namespace Touchpointe.API.Controllers
 {
     [Authorize]
     [ApiController]
     [Route("api/mentions")]
+    [EnableRateLimiting("ApiLimiter")]
     public class MentionsController : BaseController
     {
         private readonly IApplicationDbContext _context;
@@ -30,15 +33,9 @@ namespace Touchpointe.API.Controllers
             if (pageSize < 1) pageSize = 20;
             if (pageSize > 100) pageSize = 100;
 
-            int takeAmount = page * pageSize;
-
             // 1. Task Mentions
             var taskMentionsQuery = _context.TaskMentions
-                .Include(tm => tm.Task)
-                .Include(tm => tm.Task.CreatedBy)
                 .Where(tm => tm.UserId == userId)
-                .OrderByDescending(tm => tm.CreatedAt)
-                .Take(takeAmount)
                 .Select(tm => new UserMentionDto
                 {
                     Type = MentionType.TASK,
@@ -47,18 +44,20 @@ namespace Touchpointe.API.Controllers
                     PreviewText = tm.Task.Title,
                     TaskId = tm.TaskId,
                     TaskTitle = tm.Task.Title,
-                    ActorName = tm.Task.CreatedBy.FullName, // Approximation
-                    ActorAvatar = tm.Task.CreatedBy.AvatarUrl
+                    ActorName = tm.Task.CreatedBy.FullName, 
+                    ActorAvatar = tm.Task.CreatedBy.AvatarUrl,
+                    // Explicit nulls for union compatibility
+                    ChannelId = null,
+                    DmGroupId = null,
+                    MessageId = null,
+                    ChannelName = null,
+                    SubType = "mention",
+                    Info = null
                 });
 
             // 2. Comment Mentions
             var commentMentionsQuery = _context.CommentMentions
-                .Include(cm => cm.Comment)
-                .Include(cm => cm.Comment.User)
-                .Include(cm => cm.Comment.Task)
                 .Where(cm => cm.UserId == userId)
-                .OrderByDescending(cm => cm.CreatedAt)
-                .Take(takeAmount)
                 .Select(cm => new UserMentionDto
                 {
                     Type = MentionType.COMMENT,
@@ -68,25 +67,26 @@ namespace Touchpointe.API.Controllers
                     TaskId = cm.Comment.TaskId,
                     TaskTitle = cm.Comment.Task.Title,
                     ActorName = cm.Comment.User.FullName,
-                    ActorAvatar = cm.Comment.User.AvatarUrl
+                    ActorAvatar = cm.Comment.User.AvatarUrl,
+                    ChannelId = null,
+                    DmGroupId = null,
+                    MessageId = null,
+                    ChannelName = null,
+                    SubType = "mention",
+                    Info = null
                 });
 
             // 3. Chat Mentions
             var chatMentionsQuery = _context.ChatMentions
-                .Include(cm => cm.Message)
-                .Include(cm => cm.Message.Sender)
-                .Include(cm => cm.Message.Channel)
-                .Include(cm => cm.Message.DirectMessageGroup)
-                .Include(cm => cm.SourceUser)
                 .Where(cm => cm.UserId == userId)
-                .OrderByDescending(cm => cm.CreatedAt)
-                .Take(takeAmount)
                 .Select(cm => new UserMentionDto
                 {
                     Type = MentionType.CHAT,
                     WorkspaceId = cm.Message.WorkspaceId,
                     CreatedAt = cm.CreatedAt,
                     PreviewText = cm.Message.Content,
+                    TaskId = null,
+                    TaskTitle = null,
                     MessageId = cm.MessageId,
                     ChannelId = cm.Message.ChannelId,
                     DmGroupId = cm.Message.DirectMessageGroupId,
@@ -101,19 +101,18 @@ namespace Touchpointe.API.Controllers
                     Info = cm.Info
                 });
 
-            var tMentions = await taskMentionsQuery.ToListAsync();
-            var cMentions = await commentMentionsQuery.ToListAsync();
-            var chMentions = await chatMentionsQuery.ToListAsync();
+            // Unified Query (UNION ALL)
+            var unionQuery = taskMentionsQuery
+                .Concat(commentMentionsQuery)
+                .Concat(chatMentionsQuery);
 
-            var allMentions = tMentions
-                .Concat(cMentions)
-                .Concat(chMentions)
+            var result = await unionQuery
                 .OrderByDescending(m => m.CreatedAt)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
-                .ToList();
+                .ToListAsync();
 
-            return Ok(allMentions);
+            return Ok(result);
         }
     }
 }

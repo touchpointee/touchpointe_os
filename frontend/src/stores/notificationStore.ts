@@ -17,12 +17,19 @@ interface NotificationStore {
     error: string | null;
     fetchNotifications: () => Promise<void>;
     markAsRead: (id: string) => Promise<void>;
+    reset: () => void;
 }
 
 export const useNotificationStore = create<NotificationStore>((set) => ({
     notifications: [],
     isLoading: false,
     error: null,
+
+    reset: () => set({
+        notifications: [],
+        isLoading: false,
+        error: null
+    }),
 
     fetchNotifications: async () => {
         set({ isLoading: true, error: null });

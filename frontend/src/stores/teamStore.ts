@@ -51,12 +51,21 @@ interface TeamState {
     // Presence
     onlineUserIds: string[]; // Use array for JSON serializability in Zustand devtools
     setUserOnline: (userId: string, isOnline: boolean) => void;
+    reset: () => void;
 }
 
 export const useTeamStore = create<TeamState>()((set, get) => ({
     members: [],
     isLoading: false,
     error: null,
+
+    reset: () => set({
+        members: [],
+        isLoading: false,
+        error: null,
+        invitations: [],
+        onlineUserIds: []
+    }),
 
     fetchMembers: async (workspaceId) => {
         set({ isLoading: true, error: null });

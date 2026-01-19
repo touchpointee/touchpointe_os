@@ -40,8 +40,9 @@ export const MyTasksPage = () => {
     const loadTasks = async () => {
         try {
             setLoading(true);
-            const data = await apiGet<MyTask[]>(`/workspaces/${activeWorkspace!.id}/tasks/my-tasks`);
-            setTasks(data);
+            const data = await apiGet<any>(`/workspaces/${activeWorkspace!.id}/tasks/my-tasks`);
+            // Handle PaginatedList response
+            setTasks(data.items || []);
         } catch (err) {
             console.error(err);
         } finally {

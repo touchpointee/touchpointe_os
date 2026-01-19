@@ -19,6 +19,7 @@ export interface RealtimeState {
     emitStopTyping: (channelId: string) => Promise<void>;
     joinChannel: (channelId: string) => Promise<void>;
     leaveChannel: (channelId: string) => Promise<void>;
+    reset: () => void;
 }
 
 export const useRealtimeStore = create<RealtimeState>()((set, get) => ({
@@ -26,6 +27,16 @@ export const useRealtimeStore = create<RealtimeState>()((set, get) => ({
     isConnected: false,
     isConnecting: false,
     typingUsers: {},
+
+    reset: () => {
+        get().disconnect();
+        set({
+            connection: null,
+            isConnected: false,
+            isConnecting: false,
+            typingUsers: {}
+        });
+    },
 
     connect: async (token, workspaceId) => {
         if (get().isConnected || get().isConnecting) return;

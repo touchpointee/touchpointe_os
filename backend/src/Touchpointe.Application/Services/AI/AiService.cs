@@ -76,7 +76,7 @@ namespace Touchpointe.Application.Services.AI
             {
                 case "task":
                 case "workspace":
-                    data["tasks"] = await _taskService.GetMyTasksAsync(userId, workspaceId);
+                    data["tasks"] = (await _taskService.GetMyTasksAsync(userId, workspaceId, 1, 50)).Items;
                     data["lists"] = await _context.TaskLists
                         .Where(l => l.Space.WorkspaceId == workspaceId)
                         .Select(l => new { l.Id, l.Name })

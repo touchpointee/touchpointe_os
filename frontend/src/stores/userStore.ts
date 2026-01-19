@@ -1,6 +1,18 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { apiGet } from '@/lib/api';
+import { useTaskStore } from './taskStore';
+import { useChatStore } from './chatStore';
+import { useHierarchyStore } from './hierarchyStore';
+import { useTeamStore } from './teamStore';
+import { useDashboardStore } from './dashboardStore';
+import { useAiStore } from './aiStore';
+import { useCrmStore } from './crmStore';
+import { useMentionStore } from './mentionStore';
+import { useNotificationStore } from './notificationStore';
+import { useRealtimeStore } from './realtimeStore';
+import { useTagStore } from './tagStore';
+import { useWorkspaces } from './workspaceStore';
 
 export interface User {
     id: string;
@@ -21,7 +33,6 @@ interface UserState {
     logout: () => void;
     clear: () => void;
 }
-
 export const useUserStore = create<UserState>()(
     persist(
         (set) => ({
@@ -43,6 +54,23 @@ export const useUserStore = create<UserState>()(
             },
 
             logout: () => {
+                // 1. Reset all domain stores
+                useTaskStore.getState().reset();
+                useChatStore.getState().reset();
+                useHierarchyStore.getState().reset();
+                useTeamStore.getState().reset();
+                useDashboardStore.getState().reset();
+                useAiStore.getState().reset();
+                useCrmStore.getState().reset();
+                useMentionStore.getState().reset();
+                useNotificationStore.getState().reset();
+                useRealtimeStore.getState().reset();
+                useTagStore.getState().reset();
+
+                // 2. Reset workspace store
+                useWorkspaces.getState().clear();
+
+                // 3. Clear user state
                 set({ user: null, error: null });
             },
 
