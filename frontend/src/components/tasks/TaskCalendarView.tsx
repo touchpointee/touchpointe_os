@@ -17,7 +17,8 @@ const statusColors: Record<TaskStatus, string> = {
 export function TaskCalendarView() {
     const { listId } = useParams<{ listId: string }>();
     const { tasks, openTaskDetail } = useTaskStore();
-    const listTasks = tasks[listId || ''] || [];
+    const listTasksData = tasks[listId || ''];
+    const listTasks = listTasksData?.items || [];
 
     // Calendar State
     const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -33,7 +34,7 @@ export function TaskCalendarView() {
 
     // Group tasks by date
     const tasksByDate = (date: Date) => {
-        return listTasks.filter(task =>
+        return listTasks.filter((task) =>
             task.dueDate && isSameDay(new Date(task.dueDate), date)
         );
     };
