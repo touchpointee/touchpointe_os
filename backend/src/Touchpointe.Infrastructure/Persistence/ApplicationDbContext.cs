@@ -356,11 +356,15 @@ namespace Touchpointe.Infrastructure.Persistence
                 .HasForeignKey(cm => cm.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
             
+            modelBuilder.Entity<ChatMention>()
+                .HasIndex(cm => cm.UserId);
+            
             modelBuilder.Entity<CommentMention>()
                 .HasIndex(cm => cm.UserId);
                 
-            modelBuilder.Entity<ChatMention>()
-                .HasIndex(cm => cm.UserId);
+            // Schema drift protection: SourceUserId likely not in DB yet
+            modelBuilder.Entity<ChatMention>().Ignore(cm => cm.SourceUserId);
+            modelBuilder.Entity<ChatMention>().Ignore(cm => cm.SourceUser);
 
             // CRM: Company
             modelBuilder.Entity<Company>()

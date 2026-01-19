@@ -545,10 +545,13 @@ namespace Touchpointe.Application.Services.Chat
             bool hasAccess = false;
             if (message.ChannelId.HasValue)
             {
+                // Ensure Channel is loaded or handle null
+                if (message.Channel == null) throw new Exception("Channel data missing for this message");
                 hasAccess = !message.Channel.IsPrivate || await _context.ChannelMembers.AnyAsync(cm => cm.ChannelId == message.ChannelId && cm.UserId == userId);
             }
             else if (message.DirectMessageGroupId.HasValue)
             {
+                if (message.DirectMessageGroup == null) throw new Exception("DM Group data missing for this message");
                 hasAccess = message.DirectMessageGroup.Members.Any(mm => mm.UserId == userId);
             }
 
@@ -576,18 +579,25 @@ namespace Touchpointe.Application.Services.Chat
             // Notify message owner about the reaction (as a ChatMention)
             if (message.SenderId != userId)
             {
-                var reactionMention = new ChatMention
+                // Check if mention already exists (Prevent duplicate key error on (MessageId, UserId))
+                var exists = await _context.ChatMentions
+                    .AnyAsync(cm => cm.MessageId == messageId && cm.UserId == message.SenderId);
+                
+                if (!exists)
                 {
-                    Id = Guid.NewGuid(),
-                    MessageId = messageId,
-                    UserId = message.SenderId,
-                    CreatedAt = DateTime.UtcNow,
-                    Type = "reaction",
-                    Info = emoji,
-                    SourceUserId = userId
-                };
-                _context.ChatMentions.Add(reactionMention);
-                await _context.SaveChangesAsync(CancellationToken.None);
+                    var reactionMention = new ChatMention
+                    {
+                        Id = Guid.NewGuid(),
+                        MessageId = messageId,
+                        UserId = message.SenderId,
+                        CreatedAt = DateTime.UtcNow,
+                        Type = "reaction",
+                        Info = emoji,
+                        SourceUserId = userId
+                    };
+                    _context.ChatMentions.Add(reactionMention);
+                    await _context.SaveChangesAsync(CancellationToken.None);
+                }
 
                 // Optional: Notify via push/real-time
                 string channelName = message.ChannelId.HasValue ? message.Channel?.Name ?? "a channel" : "Direct Message";
@@ -619,7 +629,21 @@ namespace Touchpointe.Application.Services.Chat
             _context.MessageReactions.Remove(reaction);
             await _context.SaveChangesAsync(CancellationToken.None);
 
-            string channelKey = reaction.Message.ChannelId.HasValue ? reaction.Message.ChannelId.Value.ToString() : reaction.Message.DirectMessageGroupId.Value.ToString();
+            string channelKey;
+            if (reaction.Message.ChannelId.HasValue)
+            {
+                channelKey = reaction.Message.ChannelId.Value.ToString();
+            }
+            else if (reaction.Message.DirectMessageGroupId.HasValue)
+            {
+                channelKey = reaction.Message.DirectMessageGroupId.Value.ToString();
+            }
+            else 
+            {
+                // Fallback for orphaned messages (should not happen)
+                return;
+            }
+
             await _chatNotification.NotifyReactionRemovedAsync(channelKey, messageId, userId, emoji);
         }
 
