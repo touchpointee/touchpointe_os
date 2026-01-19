@@ -142,7 +142,10 @@ var isProduction = builder.Environment.IsProduction();
 
 if (isProduction && string.IsNullOrEmpty(redisConnection))
 {
-    throw new InvalidOperationException("Redis Connection is REQUIRED in Production for SignalR Backplane.");
+    // WARNING: Single-instance mode - no Redis backplane configured
+    // This works for single-server deployments but won't scale horizontally
+    Console.WriteLine("[WARNING] Redis Connection not configured. Running in SINGLE-INSTANCE mode.");
+    Console.WriteLine("[WARNING] SignalR will work but horizontal scaling is NOT supported.");
 }
 
 if (!string.IsNullOrEmpty(redisConnection))
