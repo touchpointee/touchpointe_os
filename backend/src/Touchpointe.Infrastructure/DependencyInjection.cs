@@ -53,7 +53,9 @@ namespace Touchpointe.Infrastructure
 
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseNpgsql(connectionString,
-                    builder => builder.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName)));
+                    builder => builder.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName))
+                    .ConfigureWarnings(warnings => warnings
+                        .Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning)));
 
             services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
 

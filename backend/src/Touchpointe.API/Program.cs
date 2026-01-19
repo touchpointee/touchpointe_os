@@ -150,10 +150,35 @@ if (isProduction && string.IsNullOrEmpty(redisConnection))
 
 if (!string.IsNullOrEmpty(redisConnection))
 {
-    Console.WriteLine($"[REDIS] Configuring SignalR Backplane with connection: {redisConnection}");
+    // Parse redis:// URL format to StackExchange.Redis format
+    var parsedRedisConnection = redisConnection;
+    if (redisConnection.StartsWith("redis://"))
+    {
+        try
+        {
+            var uri = new Uri(redisConnection);
+            var host = uri.Host;
+            var port = uri.Port > 0 ? uri.Port : 6379;
+            var userInfo = uri.UserInfo.Split(new[] { ':' }, 2);
+            var password = userInfo.Length > 1 ? userInfo[1] : null;
+            
+            parsedRedisConnection = $"{host}:{port},abortConnect=false";
+            if (!string.IsNullOrEmpty(password))
+            {
+                parsedRedisConnection += $",password={password}";
+            }
+            Console.WriteLine($"[REDIS] Parsed redis:// URL to: {host}:{port}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[REDIS] Failed to parse redis:// URL: {ex.Message}. Using raw string.");
+        }
+    }
+    
+    Console.WriteLine($"[REDIS] Configuring SignalR Backplane...");
     try 
     {
-        signalRBuilder.AddStackExchangeRedis(redisConnection, options => {
+        signalRBuilder.AddStackExchangeRedis(parsedRedisConnection, options => {
             options.Configuration.ChannelPrefix = "Touchpointe";
         });
     }
