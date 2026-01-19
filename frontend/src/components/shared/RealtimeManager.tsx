@@ -8,9 +8,8 @@ export function RealtimeManager() {
     const { activeWorkspace } = useWorkspaces();
 
     useEffect(() => {
-        const token = localStorage.getItem('token');
-        if (token && activeWorkspace?.id) {
-            connect(token, activeWorkspace.id);
+        if (activeWorkspace?.id) {
+            connect(activeWorkspace.id);
         }
 
         return () => {

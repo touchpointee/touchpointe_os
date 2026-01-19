@@ -23,7 +23,8 @@ export function ChatWindow() {
         emitStopTyping,
         typingUsers,
         joinChannel,
-        leaveChannel
+        leaveChannel,
+        isConnected
     } = useRealtimeStore();
     const { activeWorkspace } = useWorkspaces();
     const currentUser = getCurrentUser();
@@ -63,15 +64,21 @@ export function ChatWindow() {
         if (activeWorkspace && activeId) {
             fetchMessages(activeWorkspace.id, activeId, isDm);
             fetchWorkspaceMembers(activeWorkspace.id);
+        }
+    }, [activeWorkspace, activeId, isDm, fetchMessages, fetchWorkspaceMembers]);
 
+    // SignalR Subscription Effect - Depends on connection state
+    useEffect(() => {
+        if (activeWorkspace && activeId && isConnected) {
             // Join SignalR Group
+            console.log(`[ChatWindow] Joining channel ${activeId} (connected: ${isConnected})`);
             joinChannel(activeId);
 
             return () => {
                 leaveChannel(activeId);
             };
         }
-    }, [activeWorkspace, activeId, isDm, fetchMessages, fetchWorkspaceMembers, joinChannel, leaveChannel]);
+    }, [activeWorkspace, activeId, isConnected, joinChannel, leaveChannel]);
 
     useEffect(() => {
         const messageId = searchParams.get('messageId');

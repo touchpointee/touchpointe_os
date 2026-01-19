@@ -11,7 +11,7 @@ export interface RealtimeState {
     // Typing tracking: ChannelId -> Set of UserNames typing
     typingUsers: Record<string, { userId: string, userName: string }[]>;
 
-    connect: (token: string, workspaceId: string) => Promise<void>;
+    connect: (workspaceId: string, token?: string) => Promise<void>;
     disconnect: () => Promise<void>;
 
     // Actions
@@ -38,7 +38,7 @@ export const useRealtimeStore = create<RealtimeState>()((set, get) => ({
         });
     },
 
-    connect: async (token, workspaceId) => {
+    connect: async (workspaceId, token) => {
         if (get().isConnected || get().isConnecting) return;
 
         set({ isConnecting: true });
@@ -54,7 +54,8 @@ export const useRealtimeStore = create<RealtimeState>()((set, get) => ({
 
         const connection = new HubConnectionBuilder()
             .withUrl(`${apiBaseUrl}/hubs/chat?workspaceId=${workspaceId}`, {
-                accessTokenFactory: () => token
+                accessTokenFactory: token ? () => token : undefined,
+                withCredentials: true
             })
             .withAutomaticReconnect()
             .configureLogging(LogLevel.Information)
@@ -86,8 +87,13 @@ export const useRealtimeStore = create<RealtimeState>()((set, get) => ({
             useChatStore.getState().handleReactionAdded(reaction);
         });
 
-        connection.on('message:reaction:remove', ({ messageId, userId, emoji }: { messageId: string, userId: string, emoji: string }) => {
-            useChatStore.getState().handleReactionRemoved(messageId, userId, emoji);
+        connection.on('message:reaction:remove', (payload: any) => {
+            const messageId = payload.messageId || payload.MessageId;
+            const userId = payload.userId || payload.UserId;
+            const emoji = payload.emoji || payload.Emoji;
+            if (messageId && userId && emoji) {
+                useChatStore.getState().handleReactionRemoved(messageId, userId, emoji);
+            }
         });
 
         connection.on('user:typing', ({ userId, userName, channelId }: { userId: string, userName: string, channelId: string }) => {

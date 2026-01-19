@@ -334,20 +334,33 @@ export const useChatStore = create<ChatState>()((set, get) => ({
         set(state => {
             const newState: Partial<ChatState> = { messages: { ...state.messages } };
 
-            // We unfortunately have to search for the message since we don't have the channelId
-            // This is okay as we don't expect thousands of active channel entries
+            // Handle PascalCase fallback
+            const msgId = reaction.messageId || reaction.MessageId;
+            const reactionId = reaction.id || reaction.Id;
+
+            if (!msgId) return state;
+
             let found = false;
             for (const key of Object.keys(newState.messages!)) {
                 if (found) break;
                 const list = newState.messages![key];
 
-                const msgIndex = list.findIndex(m => m.id === reaction.messageId);
+                const msgIndex = list.findIndex(m => m.id === msgId);
                 if (msgIndex !== -1) {
                     const msg = list[msgIndex];
                     // Dedupe
-                    if (!msg.reactions.some(r => r.id === reaction.id)) {
+                    if (!msg.reactions.some(r => r.id === reactionId)) {
                         const newList = [...list];
-                        newList[msgIndex] = { ...msg, reactions: [...msg.reactions, reaction] };
+                        // Normalize reaction object to camelCase if needed
+                        const normalizedReaction = {
+                            id: reactionId,
+                            messageId: msgId,
+                            userId: reaction.userId || reaction.UserId,
+                            userName: reaction.userName || reaction.UserName,
+                            emoji: reaction.emoji || reaction.Emoji,
+                            createdAt: reaction.createdAt || reaction.CreatedAt
+                        };
+                        newList[msgIndex] = { ...msg, reactions: [...msg.reactions, normalizedReaction] };
                         newState.messages![key] = newList;
                     }
                     found = true;
