@@ -82,25 +82,30 @@ export function PrimarySidebar() {
                             cn(
                                 'group relative flex items-center justify-center w-full h-12 rounded-lg transition-all duration-200',
                                 isActive
-                                    ? 'nav-item-selected shadow-sm'
+                                    ? 'shadow-sm text-white'
                                     : 'text-[hsl(var(--sidebar-muted))] hover:text-[hsl(var(--sidebar-fg))] hover:bg-[hsl(var(--sidebar-accent))]'
                             )
                         }
+                        style={({ isActive }) => isActive ? { background: 'linear-gradient(94.03deg, #925FF8 -8.9%, #4175E4 100%)' } : undefined}
                     >
-                        {/* Agent Background Shade */}
-                        {label === 'Agent' && (
-                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 bg-gradient-to-br from-[#477df7] via-[#a157fa] to-[#f74787] rounded-lg blur-[6px] opacity-50 pointer-events-none agent-blink-bg" />
+                        {({ isActive }) => (
+                            <>
+                                {/* Agent Background Shade */}
+                                {label === 'Agent' && !isActive && (
+                                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 bg-gradient-to-br from-[#477df7] via-[#a157fa] to-[#f74787] rounded-lg blur-[6px] opacity-50 pointer-events-none agent-blink-bg" />
+                                )}
+
+                                <Icon
+                                    className={cn("w-5 h-5 relative z-10", label === 'Agent' && "agent-blink-icon")}
+                                    style={label === 'Agent' && !isActive ? { stroke: 'url(#agent-gradient)' } : undefined}
+                                />
+
+                                {/* Tooltip */}
+                                <span className="absolute left-full ml-2 px-2 py-1 rounded nav-tooltip text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+                                    {label}
+                                </span>
+                            </>
                         )}
-
-                        <Icon
-                            className={cn("w-5 h-5 relative z-10", label === 'Agent' && "agent-blink-icon")}
-                            style={label === 'Agent' ? { stroke: 'url(#agent-gradient)' } : undefined}
-                        />
-
-                        {/* Tooltip */}
-                        <span className="absolute left-full ml-2 px-2 py-1 rounded nav-tooltip text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
-                            {label}
-                        </span>
                     </NavLink>
                 ))}
             </nav>

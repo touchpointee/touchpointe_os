@@ -224,9 +224,10 @@ function SidebarItemComponent({ item }: { item: SidebarItem }) {
                             className={cn(
                                 "block px-3 py-1.5 text-xs rounded-md transition-colors cursor-pointer",
                                 location.pathname.includes(child.path)
-                                    ? "nav-item-selected"
+                                    ? "text-white font-medium shadow-sm"
                                     : "text-muted-foreground hover:text-foreground hover:bg-accent"
                             )}
+                            style={location.pathname.includes(child.path) ? { background: 'linear-gradient(94.03deg, #925FF8 -8.9%, #4175E4 100%)' } : undefined}
                         >
                             {child.label}
                         </a>
@@ -243,9 +244,10 @@ function SidebarItemComponent({ item }: { item: SidebarItem }) {
             className={cn(
                 'flex items-center gap-2 px-3 py-2 text-sm rounded-md transition-colors cursor-pointer',
                 isActive
-                    ? 'nav-item-selected font-medium'
+                    ? 'text-white font-medium shadow-sm'
                     : 'text-muted-foreground hover:text-foreground hover:bg-accent'
             )}
+            style={isActive ? { background: 'linear-gradient(94.03deg, #925FF8 -8.9%, #4175E4 100%)' } : undefined}
         >
             <Icon className="w-4 h-4" />
             <span>{item.label}</span>

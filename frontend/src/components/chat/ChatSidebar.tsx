@@ -102,8 +102,9 @@ export function ChatSidebar() {
                         <button
                             key={channel.id}
                             onClick={() => setActiveChannel(channel.id)}
-                            className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-xs transition-colors ${activeChannelId === channel.id ? 'nav-item-selected' : 'text-muted-foreground hover:bg-accent hover:text-foreground'
+                            className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-xs transition-colors ${activeChannelId === channel.id ? 'text-white font-medium shadow-sm' : 'text-muted-foreground hover:bg-accent hover:text-foreground'
                                 }`}
+                            style={activeChannelId === channel.id ? { background: 'linear-gradient(94.03deg, #925FF8 -8.9%, #4175E4 100%)' } : undefined}
                         >
                             {channel.isPrivate ? (
                                 <Lock className="w-3.5 h-3.5" />
@@ -157,8 +158,9 @@ export function ChatSidebar() {
                             <button
                                 key={group.id}
                                 onClick={() => setActiveDmInfo(group.id)}
-                                className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-xs transition-colors ${activeDmGroupId === group.id ? 'nav-item-selected' : 'text-muted-foreground hover:bg-accent hover:text-foreground'
+                                className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-xs transition-colors ${activeDmGroupId === group.id ? 'text-white font-medium shadow-sm' : 'text-muted-foreground hover:bg-accent hover:text-foreground'
                                     }`}
+                                style={activeDmGroupId === group.id ? { background: 'linear-gradient(94.03deg, #925FF8 -8.9%, #4175E4 100%)' } : undefined}
                             >
                                 <div className="relative">
                                     {group.members.length > 2 ? <Users className="w-3.5 h-3.5" /> : <User className="w-3.5 h-3.5" />}
