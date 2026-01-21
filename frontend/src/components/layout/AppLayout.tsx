@@ -43,9 +43,9 @@ export function AppLayout({ children, hideContextSidebar = false }: AppLayoutPro
                 {location.pathname.startsWith('/chat') || location.pathname.startsWith('/ai') || hideContextSidebar ? (
                     children
                 ) : (
-                    <div className="h-full p-4 md:p-6">
-                        <div className="surface-elevated rounded-tl-2xl h-full flex flex-col overflow-hidden p-4 md:p-6 bg-card/50 border border-white/5">
-                            <div className="flex-1 overflow-y-auto">
+                    <div className="h-full pt-4 pl-4 md:pt-6 md:pl-6">
+                        <div className="surface-elevated rounded-tl-2xl h-full flex flex-col overflow-hidden pt-4 pl-4 md:pt-6 md:pl-6 bg-card/50 border border-white/5">
+                            <div className="flex-1 overflow-y-auto no-scrollbar">
                                 {children}
                             </div>
                         </div>

@@ -187,8 +187,9 @@ function SpaceItem({ space, workspaceId, isExpanded, expandedFolders, onToggle, 
             <div
                 className={cn(
                     "group flex items-center gap-2 px-2 py-1.5 rounded-md transition-all duration-200 relative cursor-pointer select-none",
-                    shouldHighlight ? "nav-item-selected" : "hover:bg-accent text-foreground"
+                    shouldHighlight ? "text-white font-medium shadow-sm" : "hover:bg-accent text-foreground"
                 )}
+                style={shouldHighlight ? { background: 'linear-gradient(94.03deg, #925FF8 -8.9%, #4175E4 100%)' } : undefined}
                 onClick={onToggle}
             >
                 {/* Active Indicator */}
@@ -355,8 +356,9 @@ function FolderItem({ folder, spaceId, workspaceId, isExpanded, onToggle, canMan
             <div
                 className={cn(
                     "group flex items-center gap-2 px-2 py-1 rounded-md hover:bg-accent transition-colors cursor-pointer select-none",
-                    shouldHighlight && "nav-item-selected"
+                    shouldHighlight && "text-white font-medium shadow-sm"
                 )}
+                style={shouldHighlight ? { background: 'linear-gradient(94.03deg, #925FF8 -8.9%, #4175E4 100%)' } : undefined}
                 onClick={onToggle}
             >
                 {/* Active Indicator */}
@@ -494,10 +496,11 @@ function ListItem({ list, workspaceId, canManageStructure }: { list: ListDto, wo
                 cn(
                     'group relative flex items-center gap-2 px-2 py-1.5 rounded-md text-[11px] transition-all select-none pl-2',
                     isActive
-                        ? 'nav-item-selected'
+                        ? 'text-white font-medium shadow-sm'
                         : 'text-muted-foreground hover:bg-accent hover:text-foreground'
                 )
             }
+            style={({ isActive }) => isActive ? { background: 'linear-gradient(94.03deg, #925FF8 -8.9%, #4175E4 100%)' } : undefined}
         >
             {({ isActive }) => (
                 <>
