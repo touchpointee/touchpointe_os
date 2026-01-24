@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "i0XPGaiME/8=",
+  "dgSpecHash": "iyJ28w+CiN8=",
   "success": true,
-  "projectFilePath": "C:\\Users\\ajmal\\Desktop\\kravino Innovations\\touchpointe\\touchpointe_os\\backend\\src\\touchpointe.api\\Touchpointe.API.csproj",
+  "projectFilePath": "C:\\Users\\ajmal\\Desktop\\kravino Innovations\\touchpointe\\touchpointe_os\\backend\\src\\Touchpointe.API\\Touchpointe.API.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\ajmal\\.nuget\\packages\\bcrypt.net-next\\4.0.3\\bcrypt.net-next.4.0.3.nupkg.sha512",
     "C:\\Users\\ajmal\\.nuget\\packages\\fluentvalidation\\12.1.1\\fluentvalidation.12.1.1.nupkg.sha512",

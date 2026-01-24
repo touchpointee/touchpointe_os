@@ -109,4 +109,5 @@ namespace Touchpointe.Application.DTOs
 
     public record CreateSubtaskRequest(string Title, Guid? AssigneeId = null);
     public record CreateCommentRequest(string Content);
+    public record UpdateCommentRequest(string Content);
 }

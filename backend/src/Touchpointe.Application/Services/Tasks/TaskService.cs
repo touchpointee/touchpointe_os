@@ -137,10 +137,8 @@ namespace Touchpointe.Application.Services.Tasks
             if (task == null) throw new Exception("Task not found.");
             
             // STRICT PERMISSION CHECK: Only Assignee or Creator can edit
-            if (task.AssigneeId != userId && task.CreatedById != userId)
-            {
-                throw new UnauthorizedAccessException("You don't have permission to edit this task.");
-            }
+            // STRICT PERMISSION CHECK REMOVED: Workspace membership is the only requirement.
+            // Any member can edit any task.
 
             // Log changes
             if (request.CustomStatus != null && task.CustomStatus != request.CustomStatus)
@@ -347,10 +345,7 @@ namespace Touchpointe.Application.Services.Tasks
             if (task == null) throw new Exception("Task not found.");
 
             // STRICT PERMISSION CHECK: Only Main Task Owner can add subtasks
-            if (task.AssigneeId != userId && task.CreatedById != userId)
-            {
-                throw new UnauthorizedAccessException("Only the task owner can add subtasks.");
-            }
+            // STRICT PERMISSION CHECK REMOVED: Workspace membership is the only requirement.
 
             // Validate Assignee
              var isMember = await _context.WorkspaceMembers
@@ -399,10 +394,7 @@ namespace Touchpointe.Application.Services.Tasks
             if (subtask == null) throw new Exception("Subtask not found.");
 
             // STRICT PERMISSION CHECK: Subtask Assignee OR Parent Task Assignee
-            if (subtask.AssigneeId != userId && subtask.Task.AssigneeId != userId)
-            {
-                throw new UnauthorizedAccessException("You don't have permission to complete this subtask.");
-            }
+            // STRICT PERMISSION CHECK REMOVED: Workspace membership is the only requirement.
 
             subtask.IsCompleted = !subtask.IsCompleted;
 
@@ -461,6 +453,39 @@ namespace Touchpointe.Application.Services.Tasks
                 new { TaskId = taskId, CommentId = comment.Id });
 
             return new TaskCommentDto(createdComment.Id, createdComment.UserId, createdComment.User.FullName, "", createdComment.Content, createdComment.CreatedAt);
+        }
+
+        public async Task<TaskCommentDto> UpdateCommentAsync(Guid workspaceId, Guid userId, Guid commentId, string content, CancellationToken cancellationToken = default)
+        {
+            var comment = await _context.TaskComments
+                .Include(c => c.User)
+                .Include(c => c.Task)
+                .FirstOrDefaultAsync(c => c.Id == commentId && c.Task.WorkspaceId == workspaceId, cancellationToken);
+
+            if (comment == null) throw new Exception("Comment not found.");
+
+            // PERMISSION: Any workspace member can edit comments (Controller ensures workspace membership)
+            
+            comment.Content = content;
+            // Note: Not strict about logging comment edits in activity for now unless requested, preserving simple activity log.
+            
+            await _context.SaveChangesAsync(cancellationToken);
+
+            return new TaskCommentDto(comment.Id, comment.UserId, comment.User.FullName, comment.User.AvatarUrl, comment.Content, comment.CreatedAt);
+        }
+
+        public async Task DeleteCommentAsync(Guid workspaceId, Guid userId, Guid commentId, CancellationToken cancellationToken = default)
+        {
+            var comment = await _context.TaskComments
+                .Include(c => c.Task)
+                .FirstOrDefaultAsync(c => c.Id == commentId && c.Task.WorkspaceId == workspaceId, cancellationToken);
+
+            if (comment == null) throw new Exception("Comment not found.");
+
+            // PERMISSION: Any workspace member can delete comments
+            
+            _context.TaskComments.Remove(comment);
+            await _context.SaveChangesAsync(cancellationToken);
         }
 
         private static TaskDto MapToDto(TaskItem t)
@@ -626,10 +651,7 @@ namespace Touchpointe.Application.Services.Tasks
                 throw new Exception("Task not found");
 
             // STRICT PERMISSION CHECK: Only Assignee or Creator can delete
-            if (task.AssigneeId != userId && task.CreatedById != userId)
-            {
-                throw new UnauthorizedAccessException("You don't have permission to delete this task.");
-            }
+            // STRICT PERMISSION CHECK REMOVED: Workspace membership is the only requirement.
 
             // Query and remove related entities
             var subtasks = await _context.Subtasks.Where(s => s.TaskId == taskId).ToListAsync(cancellationToken);
