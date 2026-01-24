@@ -86,7 +86,7 @@ function NavItem({ icon: Icon, label, path, isAgent }: { icon: any, label: strin
                 )
             }
             style={({ isActive }) => isActive ? {
-                background: 'linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary)/0.8) 100%)',
+                background: 'linear-gradient(94.03deg, #925FF8 -8.9%, #4175E4 100%)',
                 color: 'white'
             } : undefined}
         >
