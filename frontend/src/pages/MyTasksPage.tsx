@@ -28,6 +28,7 @@ export const MyTasksPage = () => {
 
     // Read state from URL
     const filter = (searchParams.get('filter') || 'ALL') as 'ALL' | 'TODAY' | 'OVERDUE' | 'MENTIONS' | 'COMMENT_MENTIONS' | 'CHAT_MENTIONS';
+    const statusFilter = searchParams.get('status') || 'ALL';
     const spaceFilterId = searchParams.get('spaceFilter');
     const urgencyMode = searchParams.get('urgency') === 'true';
 
@@ -166,6 +167,11 @@ export const MyTasksPage = () => {
                 break;
         }
 
+        // 1.2 Status Filter
+        if (statusFilter !== 'ALL') {
+            result = result.filter(t => t.status === statusFilter);
+        }
+
         // 1.5. Space Filter
         if (spaceFilterId && spaces.length > 0) {
             // Find space name from stored hierarchy
@@ -267,152 +273,173 @@ export const MyTasksPage = () => {
                             </h2>
 
                             {/* View Toggles */}
-                            <div className="flex items-center gap-2">
-
-                                {isMentionsView && (
-                                    <div className="flex items-center bg-card border border-border p-1 rounded-lg">
-                                        <button
-                                            onClick={() => setSearchParams({ filter: 'MENTIONS' })}
-                                            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${filter === 'MENTIONS' ? 'bg-primary/10 text-primary shadow-sm' : 'text-muted-foreground hover:bg-accent'}`}
-                                        >
-                                            All
-                                        </button>
-                                        <button
-                                            onClick={() => setSearchParams({ filter: 'CHAT_MENTIONS' })}
-                                            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${filter === 'CHAT_MENTIONS' ? 'bg-primary/10 text-primary shadow-sm' : 'text-muted-foreground hover:bg-accent'}`}
-                                        >
-                                            Chat
-                                        </button>
-                                        <button
-                                            onClick={() => setSearchParams({ filter: 'COMMENT_MENTIONS' })}
-                                            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${filter === 'COMMENT_MENTIONS' ? 'bg-primary/10 text-primary shadow-sm' : 'text-muted-foreground hover:bg-accent'}`}
-                                        >
-                                            Comments
-                                        </button>
-                                    </div>
-                                )}
+                            <div className="flex items-center gap-3">
 
                                 {!isMentionsView && (
-                                    <div className="flex items-center bg-card border border-border p-1 rounded-lg">
-                                        <button
-                                            onClick={() => setViewMode('GRID')}
-                                            className={`p-1.5 rounded-md transition-all ${viewMode === 'GRID' ? 'bg-primary/10 text-primary shadow-sm' : 'text-muted-foreground hover:bg-accent'}`}
-                                        >
-                                            <LayoutGrid className="w-4 h-4" />
-                                        </button>
-                                        <button
-                                            onClick={() => setViewMode('LIST')}
-                                            className={`p-1.5 rounded-md transition-all ${viewMode === 'LIST' ? 'bg-primary/10 text-primary shadow-sm' : 'text-muted-foreground hover:bg-accent'}`}
-                                        >
-                                            <LayoutList className="w-4 h-4" />
-                                        </button>
-                                    </div>
+                                    <select
+                                        value={statusFilter}
+                                        onChange={(e) => setSearchParams(prev => {
+                                            const newParams = new URLSearchParams(prev);
+                                            newParams.set('status', e.target.value);
+                                            return newParams;
+                                        })}
+                                        className="h-8 px-2 text-xs bg-card border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary/50 text-foreground"
+                                    >
+                                        <option value="ALL">All Statuses</option>
+                                        <option value="TODO">To Do</option>
+                                        <option value="IN_PROGRESS">In Progress</option>
+                                        <option value="IN_REVIEW">In Review</option>
+                                        <option value="BLOCKED">Blocked</option>
+                                        <option value="DONE">Done</option>
+                                    </select>
+                                )}
+
+                                <div className="flex items-center gap-2">
+
+                                    {isMentionsView && (
+                                        <div className="flex items-center bg-card border border-border p-1 rounded-lg">
+                                            <button
+                                                onClick={() => setSearchParams({ filter: 'MENTIONS' })}
+                                                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${filter === 'MENTIONS' ? 'bg-primary/10 text-primary shadow-sm' : 'text-muted-foreground hover:bg-accent'}`}
+                                            >
+                                                All
+                                            </button>
+                                            <button
+                                                onClick={() => setSearchParams({ filter: 'CHAT_MENTIONS' })}
+                                                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${filter === 'CHAT_MENTIONS' ? 'bg-primary/10 text-primary shadow-sm' : 'text-muted-foreground hover:bg-accent'}`}
+                                            >
+                                                Chat
+                                            </button>
+                                            <button
+                                                onClick={() => setSearchParams({ filter: 'COMMENT_MENTIONS' })}
+                                                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${filter === 'COMMENT_MENTIONS' ? 'bg-primary/10 text-primary shadow-sm' : 'text-muted-foreground hover:bg-accent'}`}
+                                            >
+                                                Comments
+                                            </button>
+                                        </div>
+                                    )}
+
+                                    {!isMentionsView && (
+                                        <div className="flex items-center bg-card border border-border p-1 rounded-lg">
+                                            <button
+                                                onClick={() => setViewMode('GRID')}
+                                                className={`p-1.5 rounded-md transition-all ${viewMode === 'GRID' ? 'bg-primary/10 text-primary shadow-sm' : 'text-muted-foreground hover:bg-accent'}`}
+                                            >
+                                                <LayoutGrid className="w-4 h-4" />
+                                            </button>
+                                            <button
+                                                onClick={() => setViewMode('LIST')}
+                                                className={`p-1.5 rounded-md transition-all ${viewMode === 'LIST' ? 'bg-primary/10 text-primary shadow-sm' : 'text-muted-foreground hover:bg-accent'}`}
+                                            >
+                                                <LayoutList className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Filter Popup Removed */}
+
+                            {/* CONTENT */}
+                            <div className="min-h-[400px]">
+                                {isMentionsView ? (
+                                    mentionsLoading ? (
+                                        <div className="flex items-center justify-center p-12">
+                                            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                                        </div>
+                                    ) : displayedMentions.length === 0 ? (
+                                        <div className="flex flex-col items-center justify-center text-muted-foreground opacity-50 p-12 bg-card/50 rounded-xl border border-dashed border-border">
+                                            <Bell className="w-12 h-12 mb-4 stroke-1" />
+                                            <p>No mentions found.</p>
+                                        </div>
+                                    ) : (
+                                        <div className="grid gap-3">
+                                            {displayedMentions.map((mention, idx) => (
+                                                <div
+                                                    key={idx}
+                                                    className="flex gap-4 p-4 rounded-xl border bg-card hover:bg-accent/50 transition-all cursor-pointer shadow-sm"
+                                                    onClick={() => handleMentionClick(mention)}
+                                                >
+                                                    <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${getBgColor(mention.type)}`}>
+                                                        {getIcon(mention.type)}
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <div className="flex justify-between">
+                                                            <span className="text-sm font-semibold">{mention.actorName}</span>
+                                                            <span className="text-xs text-muted-foreground">{formatDistanceToNow(new Date(mention.createdAt))} ago</span>
+                                                        </div>
+                                                        <p className="text-sm text-foreground mt-1 line-clamp-1">
+                                                            {mention.previewText.replace(/<@[\w-]+\|([^>]+)>/g, "@$1")}
+                                                        </p>
+                                                        {mention.taskTitle && <p className="text-xs text-primary mt-1">{mention.taskTitle}</p>}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )
+                                ) : (
+                                    filteredTasks.length === 0 ? (
+                                        <div className="flex flex-col items-center justify-center text-muted-foreground opacity-50 p-12 bg-card/50 rounded-xl border border-dashed border-border">
+                                            <Inbox className="w-12 h-12 mb-4 stroke-1" />
+                                            <p>No tasks found.</p>
+                                        </div>
+                                    ) : (
+                                        <div className={viewMode === 'GRID'
+                                            ? "grid gap-4 md:grid-cols-2 xl:grid-cols-3"
+                                            : "flex flex-col gap-2"
+                                        }>
+                                            {filteredTasks.map(task => (
+                                                viewMode === 'GRID' ? (
+                                                    <MyTaskCard
+                                                        key={task.taskId}
+                                                        task={task}
+                                                        onStatusChange={handleStatusChange}
+                                                        onClick={() => openTaskDetail(task.taskId)}
+                                                    />
+                                                ) : (
+                                                    <MyTaskListRow
+                                                        key={task.taskId}
+                                                        task={task}
+                                                        onStatusChange={handleStatusChange}
+                                                        onClick={() => openTaskDetail(task.taskId)}
+                                                    />
+                                                )
+                                            ))}
+                                        </div>
+                                    )
                                 )}
                             </div>
                         </div>
-
-                        {/* Filter Popup Removed */}
-
-                        {/* CONTENT */}
-                        <div className="min-h-[400px]">
-                            {isMentionsView ? (
-                                mentionsLoading ? (
-                                    <div className="flex items-center justify-center p-12">
-                                        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                                    </div>
-                                ) : displayedMentions.length === 0 ? (
-                                    <div className="flex flex-col items-center justify-center text-muted-foreground opacity-50 p-12 bg-card/50 rounded-xl border border-dashed border-border">
-                                        <Bell className="w-12 h-12 mb-4 stroke-1" />
-                                        <p>No mentions found.</p>
-                                    </div>
-                                ) : (
-                                    <div className="grid gap-3">
-                                        {displayedMentions.map((mention, idx) => (
-                                            <div
-                                                key={idx}
-                                                className="flex gap-4 p-4 rounded-xl border bg-card hover:bg-accent/50 transition-all cursor-pointer shadow-sm"
-                                                onClick={() => handleMentionClick(mention)}
-                                            >
-                                                <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${getBgColor(mention.type)}`}>
-                                                    {getIcon(mention.type)}
-                                                </div>
-                                                <div className="flex-1">
-                                                    <div className="flex justify-between">
-                                                        <span className="text-sm font-semibold">{mention.actorName}</span>
-                                                        <span className="text-xs text-muted-foreground">{formatDistanceToNow(new Date(mention.createdAt))} ago</span>
-                                                    </div>
-                                                    <p className="text-sm text-foreground mt-1 line-clamp-1">
-                                                        {mention.previewText.replace(/<@[\w-]+\|([^>]+)>/g, "@$1")}
-                                                    </p>
-                                                    {mention.taskTitle && <p className="text-xs text-primary mt-1">{mention.taskTitle}</p>}
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )
-                            ) : (
-                                filteredTasks.length === 0 ? (
-                                    <div className="flex flex-col items-center justify-center text-muted-foreground opacity-50 p-12 bg-card/50 rounded-xl border border-dashed border-border">
-                                        <Inbox className="w-12 h-12 mb-4 stroke-1" />
-                                        <p>No tasks found.</p>
-                                    </div>
-                                ) : (
-                                    <div className={viewMode === 'GRID'
-                                        ? "grid gap-4 md:grid-cols-2 xl:grid-cols-3"
-                                        : "flex flex-col gap-2"
-                                    }>
-                                        {filteredTasks.map(task => (
-                                            viewMode === 'GRID' ? (
-                                                <MyTaskCard
-                                                    key={task.taskId}
-                                                    task={task}
-                                                    onStatusChange={handleStatusChange}
-                                                    onClick={() => openTaskDetail(task.taskId)}
-                                                />
-                                            ) : (
-                                                <MyTaskListRow
-                                                    key={task.taskId}
-                                                    task={task}
-                                                    onStatusChange={handleStatusChange}
-                                                    onClick={() => openTaskDetail(task.taskId)}
-                                                />
-                                            )
-                                        ))}
-                                    </div>
-                                )
-                            )}
-                        </div>
                     </div>
                 </div>
-            </div>
 
-            {isDetailPanelOpen && <TaskDetailPanel />}
-        </div>
-    );
+                {isDetailPanelOpen && <TaskDetailPanel />}
+            </div>
+            );
 };
 
-// Helper Component for KPI Cards
-function KpiCard({ icon: Icon, label, value, color, bg, onClick, active }: any) {
+            // Helper Component for KPI Cards
+            function KpiCard({icon: Icon, label, value, color, bg, onClick, active }: any) {
     const isActive = active;
 
-    return (
-        <div
-            onClick={onClick}
-            className={`p-5 rounded-xl border transition-all duration-200 cursor-pointer ${isActive
-                ? 'bg-primary/5 border-primary/20 shadow-sm ring-1 ring-primary/20'
-                : 'bg-card border-border hover:border-border/80 hover:bg-accent/50'
-                }`}
-        >
-            <div className="flex items-center justify-between mb-4">
-                <div className={`p-2.5 rounded-lg ${bg || 'bg-primary/10'} ${color || 'text-primary'}`}>
-                    <Icon className="w-5 h-5" />
+            return (
+            <div
+                onClick={onClick}
+                className={`p-5 rounded-xl border transition-all duration-200 cursor-pointer ${isActive
+                    ? 'bg-primary/5 border-primary/20 shadow-sm ring-1 ring-primary/20'
+                    : 'bg-card border-border hover:border-border/80 hover:bg-accent/50'
+                    }`}
+            >
+                <div className="flex items-center justify-between mb-4">
+                    <div className={`p-2.5 rounded-lg ${bg || 'bg-primary/10'} ${color || 'text-primary'}`}>
+                        <Icon className="w-5 h-5" />
+                    </div>
+                    {isActive && <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />}
                 </div>
-                {isActive && <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />}
+                <div>
+                    <div className="text-2xl font-bold tracking-tight text-foreground">{value}</div>
+                    <div className="text-sm text-muted-foreground font-medium mt-1">{label}</div>
+                </div>
             </div>
-            <div>
-                <div className="text-2xl font-bold tracking-tight text-foreground">{value}</div>
-                <div className="text-sm text-muted-foreground font-medium mt-1">{label}</div>
-            </div>
-        </div>
-    );
+            );
 }

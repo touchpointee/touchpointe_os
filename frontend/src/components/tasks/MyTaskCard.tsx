@@ -75,8 +75,8 @@ export const MyTaskCard: React.FC<TaskCardProps> = ({ task, onClick, onStatusCha
                         className={`h-2 w-2 rounded-full ${isDone ? 'bg-green-500' : 'bg-blue-500'
                             }`}
                     />
-                    <span className="text-xs text-task-card-foreground/80">
-                        {isDone ? 'Done' : 'In Progress'}
+                    <span className="text-xs text-task-card-foreground/80 capitalize">
+                        {task.status.toLowerCase().replace(/_/g, ' ')}
                     </span>
                 </div>
 
