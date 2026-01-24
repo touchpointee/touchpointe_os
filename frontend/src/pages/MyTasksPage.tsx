@@ -148,6 +148,12 @@ export const MyTasksPage = () => {
 
     const firstName = user?.fullName ? user.fullName.split(' ')[0] : 'Back';
 
+    // Compute unique statuses for filter dropdown
+    const availableStatuses = useMemo(() => {
+        const statuses = new Set(tasks.map(t => t.status));
+        return Array.from(statuses).sort();
+    }, [tasks]);
+
     // Filter & Sort Logic for TASKS (ignored if filter == MENTIONS)
     const filteredTasks = useMemo(() => {
         if (['MENTIONS', 'COMMENT_MENTIONS', 'CHAT_MENTIONS'].includes(filter)) return [];
@@ -283,14 +289,14 @@ export const MyTasksPage = () => {
                                             newParams.set('status', e.target.value);
                                             return newParams;
                                         })}
-                                        className="h-8 px-2 text-xs bg-card border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary/50 text-foreground"
+                                        className="h-8 px-2 text-xs bg-card border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary/50 text-foreground capitalize"
                                     >
                                         <option value="ALL">All Statuses</option>
-                                        <option value="TODO">To Do</option>
-                                        <option value="IN_PROGRESS">In Progress</option>
-                                        <option value="IN_REVIEW">In Review</option>
-                                        <option value="BLOCKED">Blocked</option>
-                                        <option value="DONE">Done</option>
+                                        {availableStatuses.map(status => (
+                                            <option key={status} value={status}>
+                                                {status.toLowerCase().replace(/_/g, ' ')}
+                                            </option>
+                                        ))}
                                     </select>
                                 )}
 
