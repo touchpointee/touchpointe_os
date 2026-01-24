@@ -1,0 +1,659 @@
+/* Landing Page Styles */
+
+/* Smooth scrolling */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Text and box glow effects */
+.text-glow {
+    text-shadow: 0 0 20px rgba(96, 165, 250, 0.5);
+}
+
+.box-glow {
+    box-shadow: 0 0 40px -10px rgba(59, 130, 246, 0.3);
+}
+
+.bg-grid {
+    background-size: 40px 40px;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #020405;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #2563eb;
+    border-radius: 4px;
+}
+
+/* Hide details marker */
+details>summary {
+    list-style: none;
+}
+
+details>summary::-webkit-details-marker {
+    display: none;
+}
+
+/* Initial state for scroll animations */
+.scroll-reveal {
+    opacity: 0;
+    transform: translateY(50px);
+    transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+}
+
+.scroll-reveal.revealed {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.scroll-reveal-left {
+    opacity: 0;
+    transform: translateX(-50px);
+    transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+}
+
+.scroll-reveal-left.revealed {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.scroll-reveal-right {
+    opacity: 0;
+    transform: translateX(50px);
+    transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+}
+
+.scroll-reveal-right.revealed {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.scroll-scale {
+    opacity: 0;
+    transform: scale(0.8);
+    transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+}
+
+.scroll-scale.revealed {
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* Staggered animations */
+.stagger-1 {
+    transition-delay: 0.1s;
+}
+
+.stagger-2 {
+    transition-delay: 0.2s;
+}
+
+.stagger-3 {
+    transition-delay: 0.3s;
+}
+
+.stagger-4 {
+    transition-delay: 0.4s;
+}
+
+.stagger-5 {
+    transition-delay: 0.5s;
+}
+
+.stagger-6 {
+    transition-delay: 0.6s;
+}
+
+/* Enhanced hover effects */
+.hover-lift {
+    padding: 1.5rem;
+    border-radius: 1rem;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 2px solid transparent;
+    position: relative;
+    isolation: isolate;
+}
+
+/* Progress border effect */
+.hover-lift::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: inherit;
+    padding: 2px;
+    background: conic-gradient(from -90deg,
+            #3b82f6 0deg,
+            #3b82f6 0deg,
+            transparent 0deg);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    opacity: 0;
+    filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.6));
+    transition: opacity 0.3s ease;
+}
+
+.hover-lift:hover::before {
+    opacity: 1;
+    animation: border-progress 2s ease-in-out forwards;
+}
+
+@keyframes border-progress {
+    0% {
+        background: conic-gradient(from -90deg,
+                #3b82f6 0deg,
+                #3b82f6 0deg,
+                rgba(255, 255, 255, 0.1) 0deg,
+                rgba(255, 255, 255, 0.1) 360deg);
+    }
+
+    100% {
+        background: conic-gradient(from -90deg,
+                #3b82f6 0deg,
+                #3b82f6 360deg,
+                rgba(255, 255, 255, 0.1) 360deg);
+    }
+}
+
+.hover-lift:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px -10px rgba(59, 130, 246, 0.4), 0 0 0 1px rgba(59, 130, 246, 0.2);
+    padding: 2rem;
+    border-radius: 1.5rem;
+    border: 2px solid rgba(59, 130, 246, 0.4);
+    background: rgba(59, 130, 246, 0.03);
+}
+
+/* Scale-only hover effect (for positioned elements) */
+.hover-scale {
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.4s ease;
+}
+
+.hover-scale:hover {
+    transform: translateX(-50%) scale(1.05);
+    box-shadow: 0 25px 50px -12px rgba(59, 130, 246, 0.5);
+}
+
+/* Button shimmer effect */
+.btn-shimmer {
+    background-size: 200% auto;
+    transition: background-position 0.5s ease;
+}
+
+.btn-shimmer:hover {
+    background-position: right center;
+}
+
+/* Gradient text animation */
+@keyframes gradient-shift {
+
+    0%,
+    100% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+}
+
+.gradient-animate {
+    background-size: 200% auto;
+    animation: gradient-shift 3s ease infinite;
+}
+
+/* Card shine effect */
+.card-shine {
+    position: relative;
+    overflow: hidden;
+}
+
+.card-shine::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg,
+            transparent 30%,
+            rgba(255, 255, 255, 0.05) 50%,
+            transparent 70%);
+    transform: translateX(-100%) translateY(-100%);
+    transition: transform 0.6s ease;
+}
+
+.card-shine:hover::after {
+    transform: translateX(100%) translateY(100%);
+}
+
+/* Galaxy Effect Animations */
+.stars {
+    position: absolute;
+    inset: 0;
+    background-image:
+        radial-gradient(2px 2px at 20px 30px, white, transparent),
+        radial-gradient(2px 2px at 60px 70px, white, transparent),
+        radial-gradient(1px 1px at 50px 50px, white, transparent),
+        radial-gradient(1px 1px at 130px 80px, white, transparent),
+        radial-gradient(2px 2px at 90px 10px, white, transparent),
+        radial-gradient(1px 1px at 200px 150px, rgba(255, 255, 255, 0.8), transparent),
+        radial-gradient(1px 1px at 170px 120px, rgba(255, 255, 255, 0.6), transparent);
+    background-size: 300px 300px, 400px 400px, 250px 250px, 350px 350px, 200px 200px, 450px 450px, 380px 380px;
+    background-position: 0 0, 40px 60px, 130px 270px, 70px 100px, 150px 50px, 220px 180px, 90px 230px;
+    animation: twinkle 8s ease-in-out infinite, drift 60s linear infinite;
+    opacity: 0.6;
+}
+
+@keyframes twinkle {
+
+    0%,
+    100% {
+        opacity: 0.4;
+    }
+
+    50% {
+        opacity: 0.8;
+    }
+}
+
+@keyframes drift {
+    from {
+        transform: translateY(0);
+    }
+
+    to {
+        transform: translateY(-20px);
+    }
+}
+
+.nebula {
+    position: absolute;
+    width: 600px;
+    height: 600px;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.3;
+    animation: float-nebula 20s ease-in-out infinite;
+}
+
+.nebula-1 {
+    background: radial-gradient(circle, rgba(59, 130, 246, 0.4) 0%, transparent 70%);
+    top: 10%;
+    left: 10%;
+    animation-delay: 0s;
+}
+
+.nebula-2 {
+    background: radial-gradient(circle, rgba(96, 165, 250, 0.3) 0%, transparent 70%);
+    top: 50%;
+    right: 10%;
+    animation-delay: -7s;
+}
+
+.nebula-3 {
+    background: radial-gradient(circle, rgba(37, 99, 235, 0.35) 0%, transparent 70%);
+    bottom: 20%;
+    left: 30%;
+    animation-delay: -14s;
+}
+
+@keyframes float-nebula {
+
+    0%,
+    100% {
+        transform: translate(0, 0) scale(1);
+    }
+
+    33% {
+        transform: translate(30px, -30px) scale(1.1);
+    }
+
+    66% {
+        transform: translate(-30px, 30px) scale(0.9);
+    }
+}
+
+.particles {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+}
+
+.particle {
+    position: absolute;
+    width: 3px;
+    height: 3px;
+    background: rgba(96, 165, 250, 0.8);
+    border-radius: 50%;
+    box-shadow: 0 0 10px rgba(96, 165, 250, 0.5);
+    animation: float-particle linear infinite;
+}
+
+@keyframes float-particle {
+    0% {
+        transform: translateY(0) translateX(0);
+        opacity: 0;
+    }
+
+    10% {
+        opacity: 1;
+    }
+
+    90% {
+        opacity: 1;
+    }
+
+    100% {
+        transform: translateY(-100vh) translateX(var(--drift));
+        opacity: 0;
+    }
+}
+
+/* Comet Animation */
+.comet {
+    position: absolute;
+    top: -50px;
+    right: -50px;
+    width: 12px;
+    height: 12px;
+    background: radial-gradient(circle, #fff 0%, rgba(96, 165, 250, 1) 50%, rgba(59, 130, 246, 0.5) 100%);
+    border-radius: 50%;
+    box-shadow:
+        0 0 30px rgba(96, 165, 250, 1),
+        0 0 60px rgba(59, 130, 246, 0.9),
+        0 0 100px rgba(37, 99, 235, 0.7);
+    animation: comet-travel 8s ease-in-out infinite;
+    animation-delay: 3s;
+    opacity: 0;
+    z-index: 5;
+}
+
+/* Comet tail */
+.comet::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 200px;
+    height: 3px;
+    background: linear-gradient(90deg,
+            rgba(255, 255, 255, 0.9) 0%,
+            rgba(96, 165, 250, 0.6) 20%,
+            rgba(59, 130, 246, 0.3) 50%,
+            transparent 100%);
+    transform: translate(-50%, -50%) rotate(45deg);
+    filter: blur(2px);
+    box-shadow: 0 0 20px rgba(96, 165, 250, 0.5);
+}
+
+/* Glow trail */
+.comet::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 150px;
+    height: 150px;
+    background: radial-gradient(ellipse 200px 10px,
+            rgba(96, 165, 250, 0.4) 0%,
+            transparent 70%);
+    transform: translate(-50%, -50%) rotate(45deg);
+    filter: blur(15px);
+}
+
+@keyframes comet-travel {
+    0% {
+        top: -50px;
+        right: -50px;
+        opacity: 0;
+        transform: scale(0.5);
+    }
+
+    5% {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    95% {
+        opacity: 1;
+    }
+
+    100% {
+        top: calc(100% + 50px);
+        left: -50px;
+        opacity: 0;
+        transform: scale(0.8);
+    }
+}
+
+/* Comet 2 - Horizontal path (left to right) */
+.comet-2 {
+    position: absolute;
+    top: 20%;
+    left: -50px;
+    width: 10px;
+    height: 10px;
+    background: radial-gradient(circle, #fff 0%, rgba(96, 165, 250, 1) 50%, rgba(59, 130, 246, 0.5) 100%);
+    border-radius: 50%;
+    box-shadow:
+        0 0 25px rgba(96, 165, 250, 1),
+        0 0 50px rgba(96, 165, 250, 0.9),
+        0 0 80px rgba(59, 130, 246, 0.7);
+    animation: comet-horizontal 12s ease-in-out infinite;
+    animation-delay: 5s;
+    opacity: 0;
+    z-index: 5;
+}
+
+.comet-2::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 180px;
+    height: 2px;
+    background: linear-gradient(90deg,
+            rgba(255, 255, 255, 0.9) 0%,
+            rgba(96, 165, 250, 0.6) 20%,
+            rgba(59, 130, 246, 0.3) 50%,
+            transparent 100%);
+    transform: translate(-50%, -50%);
+    filter: blur(2px);
+    box-shadow: 0 0 15px rgba(96, 165, 250, 0.4);
+}
+
+.comet-2::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 120px;
+    height: 120px;
+    background: radial-gradient(ellipse 180px 8px,
+            rgba(96, 165, 250, 0.3) 0%,
+            transparent 70%);
+    transform: translate(-50%, -50%);
+    filter: blur(12px);
+}
+
+@keyframes comet-horizontal {
+    0% {
+        left: -50px;
+        opacity: 0;
+        transform: scale(0.5);
+    }
+
+    5% {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    95% {
+        opacity: 1;
+    }
+
+    100% {
+        left: calc(100% + 50px);
+        opacity: 0;
+        transform: scale(0.8);
+    }
+}
+
+/* Comet 3 - Top-left to bottom-right */
+.comet-3 {
+    position: absolute;
+    top: -50px;
+    left: 10%;
+    width: 9px;
+    height: 9px;
+    background: radial-gradient(circle, #fff 0%, rgba(96, 165, 250, 1) 50%, rgba(59, 130, 246, 0.5) 100%);
+    border-radius: 50%;
+    box-shadow:
+        0 0 28px rgba(96, 165, 250, 1),
+        0 0 55px rgba(96, 165, 250, 0.9),
+        0 0 90px rgba(59, 130, 246, 0.7);
+    animation: comet-diagonal-2 10s ease-in-out infinite;
+    animation-delay: 7s;
+    opacity: 0;
+    z-index: 5;
+}
+
+.comet-3::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 150px;
+    height: 2.5px;
+    background: linear-gradient(90deg,
+            rgba(255, 255, 255, 0.9) 0%,
+            rgba(96, 165, 250, 0.6) 20%,
+            rgba(59, 130, 246, 0.3) 50%,
+            transparent 100%);
+    transform: translate(-50%, -50%) rotate(45deg);
+    filter: blur(2px);
+    box-shadow: 0 0 18px rgba(96, 165, 250, 0.5);
+}
+
+.comet-3::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 140px;
+    height: 140px;
+    background: radial-gradient(ellipse 160px 9px,
+            rgba(96, 165, 250, 0.35) 0%,
+            transparent 70%);
+    transform: translate(-50%, -50%) rotate(45deg);
+    filter: blur(14px);
+}
+
+@keyframes comet-diagonal-2 {
+    0% {
+        top: -50px;
+        left: 10%;
+        opacity: 0;
+        transform: scale(0.5);
+    }
+
+    5% {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    95% {
+        opacity: 1;
+    }
+
+    100% {
+        top: calc(100% + 50px);
+        left: 80%;
+        opacity: 0;
+        transform: scale(0.8);
+    }
+}
+
+/* Comet 4 - Small fast comet (bottom-left to top-right) */
+.comet-4 {
+    position: absolute;
+    bottom: -50px;
+    left: 20%;
+    width: 7px;
+    height: 7px;
+    background: radial-gradient(circle, #fff 0%, rgba(96, 165, 250, 1) 50%, rgba(59, 130, 246, 0.5) 100%);
+    border-radius: 50%;
+    box-shadow:
+        0 0 22px rgba(96, 165, 250, 1),
+        0 0 45px rgba(96, 165, 250, 0.8),
+        0 0 70px rgba(59, 130, 246, 0.6);
+    animation: comet-reverse 9s ease-in-out infinite;
+    animation-delay: 4s;
+    opacity: 0;
+    z-index: 5;
+}
+
+.comet-4::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 120px;
+    height: 2px;
+    background: linear-gradient(90deg,
+            transparent 0%,
+            rgba(59, 130, 246, 0.3) 50%,
+            rgba(96, 165, 250, 0.6) 80%,
+            rgba(255, 255, 255, 0.9) 100%);
+    transform: translate(-50%, -50%) rotate(-45deg);
+    filter: blur(2px);
+    box-shadow: 0 0 15px rgba(96, 165, 250, 0.4);
+}
+
+.comet-4::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 100px;
+    height: 100px;
+    background: radial-gradient(ellipse 130px 7px,
+            rgba(96, 165, 250, 0.3) 0%,
+            transparent 70%);
+    transform: translate(-50%, -50%) rotate(-45deg);
+    filter: blur(10px);
+}
+
+@keyframes comet-reverse {
+    0% {
+        bottom: -50px;
+        left: 20%;
+        opacity: 0;
+        transform: scale(0.5);
+    }
+
+    5% {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    95% {
+        opacity: 1;
+    }
+
+    100% {
+        bottom: calc(100% + 50px);
+        left: 70%;
+        opacity: 0;
+        transform: scale(0.8);
+    }
+}

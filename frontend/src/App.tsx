@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { AppLayout } from '@/components/layout';
-import { TasksPage, CrmPage, ChatPage, TeamPage, SettingsPage, ProfilePage, InboxPage } from '@/pages';
+import { HomePage, TasksPage, CrmPage, ChatPage, TeamPage, SettingsPage, ProfilePage, InboxPage } from '@/pages';
 import { LoginPage } from '@/pages/auth/LoginPage';
 import { RegisterPage } from '@/pages/auth/RegisterPage';
 import { RoomPage } from './pages/meet/RoomPage';
@@ -52,13 +52,7 @@ function App() {
                                 </AppLayout>
                             </AuthGuard>
                         } />
-                        {/* <Route path="/home/*" element={
-                            <AuthGuard>
-                                <AppLayout hideContextSidebar={true}>
-                                    <HomePage />
-                                </AppLayout>
-                            </AuthGuard>
-                        } /> */}
+                        <Route path="/" element={<HomePage />} />
                         {/* <Route path="/workspace/:workspaceId/home" element={
                             <AuthGuard>
                                 <AppLayout hideContextSidebar={true}>
@@ -172,10 +166,8 @@ function App() {
                             </AuthGuard>
                         } />
 
-                        {/* Root Redirect - Go to home, AuthGuard handles the rest */}
-                        {/* Root Redirect - Go to home, AuthGuard handles the rest */}
-                        <Route path="/" element={<Navigate to="/my-tasks" replace />} />
-                        <Route path="*" element={<Navigate to="/my-tasks" replace />} />
+                        {/* Fallback - Redirect unknown routes to root */}
+                        <Route path="*" element={<Navigate to="/" replace />} />
                     </Routes>
                 </BrowserRouter>
             </ToastProvider>
