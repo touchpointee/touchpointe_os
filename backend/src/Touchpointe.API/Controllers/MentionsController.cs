@@ -111,7 +111,6 @@ namespace Touchpointe.API.Controllers
                     .Include(cm => cm.Message)
                     .Include(cm => cm.Message.Channel)
                     .Include(cm => cm.Message.Sender)
-                    .Include(cm => cm.SourceUser)
                     .Where(cm => chatMentionIds.Contains(cm.Id))
                     .ToListAsync();
             }
