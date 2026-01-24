@@ -337,109 +337,110 @@ export const MyTasksPage = () => {
                                     )}
                                 </div>
                             </div>
+                        </div>
 
-                            {/* Filter Popup Removed */}
+                        {/* Filter Popup Removed */}
 
-                            {/* CONTENT */}
-                            <div className="min-h-[400px]">
-                                {isMentionsView ? (
-                                    mentionsLoading ? (
-                                        <div className="flex items-center justify-center p-12">
-                                            <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                                        </div>
-                                    ) : displayedMentions.length === 0 ? (
-                                        <div className="flex flex-col items-center justify-center text-muted-foreground opacity-50 p-12 bg-card/50 rounded-xl border border-dashed border-border">
-                                            <Bell className="w-12 h-12 mb-4 stroke-1" />
-                                            <p>No mentions found.</p>
-                                        </div>
-                                    ) : (
-                                        <div className="grid gap-3">
-                                            {displayedMentions.map((mention, idx) => (
-                                                <div
-                                                    key={idx}
-                                                    className="flex gap-4 p-4 rounded-xl border bg-card hover:bg-accent/50 transition-all cursor-pointer shadow-sm"
-                                                    onClick={() => handleMentionClick(mention)}
-                                                >
-                                                    <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${getBgColor(mention.type)}`}>
-                                                        {getIcon(mention.type)}
-                                                    </div>
-                                                    <div className="flex-1">
-                                                        <div className="flex justify-between">
-                                                            <span className="text-sm font-semibold">{mention.actorName}</span>
-                                                            <span className="text-xs text-muted-foreground">{formatDistanceToNow(new Date(mention.createdAt))} ago</span>
-                                                        </div>
-                                                        <p className="text-sm text-foreground mt-1 line-clamp-1">
-                                                            {mention.previewText.replace(/<@[\w-]+\|([^>]+)>/g, "@$1")}
-                                                        </p>
-                                                        {mention.taskTitle && <p className="text-xs text-primary mt-1">{mention.taskTitle}</p>}
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )
+                        {/* CONTENT */}
+                        <div className="min-h-[400px]">
+                            {isMentionsView ? (
+                                mentionsLoading ? (
+                                    <div className="flex items-center justify-center p-12">
+                                        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                                    </div>
+                                ) : displayedMentions.length === 0 ? (
+                                    <div className="flex flex-col items-center justify-center text-muted-foreground opacity-50 p-12 bg-card/50 rounded-xl border border-dashed border-border">
+                                        <Bell className="w-12 h-12 mb-4 stroke-1" />
+                                        <p>No mentions found.</p>
+                                    </div>
                                 ) : (
-                                    filteredTasks.length === 0 ? (
-                                        <div className="flex flex-col items-center justify-center text-muted-foreground opacity-50 p-12 bg-card/50 rounded-xl border border-dashed border-border">
-                                            <Inbox className="w-12 h-12 mb-4 stroke-1" />
-                                            <p>No tasks found.</p>
-                                        </div>
-                                    ) : (
-                                        <div className={viewMode === 'GRID'
-                                            ? "grid gap-4 md:grid-cols-2 xl:grid-cols-3"
-                                            : "flex flex-col gap-2"
-                                        }>
-                                            {filteredTasks.map(task => (
-                                                viewMode === 'GRID' ? (
-                                                    <MyTaskCard
-                                                        key={task.taskId}
-                                                        task={task}
-                                                        onStatusChange={handleStatusChange}
-                                                        onClick={() => openTaskDetail(task.taskId)}
-                                                    />
-                                                ) : (
-                                                    <MyTaskListRow
-                                                        key={task.taskId}
-                                                        task={task}
-                                                        onStatusChange={handleStatusChange}
-                                                        onClick={() => openTaskDetail(task.taskId)}
-                                                    />
-                                                )
-                                            ))}
-                                        </div>
-                                    )
-                                )}
-                            </div>
+                                    <div className="grid gap-3">
+                                        {displayedMentions.map((mention, idx) => (
+                                            <div
+                                                key={idx}
+                                                className="flex gap-4 p-4 rounded-xl border bg-card hover:bg-accent/50 transition-all cursor-pointer shadow-sm"
+                                                onClick={() => handleMentionClick(mention)}
+                                            >
+                                                <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${getBgColor(mention.type)}`}>
+                                                    {getIcon(mention.type)}
+                                                </div>
+                                                <div className="flex-1">
+                                                    <div className="flex justify-between">
+                                                        <span className="text-sm font-semibold">{mention.actorName}</span>
+                                                        <span className="text-xs text-muted-foreground">{formatDistanceToNow(new Date(mention.createdAt))} ago</span>
+                                                    </div>
+                                                    <p className="text-sm text-foreground mt-1 line-clamp-1">
+                                                        {mention.previewText.replace(/<@[\w-]+\|([^>]+)>/g, "@$1")}
+                                                    </p>
+                                                    {mention.taskTitle && <p className="text-xs text-primary mt-1">{mention.taskTitle}</p>}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )
+                            ) : (
+                                filteredTasks.length === 0 ? (
+                                    <div className="flex flex-col items-center justify-center text-muted-foreground opacity-50 p-12 bg-card/50 rounded-xl border border-dashed border-border">
+                                        <Inbox className="w-12 h-12 mb-4 stroke-1" />
+                                        <p>No tasks found.</p>
+                                    </div>
+                                ) : (
+                                    <div className={viewMode === 'GRID'
+                                        ? "grid gap-4 md:grid-cols-2 xl:grid-cols-3"
+                                        : "flex flex-col gap-2"
+                                    }>
+                                        {filteredTasks.map(task => (
+                                            viewMode === 'GRID' ? (
+                                                <MyTaskCard
+                                                    key={task.taskId}
+                                                    task={task}
+                                                    onStatusChange={handleStatusChange}
+                                                    onClick={() => openTaskDetail(task.taskId)}
+                                                />
+                                            ) : (
+                                                <MyTaskListRow
+                                                    key={task.taskId}
+                                                    task={task}
+                                                    onStatusChange={handleStatusChange}
+                                                    onClick={() => openTaskDetail(task.taskId)}
+                                                />
+                                            )
+                                        ))}
+                                    </div>
+                                )
+                            )}
                         </div>
                     </div>
                 </div>
-
-                {isDetailPanelOpen && <TaskDetailPanel />}
             </div>
-            );
+
+            {isDetailPanelOpen && <TaskDetailPanel />}
+        </div>
+    );
 };
 
-            // Helper Component for KPI Cards
-            function KpiCard({icon: Icon, label, value, color, bg, onClick, active }: any) {
+// Helper Component for KPI Cards
+function KpiCard({ icon: Icon, label, value, color, bg, onClick, active }: any) {
     const isActive = active;
 
-            return (
-            <div
-                onClick={onClick}
-                className={`p-5 rounded-xl border transition-all duration-200 cursor-pointer ${isActive
-                    ? 'bg-primary/5 border-primary/20 shadow-sm ring-1 ring-primary/20'
-                    : 'bg-card border-border hover:border-border/80 hover:bg-accent/50'
-                    }`}
-            >
-                <div className="flex items-center justify-between mb-4">
-                    <div className={`p-2.5 rounded-lg ${bg || 'bg-primary/10'} ${color || 'text-primary'}`}>
-                        <Icon className="w-5 h-5" />
-                    </div>
-                    {isActive && <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />}
+    return (
+        <div
+            onClick={onClick}
+            className={`p-5 rounded-xl border transition-all duration-200 cursor-pointer ${isActive
+                ? 'bg-primary/5 border-primary/20 shadow-sm ring-1 ring-primary/20'
+                : 'bg-card border-border hover:border-border/80 hover:bg-accent/50'
+                }`}
+        >
+            <div className="flex items-center justify-between mb-4">
+                <div className={`p-2.5 rounded-lg ${bg || 'bg-primary/10'} ${color || 'text-primary'}`}>
+                    <Icon className="w-5 h-5" />
                 </div>
-                <div>
-                    <div className="text-2xl font-bold tracking-tight text-foreground">{value}</div>
-                    <div className="text-sm text-muted-foreground font-medium mt-1">{label}</div>
-                </div>
+                {isActive && <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />}
             </div>
-            );
+            <div>
+                <div className="text-2xl font-bold tracking-tight text-foreground">{value}</div>
+                <div className="text-sm text-muted-foreground font-medium mt-1">{label}</div>
+            </div>
+        </div>
+    );
 }
