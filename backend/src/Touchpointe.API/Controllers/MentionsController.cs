@@ -24,7 +24,7 @@ namespace Touchpointe.API.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<List<UserMentionDto>>> GetMentions([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+        public async Task<ActionResult<List<UserMentionDto>>> GetMentions([FromQuery] Guid workspaceId, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
         {
             var userId = GetUserId();
             if (userId == Guid.Empty) return Unauthorized();
@@ -33,86 +33,187 @@ namespace Touchpointe.API.Controllers
             if (pageSize < 1) pageSize = 20;
             if (pageSize > 100) pageSize = 100;
 
-            // 1. Task Mentions
-            var taskMentionsQuery = _context.TaskMentions
-                .Where(tm => tm.UserId == userId)
-                .Select(tm => new UserMentionDto
-                {
-                    Type = MentionType.TASK,
-                    WorkspaceId = tm.Task.WorkspaceId,
-                    CreatedAt = tm.CreatedAt,
-                    PreviewText = tm.Task.Title,
-                    TaskId = tm.TaskId,
-                    TaskTitle = tm.Task.Title,
-                    ActorName = tm.Task.CreatedBy.FullName, 
-                    ActorAvatar = tm.Task.CreatedBy.AvatarUrl,
-                    // Explicit nulls for union compatibility
-                    ChannelId = null,
-                    DmGroupId = null,
-                    MessageId = null,
-                    ChannelName = null,
-                    SubType = "mention",
-                    Info = null
+            // --- STAGE 1: Fetch Paged IDs (Lightweight Union) ---
+            // We project only what is needed for sorting and pagination: Id, CreatedAt, Type
+            // Added Workspace Isolation: Join with parent tables to filter by WorkspaceId
+            
+            var taskIdsQuery = _context.TaskMentions
+                .Where(tm => tm.UserId == userId && tm.Task.WorkspaceId == workspaceId)
+                .Select(tm => new MentionIdProjection 
+                { 
+                    Id = tm.Id, // The MentionId (not TaskId)
+                    CreatedAt = tm.CreatedAt, 
+                    Type = MentionType.TASK 
                 });
 
-            // 2. Comment Mentions
-            var commentMentionsQuery = _context.CommentMentions
-                .Where(cm => cm.UserId == userId)
-                .Select(cm => new UserMentionDto
-                {
-                    Type = MentionType.COMMENT,
-                    WorkspaceId = cm.Comment.Task.WorkspaceId,
-                    CreatedAt = cm.CreatedAt,
-                    PreviewText = cm.Comment.Content,
-                    TaskId = cm.Comment.TaskId,
-                    TaskTitle = cm.Comment.Task.Title,
-                    ActorName = cm.Comment.User.FullName,
-                    ActorAvatar = cm.Comment.User.AvatarUrl,
-                    ChannelId = null,
-                    DmGroupId = null,
-                    MessageId = null,
-                    ChannelName = null,
-                    SubType = "mention",
-                    Info = null
+            var commentIdsQuery = _context.CommentMentions
+                .Where(cm => cm.UserId == userId && cm.Comment.Task.WorkspaceId == workspaceId)
+                .Select(cm => new MentionIdProjection 
+                { 
+                    Id = cm.Id, 
+                    CreatedAt = cm.CreatedAt, 
+                    Type = MentionType.COMMENT 
                 });
 
-            // 3. Chat Mentions
-            var chatMentionsQuery = _context.ChatMentions
-                .Where(cm => cm.UserId == userId)
-                .Select(cm => new UserMentionDto
-                {
-                    Type = MentionType.CHAT,
-                    WorkspaceId = cm.Message.WorkspaceId,
-                    CreatedAt = cm.CreatedAt,
-                    PreviewText = cm.Message.Content,
-                    TaskId = null,
-                    TaskTitle = null,
-                    MessageId = cm.MessageId,
-                    ChannelId = cm.Message.ChannelId,
-                    DmGroupId = cm.Message.DirectMessageGroupId,
-                    ChannelName = cm.Message.Channel != null ? cm.Message.Channel.Name : "Direct Message",
-                    ActorName = cm.SourceUserId.HasValue 
-                        ? (cm.SourceUser != null ? cm.SourceUser.FullName : cm.Message.Sender.FullName)
-                        : cm.Message.Sender.FullName,
-                    ActorAvatar = cm.SourceUserId.HasValue 
-                        ? (cm.SourceUser != null ? cm.SourceUser.AvatarUrl : cm.Message.Sender.AvatarUrl)
-                        : cm.Message.Sender.AvatarUrl,
-                    SubType = cm.Type,
-                    Info = cm.Info
+            var chatIdsQuery = _context.ChatMentions
+                .Where(cm => cm.UserId == userId && cm.Message.WorkspaceId == workspaceId && cm.Message.SenderId != userId)
+                .Select(cm => new MentionIdProjection 
+                { 
+                    Id = cm.Id, 
+                    CreatedAt = cm.CreatedAt, 
+                    Type = MentionType.CHAT 
                 });
 
-            // Unified Query (UNION ALL)
-            var unionQuery = taskMentionsQuery
-                .Concat(commentMentionsQuery)
-                .Concat(chatMentionsQuery);
-
-            var result = await unionQuery
-                .OrderByDescending(m => m.CreatedAt)
+            var pagedRefs = await taskIdsQuery
+                .Concat(commentIdsQuery)
+                .Concat(chatIdsQuery)
+                .OrderByDescending(x => x.CreatedAt)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
 
+            if (!pagedRefs.Any())
+            {
+                return Ok(new List<UserMentionDto>());
+            }
+
+            // --- STAGE 2: Fetch Details by Type ---
+
+            var taskMentionIds = pagedRefs.Where(x => x.Type == MentionType.TASK).Select(x => x.Id).ToList();
+            var commentMentionIds = pagedRefs.Where(x => x.Type == MentionType.COMMENT).Select(x => x.Id).ToList();
+            var chatMentionIds = pagedRefs.Where(x => x.Type == MentionType.CHAT).Select(x => x.Id).ToList();
+
+            var taskMentionsDocs = new List<TaskMention>();
+            var commentMentionsDocs = new List<CommentMention>();
+            var chatMentionsDocs = new List<ChatMention>();
+
+            if (taskMentionIds.Any())
+            {
+                taskMentionsDocs = await _context.TaskMentions
+                    .Include(tm => tm.Task)
+                    .Include(tm => tm.Task.CreatedBy)
+                    .Where(tm => taskMentionIds.Contains(tm.Id))
+                    .ToListAsync();
+            }
+
+            if (commentMentionIds.Any())
+            {
+                commentMentionsDocs = await _context.CommentMentions
+                    .Include(cm => cm.Comment)
+                    .Include(cm => cm.Comment.Task)
+                    .Include(cm => cm.Comment.User)
+                    .Where(cm => commentMentionIds.Contains(cm.Id))
+                    .ToListAsync();
+            }
+
+            if (chatMentionIds.Any())
+            {
+                chatMentionsDocs = await _context.ChatMentions
+                    .Include(cm => cm.Message)
+                    .Include(cm => cm.Message.Channel)
+                    .Include(cm => cm.Message.Sender)
+                    .Where(cm => chatMentionIds.Contains(cm.Id))
+                    .ToListAsync();
+            }
+
+            // --- STAGE 3: Merge and Map in Memory ---
+            
+            var result = new List<UserMentionDto>();
+
+            foreach (var reference in pagedRefs)
+            {
+                UserMentionDto? dto = null;
+
+                if (reference.Type == MentionType.TASK)
+                {
+                    var tm = taskMentionsDocs.FirstOrDefault(x => x.Id == reference.Id);
+                    if (tm != null && tm.Task != null)
+                    {
+                        dto = new UserMentionDto
+                        {
+                            Type = MentionType.TASK,
+                            WorkspaceId = tm.Task.WorkspaceId,
+                            CreatedAt = tm.CreatedAt,
+                            PreviewText = tm.Task.Title,
+                            TaskId = tm.TaskId,
+                            TaskTitle = tm.Task.Title,
+                            ActorName = tm.Task.CreatedBy?.FullName ?? "Unknown",
+                            ActorAvatar = tm.Task.CreatedBy?.AvatarUrl,
+                            SubType = "mention"
+                        };
+                    }
+                }
+                else if (reference.Type == MentionType.COMMENT)
+                {
+                    var cm = commentMentionsDocs.FirstOrDefault(x => x.Id == reference.Id);
+                    if (cm != null && cm.Comment != null)
+                    {
+                        dto = new UserMentionDto
+                        {
+                            Type = MentionType.COMMENT,
+                            WorkspaceId = cm.Comment.Task.WorkspaceId,
+                            CreatedAt = cm.CreatedAt,
+                            PreviewText = cm.Comment.Content,
+                            TaskId = cm.Comment.TaskId,
+                            TaskTitle = cm.Comment.Task.Title,
+                            ActorName = cm.Comment.User?.FullName ?? "Unknown",
+                            ActorAvatar = cm.Comment.User?.AvatarUrl,
+                            SubType = "mention"
+                        };
+                    }
+                }
+                else if (reference.Type == MentionType.CHAT)
+                {
+                    var cm = chatMentionsDocs.FirstOrDefault(x => x.Id == reference.Id);
+                    if (cm != null && cm.Message != null)
+                    {
+                        var senderName = cm.Message.Sender?.FullName ?? "Unknown";
+                        var senderAvatar = cm.Message.Sender?.AvatarUrl;
+                        // SourceUser logic removed per fix, relying on Message data
+                        // var sourceName = cm.SourceUser?.FullName;
+                        // var sourceAvatar = cm.SourceUser?.AvatarUrl;
+
+                        string actorName = senderName;
+                        string? actorAvatar = senderAvatar;
+
+                        dto = new UserMentionDto
+                        {
+                            Type = MentionType.CHAT,
+                            WorkspaceId = cm.Message.WorkspaceId,
+                            CreatedAt = cm.CreatedAt,
+                            PreviewText = cm.Message.Content,
+                            MessageId = cm.MessageId,
+                            ChannelId = cm.Message.ChannelId,
+                            DmGroupId = cm.Message.DirectMessageGroupId,
+                            ChannelName = cm.Message.Channel?.Name ?? (cm.Message.DirectMessageGroupId.HasValue ? "Direct Message" : null),
+                            
+                            ActorName = actorName,
+                            ActorAvatar = actorAvatar,
+                            
+                            SubType = cm.Type,
+                            Info = cm.Info
+                        };
+                    }
+                }
+
+                if (dto != null)
+                {
+                    result.Add(dto);
+                }
+            }
+
             return Ok(result);
         }
+
+        // Helper class for Stage 1 ID projection
+        private class MentionIdProjection
+        {
+            public Guid Id { get; set; }
+            public DateTime CreatedAt { get; set; }
+            public MentionType Type { get; set; }
+        }
+
+        // Removed old MentionProjection class as it's no longer needed
+
     }
 }

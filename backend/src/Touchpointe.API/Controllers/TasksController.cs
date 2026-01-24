@@ -87,6 +87,22 @@ namespace Touchpointe.API.Controllers
             return Ok(comment);
         }
 
+        [HttpPut("comments/{commentId}")]
+        public async Task<ActionResult<TaskCommentDto>> UpdateComment(Guid workspaceId, Guid commentId, [FromBody] UpdateCommentRequest request, CancellationToken cancellationToken)
+        {
+            var userId = GetUserId();
+            var comment = await _taskService.UpdateCommentAsync(workspaceId, userId, commentId, request.Content, cancellationToken);
+            return Ok(comment);
+        }
+
+        [HttpDelete("comments/{commentId}")]
+        public async Task<ActionResult> DeleteComment(Guid workspaceId, Guid commentId, CancellationToken cancellationToken)
+        {
+            var userId = GetUserId();
+            await _taskService.DeleteCommentAsync(workspaceId, userId, commentId, cancellationToken);
+            return Ok(new { message = "Comment deleted" });
+        }
+
         [HttpGet("my-tasks")]
         public async Task<ActionResult<PaginatedList<MyTaskDto>>> GetMyTasks(Guid workspaceId, [FromQuery] int page = 1, [FromQuery] int pageSize = 50, CancellationToken cancellationToken = default)
         {

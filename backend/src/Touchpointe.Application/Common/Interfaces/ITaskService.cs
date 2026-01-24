@@ -14,6 +14,8 @@ namespace Touchpointe.Application.Common.Interfaces
         Task<SubtaskDto> AddSubtaskAsync(Guid workspaceId, Guid userId, Guid taskId, CreateSubtaskRequest request, CancellationToken cancellationToken = default);
         Task<SubtaskDto> ToggleSubtaskAsync(Guid workspaceId, Guid userId, Guid subtaskId, CancellationToken cancellationToken = default);
         Task<TaskCommentDto> AddCommentAsync(Guid workspaceId, Guid userId, Guid taskId, CreateCommentRequest request, CancellationToken cancellationToken = default);
+        Task<TaskCommentDto> UpdateCommentAsync(Guid workspaceId, Guid userId, Guid commentId, string content, CancellationToken cancellationToken = default);
+        Task DeleteCommentAsync(Guid workspaceId, Guid userId, Guid commentId, CancellationToken cancellationToken = default);
 
         Task DeleteTaskAsync(Guid workspaceId, Guid userId, Guid taskId, CancellationToken cancellationToken = default);
     }
