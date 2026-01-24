@@ -52,6 +52,12 @@ export default {
 					'3': 'hsl(var(--chart-3))',
 					'4': 'hsl(var(--chart-4))',
 					'5': 'hsl(var(--chart-5))'
+				},
+				'task-card': {
+					border: 'var(--task-card-border)',
+					'hover-border': 'var(--task-card-hover-border)',
+					foreground: 'var(--task-card-text)',
+					muted: 'var(--task-card-text-muted)',
 				}
 			},
 			keyframes: {
@@ -59,6 +65,12 @@ export default {
 					'0%, 100%': { opacity: '1' },
 					'50%': { opacity: '0.2' },
 				}
+			},
+			boxShadow: {
+				'task-card': 'var(--task-card-shadow)',
+			},
+			backgroundImage: {
+				'task-card': 'var(--task-card-bg)',
 			},
 			animation: {
 				'pulse-slow': 'pulse-slow 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',

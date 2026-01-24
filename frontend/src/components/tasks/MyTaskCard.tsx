@@ -37,8 +37,8 @@ export const MyTaskCard: React.FC<TaskCardProps> = ({ task, onClick, onStatusCha
             onClick={() => onClick(task.taskId)}
             className="
         relative rounded-2xl
-        bg-gradient-to-br from-white/10 to-white/5
-        backdrop-blur-md border border-white/10
+        bg-task-card
+        backdrop-blur-md border border-task-card-border
         shadow-[inset_0_0_25px_0_rgba(117,117,117,0.25)] hover:border-white/20
         transition cursor-pointer
       "
@@ -47,13 +47,13 @@ export const MyTaskCard: React.FC<TaskCardProps> = ({ task, onClick, onStatusCha
             <div className="flex justify-between gap-4 p-4">
                 <div>
                     <h3
-                        className={`text-lg font-semibold ${isDone ? 'text-gray-500 line-through' : 'text-white'
+                        className={`text-lg font-semibold ${isDone ? 'text-task-card-muted line-through' : 'text-task-card-foreground'
                             }`}
                     >
                         {task.title}
                     </h3>
 
-                    <p className="mt-1 text-xs text-white/60">
+                    <p className="mt-1 text-xs text-task-card-muted">
                         {task.spaceName} / {task.listName}
                     </p>
                 </div>
@@ -76,15 +76,15 @@ export const MyTaskCard: React.FC<TaskCardProps> = ({ task, onClick, onStatusCha
                         className={`h-2 w-2 rounded-full ${isDone ? 'bg-green-500' : 'bg-blue-500'
                             }`}
                     />
-                    <span className="text-xs text-white/80">
+                    <span className="text-xs text-task-card-foreground/80">
                         {isDone ? 'Done' : 'In Progress'}
                     </span>
                 </div>
 
                 {task.dueDate && (
-                    <div className="text-xs text-white/60">
+                    <div className="text-xs text-task-card-muted">
                         Due Date
-                        <span className="ml-1 text-white font-medium">
+                        <span className="ml-1 text-task-card-foreground font-medium">
                             {format(parseISO(task.dueDate), 'dd MMM, yyyy')}
                         </span>
                     </div>
@@ -92,23 +92,23 @@ export const MyTaskCard: React.FC<TaskCardProps> = ({ task, onClick, onStatusCha
             </div>
 
             {/* Divider */}
-            <div className="my-3 h-px bg-white/10" />
+            <div className="my-3 h-px bg-task-card-border" />
 
             {/* Bottom Actions */}
             <div className="flex items-center justify-between px-4 pb-4">
-                <div className="flex gap-3 text-white/60">
+                <div className="flex gap-3 text-task-card-muted">
                     <Timer
-                        className="w-4 h-4 hover:text-white cursor-pointer transition-colors"
+                        className="w-4 h-4 hover:text-task-card-foreground cursor-pointer transition-colors"
                         onClick={(e) => {
                             e.stopPropagation();
                             // handle timer click
                         }}
                     />
-                    <MessageSquare className="w-4 h-4 hover:text-white cursor-pointer transition-colors" />
+                    <MessageSquare className="w-4 h-4 hover:text-task-card-foreground cursor-pointer transition-colors" />
                 </div>
 
                 <div
-                    className={`flex items-center gap-2 text-xs font-medium cursor-pointer transition-colors ${isDone ? 'text-green-500 hover:text-green-400' : 'text-white/40 hover:text-white'
+                    className={`flex items-center gap-2 text-xs font-medium cursor-pointer transition-colors ${isDone ? 'text-green-500 hover:text-green-400' : 'text-task-card-muted hover:text-task-card-foreground'
                         }`}
                     onClick={(e) => {
                         e.stopPropagation();
