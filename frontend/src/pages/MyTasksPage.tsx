@@ -341,7 +341,9 @@ export const MyTasksPage = () => {
                                                         <span className="text-sm font-semibold">{mention.actorName}</span>
                                                         <span className="text-xs text-muted-foreground">{formatDistanceToNow(new Date(mention.createdAt))} ago</span>
                                                     </div>
-                                                    <p className="text-sm text-foreground mt-1 line-clamp-1">{mention.previewText}</p>
+                                                    <p className="text-sm text-foreground mt-1 line-clamp-1">
+                                                        {mention.previewText.replace(/<@[\w-]+\|([^>]+)>/g, "@$1")}
+                                                    </p>
                                                     {mention.taskTitle && <p className="text-xs text-primary mt-1">{mention.taskTitle}</p>}
                                                 </div>
                                             </div>
