@@ -1,28 +1,14 @@
 import {
-    Home,
     CheckSquare,
     MessageSquare,
     UsersRound,
 
     Sparkles,
-    Video
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { MyTasksIcon } from '@/components/icons/MyTasksIcon';
 import { CrmIcon } from '@/components/icons/CrmIcon';
-
-const navItems = [
-    // { icon: Home, label: 'Home', path: '/home' },
-    { icon: MyTasksIcon, label: 'My Tasks', path: '/my-tasks' },
-    { icon: CheckSquare, label: 'Tasks', path: '/tasks' },
-    { icon: CrmIcon, label: 'CRM', path: '/crm' },
-    { icon: MessageSquare, label: 'Chat', path: '/chat' },
-    // { icon: Video, label: 'Meet', path: '/meet' },
-    { icon: Sparkles, label: 'Agent', path: '/ai' },
-    { icon: UsersRound, label: 'Team', path: '/team' },
-
-];
 
 export function PrimarySidebar() {
     return (

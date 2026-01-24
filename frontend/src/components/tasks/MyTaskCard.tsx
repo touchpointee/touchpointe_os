@@ -4,7 +4,6 @@ import {
     CheckSquare,
     Timer,
     MessageSquare,
-    RotateCcw,
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 

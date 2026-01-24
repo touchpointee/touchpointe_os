@@ -11,8 +11,7 @@ import type { MyTask } from '@/types/myTasks';
 import type { UserMention } from '@/types/mention';
 import { MyTaskCard } from '@/components/tasks/MyTaskCard';
 import { TaskDetailPanel } from '@/components/tasks/TaskDetailPanel';
-import { MentionRenderer } from '@/components/shared/MentionRenderer';
-import { Loader2, Inbox, CheckSquare, Bell, MessageSquare, MessageCircle, CheckCircle, Filter, LayoutList, LayoutGrid, AlertCircle } from 'lucide-react';
+import { Loader2, Inbox, Bell, MessageSquare, MessageCircle, CheckCircle, LayoutList, LayoutGrid, AlertCircle } from 'lucide-react';
 import { MyTaskListRow } from '@/components/tasks/MyTaskListRow';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -23,7 +22,6 @@ export const MyTasksPage = () => {
     const [searchParams, setSearchParams] = useSearchParams();
     const [tasks, setTasks] = useState<MyTask[]>([]);
     const [loading, setLoading] = useState(true);
-    const [isFilterPopupOpen, setIsFilterPopupOpen] = useState(false);
     const [viewMode, setViewMode] = useState<'GRID' | 'LIST'>('GRID');
 
     const navigate = useNavigate();
