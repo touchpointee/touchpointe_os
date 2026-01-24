@@ -56,7 +56,7 @@ namespace Touchpointe.API.Controllers
                 });
 
             var chatIdsQuery = _context.ChatMentions
-                .Where(cm => cm.UserId == userId && cm.Message.WorkspaceId == workspaceId)
+                .Where(cm => cm.UserId == userId && cm.Message.WorkspaceId == workspaceId && cm.Message.SenderId != userId)
                 .Select(cm => new MentionIdProjection 
                 { 
                     Id = cm.Id, 
