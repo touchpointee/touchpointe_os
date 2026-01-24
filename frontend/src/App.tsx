@@ -53,27 +53,27 @@ function App() {
                                 </AppLayout>
                             </AuthGuard>
                         } />
-                        <Route path="/home/*" element={
+                        {/* <Route path="/home/*" element={
                             <AuthGuard>
                                 <AppLayout hideContextSidebar={true}>
                                     <HomePage />
                                 </AppLayout>
                             </AuthGuard>
-                        } />
-                        <Route path="/workspace/:workspaceId/home" element={
+                        } /> */}
+                        {/* <Route path="/workspace/:workspaceId/home" element={
                             <AuthGuard>
                                 <AppLayout hideContextSidebar={true}>
                                     <HomePage />
                                 </AppLayout>
                             </AuthGuard>
-                        } />
-                        <Route path="/workspace/:workspaceId/meet" element={
+                        } /> */}
+                        {/* <Route path="/workspace/:workspaceId/meet" element={
                             <AuthGuard>
                                 <AppLayout hideContextSidebar={true}>
                                     <MeetPage />
                                 </AppLayout>
                             </AuthGuard>
-                        } />
+                        } /> */}
                         <Route path="/meet/history/:meetingId" element={
                             <AuthGuard>
                                 <AppLayout hideContextSidebar={true}>
@@ -83,7 +83,7 @@ function App() {
                         } />
                         <Route path="/my-tasks" element={
                             <AuthGuard>
-                                <AppLayout>
+                                <AppLayout hideContextSidebar={true}>
                                     <MyTasksPage />
                                 </AppLayout>
                             </AuthGuard>
@@ -130,13 +130,13 @@ function App() {
                                 </AppLayout>
                             </AuthGuard>
                         } />
-                        <Route path="/meet" element={
+                        {/* <Route path="/meet" element={
                             <AuthGuard>
                                 <AppLayout hideContextSidebar={true}>
                                     <MeetPage />
                                 </AppLayout>
                             </AuthGuard>
-                        } />
+                        } /> */}
                         <Route path="/chat/channel/:channelId" element={
                             <AuthGuard>
                                 <AppLayout>
@@ -174,8 +174,9 @@ function App() {
                         } />
 
                         {/* Root Redirect - Go to home, AuthGuard handles the rest */}
-                        <Route path="/" element={<Navigate to="/home" replace />} />
-                        <Route path="*" element={<Navigate to="/home" replace />} />
+                        {/* Root Redirect - Go to home, AuthGuard handles the rest */}
+                        <Route path="/" element={<Navigate to="/my-tasks" replace />} />
+                        <Route path="*" element={<Navigate to="/my-tasks" replace />} />
                     </Routes>
                 </BrowserRouter>
             </ToastProvider>

@@ -6,12 +6,13 @@ import { useTaskStore } from '@/stores/taskStore';
 import { useMentionStore } from '@/stores/mentionStore';
 import { useHierarchyStore } from '@/stores/hierarchyStore';
 import { apiGet, apiPut } from '@/lib/api';
+import { useUserStore } from '@/stores/userStore';
 import type { MyTask } from '@/types/myTasks';
 import type { UserMention } from '@/types/mention';
 import { MyTaskCard } from '@/components/tasks/MyTaskCard';
 import { TaskDetailPanel } from '@/components/tasks/TaskDetailPanel';
 import { MentionRenderer } from '@/components/shared/MentionRenderer';
-import { Loader2, Inbox, CheckSquare, Bell, MessageSquare, MessageCircle, CheckCircle, Filter, LayoutList, LayoutGrid } from 'lucide-react';
+import { Loader2, Inbox, CheckSquare, Bell, MessageSquare, MessageCircle, CheckCircle, Filter, LayoutList, LayoutGrid, AlertCircle } from 'lucide-react';
 import { MyTaskListRow } from '@/components/tasks/MyTaskListRow';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -32,7 +33,9 @@ export const MyTasksPage = () => {
     const spaceFilterId = searchParams.get('spaceFilter');
     const urgencyMode = searchParams.get('urgency') === 'true';
 
+    const { spaceFilterId: _spaceFilterId } = { spaceFilterId: searchParams.get('spaceFilter') }; // avoiding unused var lint if I don't use it yet
     const { spaces } = useHierarchyStore();
+    const { user } = useUserStore(); // Correct store for user info
 
     const isMentionsView = ['MENTIONS', 'COMMENT_MENTIONS', 'CHAT_MENTIONS'].includes(filter);
 
@@ -46,15 +49,14 @@ export const MyTasksPage = () => {
     useEffect(() => {
         if (!activeWorkspace?.id) return;
 
-        if (isMentionsView) {
-            fetchMentions();
-            setLoading(false);
-        } else {
-            // Only fetch tasks if we switched modes or workspace changed
-            loadTasks();
-        }
+        // Always fetch mentions for the KPI counts
+        fetchMentions();
+
+        // Fetch tasks
+        loadTasks();
+
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [activeWorkspace?.id, isMentionsView]);
+    }, [activeWorkspace?.id]);
 
     const loadTasks = async () => {
         try {
@@ -125,6 +127,25 @@ export const MyTasksPage = () => {
         }
     };
 
+    // --- DASHBOARD METRICS ---
+    const stats = useMemo(() => {
+        const totalTasks = tasks.length;
+        const dueToday = tasks.filter(t => t.isDueToday).length;
+        const overdue = tasks.filter(t => t.isOverdue).length;
+        const totalMentions = mentions.length;
+
+        return { totalTasks, dueToday, overdue, totalMentions };
+    }, [tasks, mentions]);
+
+    // Greeting Logic
+    const greeting = useMemo(() => {
+        const hour = new Date().getHours();
+        if (hour < 12) return "Good morning";
+        if (hour < 18) return "Good afternoon";
+        return "Good evening";
+    }, []);
+
+    const firstName = user?.fullName ? user.fullName.split(' ')[0] : 'Back';
 
     // Filter & Sort Logic for TASKS (ignored if filter == MENTIONS)
     const filteredTasks = useMemo(() => {
@@ -152,8 +173,6 @@ export const MyTasksPage = () => {
             if (space) {
                 result = result.filter(t => t.spaceName === space.name);
             } else {
-                // ID valid but not found in hierarchy => likely hierarchy stale or invalid ID. 
-                // Return empty to be safe (this matches "filter active but no matches")
                 result = [];
             }
         }
@@ -180,204 +199,195 @@ export const MyTasksPage = () => {
         );
     }
 
-
-
     return (
-        <div className="h-full flex flex-col bg-background relative">
-            <header className="flex items-center justify-between px-6 py-4 border-b">
-                <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
-                        {isMentionsView ? <Bell className="w-6 h-6" /> : <CheckSquare className="w-6 h-6" />}
-                    </div>
-                    <div>
-                        <h1 className="text-xl font-semibold tracking-tight">
-                            {filter === 'CHAT_MENTIONS' ? 'Chat Mentions' :
-                                filter === 'COMMENT_MENTIONS' ? 'Comment Mentions' :
-                                    filter === 'MENTIONS' ? 'Mentions Inbox' : 'My Tasks'}
-                        </h1>
-                        <p className="text-sm text-muted-foreground">
-                            {filter === 'ALL' && 'All your assigned tasks'}
-                            {filter === 'TODAY' && 'Tasks due today'}
-                            {filter === 'OVERDUE' && 'Overdue tasks'}
-                            {filter === 'CHAT_MENTIONS' && 'Direct messages and channel mentions'}
-                            {filter === 'COMMENT_MENTIONS' && 'Task assignments and comments'}
-                        </p>
-                    </div>
-                </div>
-                <div className="flex items-center gap-2">
-                    <div className="relative">
-                        <button
-                            onClick={() => {
-                                setIsFilterPopupOpen(true);
-                            }}
-                            className={`p-2 rounded-md transition-colors ${isFilterPopupOpen ? 'bg-muted text-foreground' : 'hover:bg-muted/50 text-muted-foreground'
-                                }`}
-                        >
-                            <Filter className="w-5 h-5" />
-                        </button>
+        <div className="h-full flex flex-col bg-background relative overflow-hidden">
 
-                        {isFilterPopupOpen && (
-                            <>
-                                <div className="fixed inset-0 z-40" onClick={() => setIsFilterPopupOpen(false)} />
-                                <div className="absolute top-full right-0 mt-1 w-60 bg-[#0a0a0a] border border-white/10 rounded-xl shadow-2xl z-50 p-2 animate-in fade-in zoom-in-95 duration-200">
-                                    <div className="space-y-1 px-2 py-0">
-                                        {[
-                                            { id: 'ALL', label: 'All Tasks' },
-                                            { id: 'TODAY', label: 'Due Today' },
-                                            { id: 'OVERDUE', label: 'Overdue' },
-                                            { id: 'COMMENT_MENTIONS', label: 'Comment Mentions' },
-                                            { id: 'CHAT_MENTIONS', label: 'Chat Mentions' },
-                                        ].map((option) => (
+            {/* Background Gradients */}
+            <div className="absolute top-0 left-0 w-full h-[300px] bg-gradient-to-b from-primary/5 to-transparent -z-10" />
+            <div className="absolute top-[-100px] right-[-100px] w-[400px] h-[400px] bg-blue-500/10 rounded-full blur-[100px] -z-10" />
+
+            <div className="flex-1 overflow-y-auto no-scrollbar">
+                <div className="p-8 max-w-[1600px] mx-auto space-y-8">
+
+                    {/* DASHBOARD HEADER */}
+                    <div className="space-y-6">
+                        <div>
+                            <h1 className="text-3xl font-bold tracking-tight text-foreground">
+                                {greeting}, {firstName}
+                            </h1>
+                            <p className="text-muted-foreground mt-1">
+                                You have <span className="font-semibold text-foreground">{stats.dueToday} tasks</span> due today.
+                            </p>
+                        </div>
+
+                        {/* KPI Grid */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <KpiCard
+                                icon={CheckCircle}
+                                label="Assigned to Me"
+                                value={stats.totalTasks}
+                                onClick={() => setSearchParams({ filter: 'ALL' })}
+                                active={filter === 'ALL'}
+                            />
+                            <KpiCard
+                                icon={LayoutList}
+                                label="Due Today"
+                                value={stats.dueToday}
+                                color="text-orange-500"
+                                bg="bg-orange-500/10"
+                                onClick={() => setSearchParams({ filter: 'TODAY' })}
+                                active={filter === 'TODAY'}
+                            />
+                            <KpiCard
+                                icon={AlertCircle}
+                                label="Overdue"
+                                value={stats.overdue}
+                                color="text-red-500"
+                                bg="bg-red-500/10"
+                                onClick={() => setSearchParams({ filter: 'OVERDUE' })}
+                                active={filter === 'OVERDUE'}
+                            />
+                            <KpiCard
+                                icon={Bell}
+                                label="Mentions"
+                                value={stats.totalMentions}
+                                color="text-purple-500"
+                                bg="bg-purple-500/10"
+                                onClick={() => setSearchParams({ filter: 'MENTIONS' })}
+                                active={isMentionsView}
+                            />
+                        </div>
+                    </div>
+
+                    {/* MAIN CONTENT AREA */}
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                            <h2 className="text-lg font-semibold tracking-tight">
+                                {isMentionsView ? 'Recent Mentions' : 'Your Tasks'}
+                            </h2>
+
+                            {/* View Toggles */}
+                            <div className="flex items-center gap-2">
+
+                                {!isMentionsView && (
+                                    <div className="flex items-center bg-card border border-border p-1 rounded-lg">
+                                        <button
+                                            onClick={() => setViewMode('GRID')}
+                                            className={`p-1.5 rounded-md transition-all ${viewMode === 'GRID' ? 'bg-primary/10 text-primary shadow-sm' : 'text-muted-foreground hover:bg-accent'}`}
+                                        >
+                                            <LayoutGrid className="w-4 h-4" />
+                                        </button>
+                                        <button
+                                            onClick={() => setViewMode('LIST')}
+                                            className={`p-1.5 rounded-md transition-all ${viewMode === 'LIST' ? 'bg-primary/10 text-primary shadow-sm' : 'text-muted-foreground hover:bg-accent'}`}
+                                        >
+                                            <LayoutList className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Filter Popup Removed */}
+
+                        {/* CONTENT */}
+                        <div className="min-h-[400px]">
+                            {isMentionsView ? (
+                                mentionsLoading ? (
+                                    <div className="flex items-center justify-center p-12">
+                                        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                                    </div>
+                                ) : displayedMentions.length === 0 ? (
+                                    <div className="flex flex-col items-center justify-center text-muted-foreground opacity-50 p-12 bg-card/50 rounded-xl border border-dashed border-border">
+                                        <Bell className="w-12 h-12 mb-4 stroke-1" />
+                                        <p>No mentions found.</p>
+                                    </div>
+                                ) : (
+                                    <div className="grid gap-3">
+                                        {displayedMentions.map((mention, idx) => (
                                             <div
-                                                key={option.id}
-                                                onClick={() => {
-                                                    setSearchParams({ filter: option.id });
-                                                    setIsFilterPopupOpen(false);
-                                                }}
-                                                className="flex items-center gap-3 px-0.5 py-1.5 rounded-lg hover:bg-white/5 cursor-pointer transition-colors group"
+                                                key={idx}
+                                                className="flex gap-4 p-4 rounded-xl border bg-card hover:bg-accent/50 transition-all cursor-pointer shadow-sm"
+                                                onClick={() => handleMentionClick(mention)}
                                             >
-                                                <div
-                                                    className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${filter === option.id
-                                                        ? 'border-transparent' // Make border transparent so background gradient shows through
-                                                        : 'border-white/20 group-hover:border-white/40'
-                                                        }`}
-                                                    style={filter === option.id ? {
-                                                        background: 'linear-gradient(#0a0a0a, #0a0a0a) padding-box, linear-gradient(94.03deg, #925FF8 -8.9%, #4175E4 100%) border-box',
-                                                        border: '1px solid transparent',
-                                                    } : undefined}
-                                                >
-                                                    {filter === option.id && (
-                                                        <div
-                                                            className="w-2.5 h-2.5 rounded-[1px]"
-                                                            style={{
-                                                                background: 'linear-gradient(94.03deg, #925FF8 -8.9%, #4175E4 100%)'
-                                                            }}
-                                                        />
-                                                    )}
+                                                <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${getBgColor(mention.type)}`}>
+                                                    {getIcon(mention.type)}
                                                 </div>
-                                                <span className={`text-sm ${filter === option.id ? 'text-white font-medium' : 'text-zinc-400 group-hover:text-zinc-300'}`}>
-                                                    {option.label}
-                                                </span>
+                                                <div className="flex-1">
+                                                    <div className="flex justify-between">
+                                                        <span className="text-sm font-semibold">{mention.actorName}</span>
+                                                        <span className="text-xs text-muted-foreground">{formatDistanceToNow(new Date(mention.createdAt))} ago</span>
+                                                    </div>
+                                                    <p className="text-sm text-foreground mt-1 line-clamp-1">{mention.previewText}</p>
+                                                    {mention.taskTitle && <p className="text-xs text-primary mt-1">{mention.taskTitle}</p>}
+                                                </div>
                                             </div>
                                         ))}
                                     </div>
-                                </div>
-                            </>
-                        )}
-                    </div>
-
-                    {!isMentionsView && (
-                        <button
-                            onClick={() => setViewMode(prev => prev === 'GRID' ? 'LIST' : 'GRID')}
-                            className="flex items-center gap-2 px-3 py-1.5 bg-accent hover:bg-accent/80 rounded-md transition-colors text-sm font-medium text-foreground"
-                        >
-                            {viewMode === 'GRID' ? (
-                                <>
-                                    <LayoutList className="w-4 h-4" />
-                                    List
-                                </>
-                            ) : (
-                                <>
-                                    <LayoutGrid className="w-4 h-4" />
-                                    Card
-                                </>
-                            )}
-                        </button>
-                    )}
-                </div>
-            </header>
-
-
-
-            <div className="flex-1 overflow-y-auto p-6 no-scrollbar">
-                {isMentionsView ? (
-                    // MENTIONS VIEW
-                    mentionsLoading ? (
-                        <div className="flex items-center justify-center h-full">
-                            <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                        </div>
-                    ) : displayedMentions.length === 0 ? (
-                        <div className="h-full flex flex-col items-center justify-center text-muted-foreground opacity-50">
-                            <Bell className="w-16 h-16 mb-4 stroke-1" />
-                            <p>No mentions found.</p>
-                        </div>
-                    ) : (
-                        <div className="max-w-4xl mx-auto space-y-4">
-                            {displayedMentions.map((mention, idx) => (
-                                <div
-                                    key={idx}
-                                    className="flex gap-4 p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors cursor-pointer"
-                                    onClick={() => handleMentionClick(mention)}
-                                >
-                                    <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${getBgColor(mention.type)}`}>
-                                        {getIcon(mention.type)}
-                                    </div>
-
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex items-start justify-between gap-2">
-                                            <div className="flex flex-col">
-                                                <span className="text-sm font-semibold">
-                                                    {mention.actorName}
-                                                    <span className="font-normal text-muted-foreground ml-1">
-                                                        mentioned you in
-                                                        {mention.type === 'CHAT' ? (mention.channelName ? ` #${mention.channelName}` : ' Chat') :
-                                                            mention.type === 'COMMENT' ? ' a comment' : ' a Task'}
-                                                    </span>
-                                                </span>
-                                                {mention.taskTitle && (
-                                                    <span className="text-xs font-medium text-primary mt-0.5">
-                                                        {mention.taskTitle}
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <span className="text-xs text-muted-foreground whitespace-nowrap">
-                                                {formatDistanceToNow(new Date(mention.createdAt), { addSuffix: true })}
-                                            </span>
-                                        </div>
-
-                                        <div className="text-sm text-foreground/80 mt-2 line-clamp-2 bg-muted/30 p-2 rounded border border-border/50 italic">
-                                            <MentionRenderer content={mention.previewText} />
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    )
-                ) : (
-                    // TASKS VIEW
-                    filteredTasks.length === 0 ? (
-                        <div className="h-full flex flex-col items-center justify-center text-muted-foreground opacity-50">
-                            <Inbox className="w-16 h-16 mb-4 stroke-1" />
-                            <p>No tasks found in this view.</p>
-                        </div>
-                    ) : (
-                        <div className={viewMode === 'GRID'
-                            ? "grid gap-4 md:grid-cols-2 xl:grid-cols-3 max-w-7xl mx-auto"
-                            : "flex flex-col gap-2 max-w-4xl mx-auto"
-                        }>
-                            {filteredTasks.map(task => (
-                                viewMode === 'GRID' ? (
-                                    <MyTaskCard
-                                        key={task.taskId}
-                                        task={task}
-                                        onStatusChange={handleStatusChange}
-                                        onClick={() => openTaskDetail(task.taskId)}
-                                    />
-                                ) : (
-                                    <MyTaskListRow
-                                        key={task.taskId}
-                                        task={task}
-                                        onStatusChange={handleStatusChange}
-                                        onClick={() => openTaskDetail(task.taskId)}
-                                    />
                                 )
-                            ))}
+                            ) : (
+                                filteredTasks.length === 0 ? (
+                                    <div className="flex flex-col items-center justify-center text-muted-foreground opacity-50 p-12 bg-card/50 rounded-xl border border-dashed border-border">
+                                        <Inbox className="w-12 h-12 mb-4 stroke-1" />
+                                        <p>No tasks found.</p>
+                                    </div>
+                                ) : (
+                                    <div className={viewMode === 'GRID'
+                                        ? "grid gap-4 md:grid-cols-2 xl:grid-cols-3"
+                                        : "flex flex-col gap-2"
+                                    }>
+                                        {filteredTasks.map(task => (
+                                            viewMode === 'GRID' ? (
+                                                <MyTaskCard
+                                                    key={task.taskId}
+                                                    task={task}
+                                                    onStatusChange={handleStatusChange}
+                                                    onClick={() => openTaskDetail(task.taskId)}
+                                                />
+                                            ) : (
+                                                <MyTaskListRow
+                                                    key={task.taskId}
+                                                    task={task}
+                                                    onStatusChange={handleStatusChange}
+                                                    onClick={() => openTaskDetail(task.taskId)}
+                                                />
+                                            )
+                                        ))}
+                                    </div>
+                                )
+                            )}
                         </div>
-                    )
-                )}
+                    </div>
+                </div>
             </div>
 
             {isDetailPanelOpen && <TaskDetailPanel />}
         </div>
     );
 };
+
+// Helper Component for KPI Cards
+function KpiCard({ icon: Icon, label, value, color, bg, onClick, active }: any) {
+    const isActive = active;
+
+    return (
+        <div
+            onClick={onClick}
+            className={`p-5 rounded-xl border transition-all duration-200 cursor-pointer ${isActive
+                ? 'bg-primary/5 border-primary/20 shadow-sm ring-1 ring-primary/20'
+                : 'bg-card border-border hover:border-border/80 hover:bg-accent/50'
+                }`}
+        >
+            <div className="flex items-center justify-between mb-4">
+                <div className={`p-2.5 rounded-lg ${bg || 'bg-primary/10'} ${color || 'text-primary'}`}>
+                    <Icon className="w-5 h-5" />
+                </div>
+                {isActive && <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />}
+            </div>
+            <div>
+                <div className="text-2xl font-bold tracking-tight text-foreground">{value}</div>
+                <div className="text-sm text-muted-foreground font-medium mt-1">{label}</div>
+            </div>
+        </div>
+    );
+}
