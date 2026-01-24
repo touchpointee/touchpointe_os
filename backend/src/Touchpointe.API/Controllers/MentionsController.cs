@@ -24,7 +24,7 @@ namespace Touchpointe.API.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<List<UserMentionDto>>> GetMentions([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+        public async Task<ActionResult<List<UserMentionDto>>> GetMentions([FromQuery] Guid workspaceId, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
         {
             var userId = GetUserId();
             if (userId == Guid.Empty) return Unauthorized();
@@ -35,9 +35,10 @@ namespace Touchpointe.API.Controllers
 
             // --- STAGE 1: Fetch Paged IDs (Lightweight Union) ---
             // We project only what is needed for sorting and pagination: Id, CreatedAt, Type
+            // Added Workspace Isolation: Join with parent tables to filter by WorkspaceId
             
             var taskIdsQuery = _context.TaskMentions
-                .Where(tm => tm.UserId == userId)
+                .Where(tm => tm.UserId == userId && tm.Task.WorkspaceId == workspaceId)
                 .Select(tm => new MentionIdProjection 
                 { 
                     Id = tm.Id, // The MentionId (not TaskId)
@@ -46,7 +47,7 @@ namespace Touchpointe.API.Controllers
                 });
 
             var commentIdsQuery = _context.CommentMentions
-                .Where(cm => cm.UserId == userId)
+                .Where(cm => cm.UserId == userId && cm.Comment.Task.WorkspaceId == workspaceId)
                 .Select(cm => new MentionIdProjection 
                 { 
                     Id = cm.Id, 
@@ -55,7 +56,7 @@ namespace Touchpointe.API.Controllers
                 });
 
             var chatIdsQuery = _context.ChatMentions
-                .Where(cm => cm.UserId == userId)
+                .Where(cm => cm.UserId == userId && cm.Message.WorkspaceId == workspaceId)
                 .Select(cm => new MentionIdProjection 
                 { 
                     Id = cm.Id, 
@@ -168,17 +169,12 @@ namespace Touchpointe.API.Controllers
                     {
                         var senderName = cm.Message.Sender?.FullName ?? "Unknown";
                         var senderAvatar = cm.Message.Sender?.AvatarUrl;
-                        var sourceName = cm.SourceUser?.FullName;
-                        var sourceAvatar = cm.SourceUser?.AvatarUrl;
+                        // SourceUser logic removed per fix, relying on Message data
+                        // var sourceName = cm.SourceUser?.FullName;
+                        // var sourceAvatar = cm.SourceUser?.AvatarUrl;
 
                         string actorName = senderName;
                         string? actorAvatar = senderAvatar;
-
-                        if (cm.SourceUserId.HasValue)
-                        {
-                            actorName = sourceName ?? senderName;
-                            actorAvatar = sourceAvatar ?? senderAvatar;
-                        }
 
                         dto = new UserMentionDto
                         {

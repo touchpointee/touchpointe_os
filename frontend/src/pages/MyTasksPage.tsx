@@ -48,7 +48,9 @@ export const MyTasksPage = () => {
         if (!activeWorkspace?.id) return;
 
         // Always fetch mentions for the KPI counts
-        fetchMentions();
+        if (activeWorkspace?.id) {
+            fetchMentions(activeWorkspace.id);
+        }
 
         // Fetch tasks
         loadTasks();
@@ -266,6 +268,29 @@ export const MyTasksPage = () => {
 
                             {/* View Toggles */}
                             <div className="flex items-center gap-2">
+
+                                {isMentionsView && (
+                                    <div className="flex items-center bg-card border border-border p-1 rounded-lg">
+                                        <button
+                                            onClick={() => setSearchParams({ filter: 'MENTIONS' })}
+                                            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${filter === 'MENTIONS' ? 'bg-primary/10 text-primary shadow-sm' : 'text-muted-foreground hover:bg-accent'}`}
+                                        >
+                                            All
+                                        </button>
+                                        <button
+                                            onClick={() => setSearchParams({ filter: 'CHAT_MENTIONS' })}
+                                            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${filter === 'CHAT_MENTIONS' ? 'bg-primary/10 text-primary shadow-sm' : 'text-muted-foreground hover:bg-accent'}`}
+                                        >
+                                            Chat
+                                        </button>
+                                        <button
+                                            onClick={() => setSearchParams({ filter: 'COMMENT_MENTIONS' })}
+                                            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${filter === 'COMMENT_MENTIONS' ? 'bg-primary/10 text-primary shadow-sm' : 'text-muted-foreground hover:bg-accent'}`}
+                                        >
+                                            Comments
+                                        </button>
+                                    </div>
+                                )}
 
                                 {!isMentionsView && (
                                     <div className="flex items-center bg-card border border-border p-1 rounded-lg">
