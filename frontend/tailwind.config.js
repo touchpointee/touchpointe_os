@@ -58,6 +58,10 @@ export default {
 					'hover-border': 'var(--task-card-hover-border)',
 					foreground: 'var(--task-card-text)',
 					muted: 'var(--task-card-text-muted)',
+				},
+				'sidebar-selected': {
+					DEFAULT: 'var(--sidebar-selected-bg)',
+					foreground: 'var(--sidebar-selected-fg)',
 				}
 			},
 			keyframes: {

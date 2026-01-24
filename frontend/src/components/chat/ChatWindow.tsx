@@ -8,7 +8,7 @@ import { getCurrentUser } from '@/lib/auth';
 import { ChatMessageItem } from './ChatMessageItem';
 import { MentionSuggestion } from '../shared/MentionSuggestion';
 import { format, isToday, isYesterday } from 'date-fns';
-import { X, CornerDownRight, Hash, User } from 'lucide-react';
+import { X, CornerDownRight } from 'lucide-react';
 
 export function ChatWindow() {
     const {
@@ -262,7 +262,7 @@ export function ChatWindow() {
     };
 
     const getHeaderTitle = () => {
-        if (activeChannel) return `#${activeChannel.name}`;
+        if (activeChannel) return activeChannel.name.replace(/^#/, '');
         if (activeDm) {
             const otherMembers = activeDm.members.filter(m => m.id !== currentUser?.id);
             return otherMembers.map(m => m.fullName).join(', ') || 'Me';
@@ -295,9 +295,43 @@ export function ChatWindow() {
 
             {/* Header */}
             <div className="h-14 border-b border-border flex items-center px-4 bg-card/10">
-                <div className="flex items-center gap-2 font-semibold">
-                    {activeChannel ? <Hash className="w-5 h-5 text-muted-foreground" /> : <User className="w-5 h-5 text-muted-foreground" />}
-                    {getHeaderTitle()}
+                <div className="flex items-center gap-3 font-semibold">
+                    {activeChannel ? (
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-sm font-bold shadow-sm">
+                            {activeChannel.name.replace(/^#/, '').charAt(0).toUpperCase()}
+                        </div>
+                    ) : activeDm ? (
+                        (() => {
+                            const otherMembers = activeDm.members.filter(m => m.id !== currentUser?.id);
+                            // Single DM
+                            if (otherMembers.length === 1 && otherMembers[0].avatarUrl) {
+                                return (
+                                    <img
+                                        src={otherMembers[0].avatarUrl}
+                                        alt={otherMembers[0].fullName}
+                                        className="w-8 h-8 rounded-full object-cover border border-border"
+                                    />
+                                );
+                            }
+                            // Group DM or no avatar
+                            return (
+                                <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground text-xs font-bold border border-border">
+                                    {otherMembers.length > 0 ? otherMembers[0].fullName.charAt(0).toUpperCase() : 'M'}
+                                </div>
+                            );
+                        })()
+                    ) : (
+                        <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
+                            {/* Generic fallback */}
+                            <div className="w-4 h-4 rounded-full bg-muted-foreground/30" />
+                        </div>
+                    )}
+
+                    {/* Title Text - REFINED (No #) */}
+                    <div className="flex flex-col leading-none justify-center">
+                        <span className="text-foreground">{activeChannel ? activeChannel.name.replace(/^#/, '') : getHeaderTitle()}</span>
+                        {activeChannel && <span className="text-[10px] text-muted-foreground font-normal mt-0.5">{activeChannel.memberCount} members</span>}
+                    </div>
                 </div>
             </div>
 
