@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { useChatStore } from '@/stores/chatStore';
 import { useWorkspaces } from '@/stores/workspaceStore';
 import { useTeamStore } from '@/stores/teamStore';
+import { useUserStore } from '@/stores/userStore';
 import { Plus, Lock, Users, ChevronDown } from 'lucide-react';
-import { getCurrentUser } from '@/lib/auth';
 
 export function ChatSidebar() {
     const {
@@ -16,9 +16,8 @@ export function ChatSidebar() {
     } = useChatStore();
 
     const { onlineUserIds } = useTeamStore();
-
     const { activeWorkspace } = useWorkspaces();
-    const currentUser = getCurrentUser();
+    const { user: currentUser } = useUserStore();
 
     const [isCreatingChannel, setIsCreatingChannel] = useState(false);
     const [newChannelName, setNewChannelName] = useState('');
@@ -76,7 +75,7 @@ export function ChatSidebar() {
         const otherMembers = group.members.filter((m: any) => m.id !== currentUser?.id);
         if (otherMembers.length === 0) return false;
         // If any member is online? Or all? Usually any.
-        return otherMembers.some((m: any) => onlineUserIds.includes(m.id));
+        return otherMembers.some((m: any) => onlineUserIds.includes(m.id || m.Id));
     };
 
     return (

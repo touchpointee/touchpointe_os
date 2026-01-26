@@ -43,6 +43,12 @@ namespace Touchpointe.Application.Common.Interfaces
         DbSet<ListStatus> ListStatuses { get; }
         DbSet<Tag> Tags { get; }
         DbSet<TaskTimeEntry> TaskTimeEntries { get; }
+        
+        // CRM - Leads
+        DbSet<Lead> Leads { get; }
+        DbSet<LeadForm> LeadForms { get; }
+        DbSet<LeadActivity> LeadActivities { get; }
+        DbSet<FacebookIntegration> FacebookIntegrations { get; }
 
         Task<int> SaveChangesAsync(CancellationToken cancellationToken);
     }

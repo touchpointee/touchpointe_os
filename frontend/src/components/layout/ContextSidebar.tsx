@@ -106,6 +106,8 @@ export function ContextSidebar({ className }: { className?: string }) {
 
     // Dynamic CRM Items
     const crmItems: SidebarItem[] = activeWorkspace ? [
+        { icon: Home, label: 'Dashboard', path: `/workspace/${activeWorkspace.id}/crm/dashboard` },
+        { icon: UserPlus, label: 'Leads', path: `/workspace/${activeWorkspace.id}/crm/leads` },
         { icon: DollarSign, label: 'Deals', path: `/workspace/${activeWorkspace.id}/crm/deals` },
         { icon: Building2, label: 'Companies', path: `/workspace/${activeWorkspace.id}/crm/companies` },
         { icon: Users, label: 'Contacts', path: `/workspace/${activeWorkspace.id}/crm/contacts` },

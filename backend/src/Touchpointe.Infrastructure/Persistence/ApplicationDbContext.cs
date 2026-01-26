@@ -71,6 +71,12 @@ namespace Touchpointe.Infrastructure.Persistence
         public DbSet<ListStatus> ListStatuses => Set<ListStatus>();
         public DbSet<Tag> Tags => Set<Tag>();
         public DbSet<TaskTimeEntry> TaskTimeEntries => Set<TaskTimeEntry>();
+        
+        // CRM - Leads
+        public DbSet<Lead> Leads => Set<Lead>();
+        public DbSet<LeadForm> LeadForms => Set<LeadForm>();
+        public DbSet<LeadActivity> LeadActivities => Set<LeadActivity>();
+        public DbSet<FacebookIntegration> FacebookIntegrations => Set<FacebookIntegration>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -608,6 +614,101 @@ namespace Touchpointe.Infrastructure.Persistence
 
             modelBuilder.Entity<TaskTimeEntry>()
                 .HasIndex(t => new { t.UserId, t.EndTime });
+
+            // ========== CRM LEADS ==========
+
+            // Lead
+            modelBuilder.Entity<Lead>()
+                .HasOne(l => l.Workspace)
+                .WithMany()
+                .HasForeignKey(l => l.WorkspaceId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Lead>()
+                .HasOne(l => l.Form)
+                .WithMany(f => f.Leads)
+                .HasForeignKey(l => l.FormId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<Lead>()
+                .HasOne(l => l.AssignedTo)
+                .WithMany()
+                .HasForeignKey(l => l.AssignedToUserId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<Lead>()
+                .HasOne(l => l.ConvertedToContact)
+                .WithMany()
+                .HasForeignKey(l => l.ConvertedToContactId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<Lead>()
+                .HasIndex(l => l.WorkspaceId);
+
+            modelBuilder.Entity<Lead>()
+                .HasIndex(l => l.Email);
+
+            modelBuilder.Entity<Lead>()
+                .HasIndex(l => new { l.WorkspaceId, l.Status });
+
+            modelBuilder.Entity<Lead>()
+                .HasIndex(l => new { l.WorkspaceId, l.Source });
+
+            // LeadForm
+            modelBuilder.Entity<LeadForm>()
+                .HasOne(f => f.Workspace)
+                .WithMany()
+                .HasForeignKey(f => f.WorkspaceId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<LeadForm>()
+                .HasOne(f => f.CreatedBy)
+                .WithMany()
+                .HasForeignKey(f => f.CreatedByUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<LeadForm>()
+                .HasIndex(f => f.Token)
+                .IsUnique();
+
+            modelBuilder.Entity<LeadForm>()
+                .HasIndex(f => f.WorkspaceId);
+
+            // LeadActivity
+            modelBuilder.Entity<LeadActivity>()
+                .HasOne(a => a.Lead)
+                .WithMany(l => l.Activities)
+                .HasForeignKey(a => a.LeadId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<LeadActivity>()
+                .HasOne(a => a.User)
+                .WithMany()
+                .HasForeignKey(a => a.UserId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<LeadActivity>()
+                .HasIndex(a => a.LeadId);
+
+            modelBuilder.Entity<LeadActivity>()
+                .HasIndex(a => a.CreatedAt);
+
+            // FacebookIntegration
+            modelBuilder.Entity<FacebookIntegration>()
+                .HasOne(f => f.Workspace)
+                .WithMany()
+                .HasForeignKey(f => f.WorkspaceId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<FacebookIntegration>()
+                .HasOne(f => f.ConnectedBy)
+                .WithMany()
+                .HasForeignKey(f => f.ConnectedByUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<FacebookIntegration>()
+                .HasIndex(f => f.WorkspaceId)
+                .IsUnique();
         }
     }
 }
