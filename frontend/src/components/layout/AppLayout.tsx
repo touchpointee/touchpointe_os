@@ -12,17 +12,18 @@ import { RealtimeManager } from '@/components/shared/RealtimeManager';
 interface AppLayoutProps {
     children: ReactNode;
     hideContextSidebar?: boolean;
+    hidePrimarySidebar?: boolean;
 }
 
-export function AppLayout({ children, hideContextSidebar = false }: AppLayoutProps) {
+export function AppLayout({ children, hideContextSidebar = false, hidePrimarySidebar = false }: AppLayoutProps) {
     const location = useLocation();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     return (
         <div className="min-h-screen bg-background pt-14">
-            <PrimarySidebar />
+            {!hidePrimarySidebar && <PrimarySidebar />}
             <GlobalHeader onOpenMobileMenu={() => setIsMobileMenuOpen(true)} />
-            {!hideContextSidebar && <ContextSidebar />}
+            {!hideContextSidebar && !hidePrimarySidebar && <ContextSidebar />}
 
             <MobileSidebar
                 isOpen={isMobileMenuOpen}
@@ -35,10 +36,9 @@ export function AppLayout({ children, hideContextSidebar = false }: AppLayoutPro
             {/* Main Content Area */}
             <main className={cn(
                 "h-[calc(100vh-56px)] overflow-hidden transition-all duration-300",
-                // Mobile: ml-0 (full width)
-                // Tablet (md): ml-[72px] (Primary sidebar only)
-                // Desktop (lg): ml-[332px] (Both sidebars), unless context sidebar hidden
-                hideContextSidebar ? "md:ml-[72px]" : "md:ml-[72px] lg:ml-[332px]"
+                // If primary sidebar hidden -> ml-0
+                // Else -> standard margins
+                hidePrimarySidebar ? "ml-0" : (hideContextSidebar ? "md:ml-[72px]" : "md:ml-[72px] lg:ml-[332px]")
             )}>
                 {location.pathname.startsWith('/chat') || location.pathname.startsWith('/ai') || hideContextSidebar ? (
                     children

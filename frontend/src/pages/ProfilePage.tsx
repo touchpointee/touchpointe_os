@@ -1,15 +1,14 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Save, ArrowLeft, User } from 'lucide-react';
-import { useRef } from 'react';
+import { useState, useRef } from 'react';
+import { Save, User, Camera, Mail } from 'lucide-react';
 import { useUserStore } from '@/stores/userStore';
 import { apiPut, apiPostMultipart } from '@/lib/api';
 
+
 export function ProfilePage() {
-    const navigate = useNavigate();
     const { user, fetchUser } = useUserStore();
 
     const [fullName, setFullName] = useState(user?.fullName || '');
+    const [username, setUsername] = useState(user?.username || '');
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
@@ -23,8 +22,8 @@ export function ProfilePage() {
         setSuccess(false);
 
         try {
-            await apiPut('/auth/profile', { fullName });
-            await fetchUser();
+            await apiPut('/profile', { fullName, username });
+            await fetchUser(true); // Silent update to prevent blinking
             setSuccess(true);
             setTimeout(() => setSuccess(false), 3000);
         } catch (err: any) {
@@ -62,9 +61,7 @@ export function ProfilePage() {
 
         try {
             await apiPostMultipart<any>('/profile/avatar', formData);
-            await fetchUser();
-
-
+            await fetchUser(true);
         } catch (err: any) {
             setError(err.message || 'Failed to upload avatar');
         } finally {
@@ -74,108 +71,152 @@ export function ProfilePage() {
     };
 
     return (
-        <div className="h-full flex flex-col">
-            {/* Header */}
-            <div className="flex items-center gap-4 px-6 py-4 border-b border-border bg-background/50 backdrop-blur-sm">
-                <button
-                    onClick={() => navigate(-1)}
-                    className="p-2 rounded-lg hover:bg-muted transition-colors"
-                >
-                    <ArrowLeft className="w-5 h-5" />
-                </button>
-                <div>
-                    <h1 className="text-2xl font-bold tracking-tight">Profile</h1>
-                    <p className="text-sm text-muted-foreground">Manage your account settings</p>
-                </div>
-            </div>
+        <div className="h-full w-full overflow-y-auto bg-gradient-to-br from-background to-muted/20">
+            <div className="min-h-full w-full flex items-center justify-center p-4">
+                <div className="w-full max-w-lg">
+                    <div className="bg-card/40 backdrop-blur-xl border border-white/10 shadow-2xl rounded-2xl overflow-hidden relative">
+                        {/* Decorative Header Background */}
+                        <div className="h-32 bg-gradient-to-r from-primary/20 via-primary/10 to-transparent relative overflow-hidden">
+                            <div className="absolute inset-0 bg-grid-white/5 opacity-50" />
+                        </div>
 
-            {/* Content */}
-            <div className="flex-1 p-6 max-w-2xl">
-                {/* Avatar Section */}
-                <div className="flex items-center gap-6 mb-8">
-                    <div className="relative group cursor-pointer" onClick={handleAvatarClick}>
-                        <div className="w-24 h-24 rounded-full bg-primary flex items-center justify-center overflow-hidden border-2 border-transparent group-hover:border-primary transition-all">
-                            {user?.avatarUrl ? (
-                                <img src={user.avatarUrl} alt="Profile" className="w-full h-full object-cover" />
-                            ) : (
-                                <span className="text-primary-foreground text-3xl font-bold">{userInitial}</span>
-                            )}
-                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-full">
-                                <span className="text-white text-xs font-medium">Change</span>
+                        <div className="px-8 pb-8">
+                            {/* Avatar - Negative margin to pull it up */}
+                            <div className="relative -mt-16 mb-6 flex justify-center">
+                                <div className="relative group cursor-pointer" onClick={handleAvatarClick}>
+                                    <div className="w-32 h-32 rounded-full bg-background p-1.5 shadow-xl ring-1 ring-white/10 relative z-10">
+                                        <div className="w-full h-full rounded-full bg-muted flex items-center justify-center overflow-hidden relative">
+                                            {user?.avatarUrl ? (
+                                                <img src={user.avatarUrl} alt="Profile" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                                            ) : (
+                                                <span className="text-4xl font-bold text-muted-foreground">{userInitial}</span>
+                                            )}
+
+                                            {/* Hover Overlay */}
+                                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center text-white">
+                                                <Camera className="w-6 h-6 mb-1" />
+                                                <span className="text-[10px] font-medium uppercase tracking-wider">Change</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Status Indicator (Optional decorative element) */}
+                                    <div className="absolute bottom-2 right-2 w-6 h-6 bg-green-500 border-4 border-background rounded-full z-20" title="Online" />
+
+                                    <input
+                                        type="file"
+                                        ref={fileInputRef}
+                                        className="hidden"
+                                        accept="image/*"
+                                        onChange={handleFileChange}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Title Section */}
+                            <div className="text-center mb-8">
+                                <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70">
+                                    {fullName || 'Update Your Profile'}
+                                </h1>
+                                <p className="text-sm text-muted-foreground mt-1">Manage your personal information</p>
+                            </div>
+
+                            {/* Form Fields */}
+                            <div className="space-y-5">
+                                {/* Error/Success Messages */}
+                                {error && (
+                                    <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-600 text-sm flex items-center gap-2 animate-in fade-in slide-in-from-top-2">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                                        {error}
+                                    </div>
+                                )}
+
+                                {success && (
+                                    <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-lg text-green-600 text-sm flex items-center gap-2 animate-in fade-in slide-in-from-top-2">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                                        Profile updated successfully!
+                                    </div>
+                                )}
+
+                                {/* Full Name Input */}
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide ml-1">
+                                        Full Name
+                                    </label>
+                                    <div className="relative group">
+                                        <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                                        <input
+                                            type="text"
+                                            value={fullName}
+                                            onChange={(e) => setFullName(e.target.value)}
+                                            placeholder="Enter your full name"
+                                            className="w-full pl-10 pr-4 py-3 bg-muted/30 border border-white/5 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:bg-background transition-all placeholder:text-muted-foreground/50"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Username Input */}
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide ml-1">
+                                        Username
+                                    </label>
+                                    <div className="relative group">
+                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-mono">@</span>
+                                        <input
+                                            type="text"
+                                            value={username}
+                                            onChange={(e) => setUsername(e.target.value)}
+                                            placeholder="username"
+                                            className="w-full pl-8 pr-4 py-3 bg-muted/30 border border-white/5 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:bg-background transition-all placeholder:text-muted-foreground/50 font-medium"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Email Input */}
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide ml-1">
+                                        Email Address
+                                    </label>
+                                    <div className="relative group">
+                                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                                        <input
+                                            type="email"
+                                            value={user?.email || ''}
+                                            disabled
+                                            className="w-full pl-10 pr-4 py-3 bg-muted/20 border border-white/5 rounded-xl text-muted-foreground cursor-not-allowed font-mono text-sm opacity-70"
+                                        />
+                                    </div>
+                                    <p className="text-[10px] text-muted-foreground/60 ml-1">
+                                        Email address is managed by your administrator and cannot be changed.
+                                    </p>
+                                </div>
+
+                                {/* Action Buttons */}
+                                <div className="pt-4">
+                                    <button
+                                        onClick={handleSave}
+                                        disabled={isSaving || !fullName.trim()}
+                                        className="w-full flex items-center justify-center gap-2 py-3 bg-primary text-primary-foreground rounded-xl font-medium shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:bg-primary/90 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
+                                    >
+                                        {isSaving ? (
+                                            <>
+                                                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                                <span>Saving Changes...</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Save className="w-4 h-4" />
+                                                <span>Save Changes</span>
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                        <input
-                            type="file"
-                            ref={fileInputRef}
-                            className="hidden"
-                            accept="image/*"
-                            onChange={handleFileChange}
-                        />
-                    </div>
-                    <div>
-                        <h2 className="text-lg font-semibold">{fullName || user?.email}</h2>
-                        <p className="text-muted-foreground">{user?.email}</p>
-                    </div>
-                </div>
-
-                {/* Form */}
-                <div className="space-y-6">
-                    {/* Error */}
-                    {error && (
-                        <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-600 text-sm">
-                            {error}
-                        </div>
-                    )}
-
-                    {/* Success */}
-                    {success && (
-                        <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-lg text-green-600 text-sm">
-                            Profile updated successfully!
-                        </div>
-                    )}
-
-                    {/* Full Name */}
-                    <div>
-                        <label className="block text-sm font-medium mb-2">
-                            <User className="w-4 h-4 inline mr-1" />
-                            Full Name
-                        </label>
-                        <input
-                            type="text"
-                            value={fullName}
-                            onChange={(e) => setFullName(e.target.value)}
-                            placeholder="Your full name"
-                            className="w-full px-4 py-2.5 bg-muted/50 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
-                        />
-                    </div>
-
-                    {/* Email (read-only) */}
-                    <div>
-                        <label className="block text-sm font-medium mb-2">
-                            Email
-                        </label>
-                        <input
-                            type="email"
-                            value={user?.email || ''}
-                            disabled
-                            className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-lg text-muted-foreground cursor-not-allowed"
-                        />
-                        <p className="text-xs text-muted-foreground mt-1">Email cannot be changed</p>
-                    </div>
-
-                    {/* Save Button */}
-                    <div className="pt-4">
-                        <button
-                            onClick={handleSave}
-                            disabled={isSaving || !fullName.trim()}
-                            className="flex items-center gap-2 px-6 py-2.5 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            <Save className="w-4 h-4" />
-                            {isSaving ? 'Saving...' : 'Save Changes'}
-                        </button>
                     </div>
                 </div>
             </div>
         </div>
+
     );
 }

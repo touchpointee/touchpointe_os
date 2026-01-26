@@ -1,9 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useLeadStore } from '@/stores/leadStore';
 import type { Lead } from '@/stores/leadStore';
 import { useWorkspaces } from '@/stores/workspaceStore';
-import { X, Mail, Phone, Building2, Calendar, ArrowRight, Flame, Snowflake, Sun, User } from 'lucide-react';
-import { format } from 'date-fns';
+import { useTaskStore } from '@/stores/taskStore';
+import { useHierarchyStore } from '@/stores/hierarchyStore';
+import { X, Mail, Phone, Building2, Calendar, ArrowRight, Flame, Snowflake, Sun, User, ListTodo } from 'lucide-react';
+import { format, addDays } from 'date-fns';
 import { cn } from '@/lib/utils';
 
 export function LeadDetailPanel() {
@@ -18,7 +21,9 @@ export function LeadDetailPanel() {
         convertLead
     } = useLeadStore();
     const { activeWorkspace } = useWorkspaces();
+    const navigate = useNavigate();
     const [showConvertModal, setShowConvertModal] = useState(false);
+    const [showTaskModal, setShowTaskModal] = useState(false);
 
     const lead = leads.find(l => l.id === activeLeadId);
 
@@ -184,8 +189,18 @@ export function LeadDetailPanel() {
                 </div>
 
                 {/* Footer Actions */}
-                {lead.status !== 'CONVERTED' && (
-                    <div className="p-4 border-t border-border">
+                <div className="p-4 border-t border-border space-y-2">
+                    {/* Create Follow-up Task */}
+                    <button
+                        onClick={() => setShowTaskModal(true)}
+                        className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-muted hover:bg-muted/80 text-foreground rounded-md font-medium transition-colors"
+                    >
+                        <ListTodo size={16} />
+                        Create Follow-up Task
+                    </button>
+
+                    {/* Convert to Contact */}
+                    {lead.status !== 'CONVERTED' && (
                         <button
                             onClick={() => setShowConvertModal(true)}
                             className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-md font-medium hover:opacity-90 transition-opacity"
@@ -193,8 +208,8 @@ export function LeadDetailPanel() {
                             <ArrowRight size={16} />
                             Convert to Contact
                         </button>
-                    </div>
-                )}
+                    )}
+                </div>
             </div>
 
             {/* Convert Modal */}
@@ -203,6 +218,20 @@ export function LeadDetailPanel() {
                     lead={lead}
                     onClose={() => setShowConvertModal(false)}
                     onConvert={handleConvert}
+                />
+            )}
+
+            {/* Create Task Modal */}
+            {showTaskModal && activeWorkspace && (
+                <CreateTaskFromLeadModal
+                    lead={lead}
+                    workspaceId={activeWorkspace.id}
+                    onClose={() => setShowTaskModal(false)}
+                    onSuccess={(taskId, listId) => {
+                        setShowTaskModal(false);
+                        // Navigate to task list
+                        navigate(`/tasks/list/${listId}?task=${taskId}`);
+                    }}
                 />
             )}
         </>
@@ -306,6 +335,175 @@ function ConvertLeadModal({ lead, onClose, onConvert }: {
                         className="px-4 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-md hover:opacity-90 disabled:opacity-50"
                     >
                         {isLoading ? 'Converting...' : 'Convert Lead'}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// ========== Create Task From Lead Modal ==========
+
+interface ListItem {
+    id: string;
+    name: string;
+    spaceName: string;
+}
+
+function CreateTaskFromLeadModal({ lead, workspaceId, onClose, onSuccess }: {
+    lead: Lead;
+    workspaceId: string;
+    onClose: () => void;
+    onSuccess: (taskId: string, listId: string) => void;
+}) {
+    const { spaces, fetchHierarchy } = useHierarchyStore();
+    const { createTask } = useTaskStore();
+
+    const [title, setTitle] = useState(`Follow up with ${lead.fullName}`);
+    const [description, setDescription] = useState(`Lead: ${lead.fullName}\nEmail: ${lead.email}${lead.phone ? `\nPhone: ${lead.phone}` : ''}${lead.companyName ? `\nCompany: ${lead.companyName}` : ''}`);
+    const [selectedListId, setSelectedListId] = useState('');
+    const [dueDate, setDueDate] = useState(format(addDays(new Date(), 1), 'yyyy-MM-dd'));
+    const [priority, setPriority] = useState<string>('MEDIUM');
+    const [isLoading, setIsLoading] = useState(false);
+
+    // Extract all lists from spaces hierarchy
+    const lists = useMemo(() => {
+        const allLists: ListItem[] = [];
+        spaces.forEach(space => {
+            // Lists directly in space
+            space.lists.forEach(list => {
+                allLists.push({ id: list.id, name: list.name, spaceName: space.name });
+            });
+            // Lists in folders
+            space.folders.forEach(folder => {
+                folder.lists.forEach(list => {
+                    allLists.push({ id: list.id, name: list.name, spaceName: `${space.name} / ${folder.name}` });
+                });
+            });
+        });
+        return allLists;
+    }, [spaces]);
+
+    useEffect(() => {
+        fetchHierarchy(workspaceId);
+    }, [workspaceId]);
+
+    useEffect(() => {
+        if (lists.length > 0 && !selectedListId) {
+            setSelectedListId(lists[0].id);
+        }
+    }, [lists]);
+
+    const handleSubmit = async () => {
+        if (!selectedListId || !title.trim()) return;
+
+        setIsLoading(true);
+        try {
+            const newTask = await createTask(workspaceId, {
+                listId: selectedListId,
+                title: title.trim(),
+                description: description.trim(),
+                priority,
+                dueDate
+            });
+            onSuccess(newTask.id, selectedListId);
+        } catch (err) {
+            console.error('Failed to create task:', err);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60]">
+            <div className="bg-card border border-border rounded-lg w-full max-w-md mx-4 shadow-xl">
+                <div className="flex items-center justify-between p-4 border-b border-border">
+                    <h2 className="text-lg font-semibold">Create Follow-up Task</h2>
+                    <button onClick={onClose} className="p-1 hover:bg-muted rounded">
+                        <X size={20} />
+                    </button>
+                </div>
+
+                <div className="p-4 space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium mb-1">Task Title *</label>
+                        <input
+                            type="text"
+                            value={title}
+                            onChange={(e) => setTitle(e.target.value)}
+                            className="w-full px-3 py-2 border border-border rounded-md bg-background"
+                            placeholder="Follow up with lead..."
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium mb-1">Description</label>
+                        <textarea
+                            value={description}
+                            onChange={(e) => setDescription(e.target.value)}
+                            rows={3}
+                            className="w-full px-3 py-2 border border-border rounded-md bg-background resize-none"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium mb-1">Task List *</label>
+                        <select
+                            value={selectedListId}
+                            onChange={(e) => setSelectedListId(e.target.value)}
+                            className="w-full px-3 py-2 border border-border rounded-md bg-background"
+                        >
+                            {lists.length === 0 ? (
+                                <option value="">No lists available</option>
+                            ) : (
+                                lists.map((list) => (
+                                    <option key={list.id} value={list.id}>
+                                        {list.spaceName ? `${list.spaceName} › ${list.name}` : list.name}
+                                    </option>
+                                ))
+                            )}
+                        </select>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                        <div>
+                            <label className="block text-sm font-medium mb-1">Due Date</label>
+                            <input
+                                type="date"
+                                value={dueDate}
+                                onChange={(e) => setDueDate(e.target.value)}
+                                className="w-full px-3 py-2 border border-border rounded-md bg-background"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium mb-1">Priority</label>
+                            <select
+                                value={priority}
+                                onChange={(e) => setPriority(e.target.value)}
+                                className="w-full px-3 py-2 border border-border rounded-md bg-background"
+                            >
+                                <option value="LOW">Low</option>
+                                <option value="MEDIUM">Medium</option>
+                                <option value="HIGH">High</option>
+                                <option value="URGENT">Urgent</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="flex justify-end gap-2 p-4 border-t border-border">
+                    <button
+                        onClick={onClose}
+                        className="px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-muted rounded-md"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        onClick={handleSubmit}
+                        disabled={isLoading || !selectedListId || !title.trim()}
+                        className="px-4 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-md hover:opacity-90 disabled:opacity-50"
+                    >
+                        {isLoading ? 'Creating...' : 'Create Task'}
                     </button>
                 </div>
             </div>

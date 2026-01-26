@@ -29,7 +29,7 @@ interface UserState {
     isLoading: boolean;
     error: string | null;
 
-    fetchUser: () => Promise<void>;
+    fetchUser: (silent?: boolean) => Promise<void>;
     logout: () => void;
     clear: () => void;
 }
@@ -40,8 +40,9 @@ export const useUserStore = create<UserState>()(
             isLoading: false,
             error: null,
 
-            fetchUser: async () => {
-                set({ isLoading: true, error: null });
+            fetchUser: async (silent = false) => {
+                if (!silent) set({ isLoading: true, error: null });
+                else set({ error: null });
                 try {
                     const user = await apiGet<User>('/auth/me');
                     set({ user, isLoading: false });

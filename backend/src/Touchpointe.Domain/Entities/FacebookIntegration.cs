@@ -11,14 +11,14 @@ namespace Touchpointe.Domain.Entities
         public Guid ConnectedByUserId { get; set; }
         public User ConnectedBy { get; set; } = null!;
 
-        // OAuth tokens (should be encrypted in production)
-        public string? AccessToken { get; set; }
-        public string? RefreshToken { get; set; }
+        // OAuth tokens
+        public string? PageAccessToken { get; set; } // Matches DB 'PageAccessToken'
+        public string? UserAccessToken { get; set; } // Not in DB yet, but useful
         public DateTime? TokenExpiresAt { get; set; }
 
         // Facebook IDs
-        public string? PageId { get; set; }
-        public string? PageName { get; set; }
+        public string PageId { get; set; } = string.Empty;
+        public string PageName { get; set; } = string.Empty;
         public string? AdAccountId { get; set; }
         public string? LeadFormId { get; set; }
 
@@ -28,7 +28,7 @@ namespace Touchpointe.Domain.Entities
         public int TotalLeadsSynced { get; set; } = 0;
 
         // Timestamps
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime ConnectedAt { get; set; } = DateTime.UtcNow; // Matches DB 'ConnectedAt'
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
     }
 }

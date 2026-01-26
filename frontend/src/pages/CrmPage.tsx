@@ -4,6 +4,8 @@ import { ContactsView } from '@/components/crm/ContactsView';
 import { DealsView } from '@/components/crm/DealsView';
 import { LeadsKanban } from '@/components/crm/LeadsKanban';
 import { CrmDashboardPage } from '@/components/crm/CrmDashboardPage';
+import { LeadFormsPage } from '@/components/crm/LeadFormsPage';
+import { CrmIntegrationsPage } from './crm/CrmIntegrationsPage';
 
 export function CrmPage() {
     return (
@@ -14,6 +16,8 @@ export function CrmPage() {
                     <Route path="/" element={<Navigate to="dashboard" replace />} />
                     <Route path="dashboard" element={<CrmDashboardPage />} />
                     <Route path="leads" element={<LeadsKanban />} />
+                    <Route path="forms" element={<LeadFormsPage />} />
+                    <Route path="integrations" element={<CrmIntegrationsPage />} />
                     <Route path="companies" element={<CompaniesView />} />
                     <Route path="contacts" element={<ContactsView />} />
                     <Route path="deals" element={<DealsView />} />

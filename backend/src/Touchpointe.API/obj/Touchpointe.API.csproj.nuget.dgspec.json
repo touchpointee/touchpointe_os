@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\ajmal\\Desktop\\touchpointe\\touchpointe_os\\backend\\src\\touchpointe.api\\Touchpointe.API.csproj": {}
+    "C:\\Users\\ajmal\\Desktop\\touchpointe\\touchpointe_os\\backend\\src\\Touchpointe.API\\Touchpointe.API.csproj": {}
   },
   "projects": {
-    "C:\\Users\\ajmal\\Desktop\\touchpointe\\touchpointe_os\\backend\\src\\touchpointe.api\\Touchpointe.API.csproj": {
+    "C:\\Users\\ajmal\\Desktop\\touchpointe\\touchpointe_os\\backend\\src\\Touchpointe.API\\Touchpointe.API.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\ajmal\\Desktop\\touchpointe\\touchpointe_os\\backend\\src\\touchpointe.api\\Touchpointe.API.csproj",
+        "projectUniqueName": "C:\\Users\\ajmal\\Desktop\\touchpointe\\touchpointe_os\\backend\\src\\Touchpointe.API\\Touchpointe.API.csproj",
         "projectName": "Touchpointe.API",
-        "projectPath": "C:\\Users\\ajmal\\Desktop\\touchpointe\\touchpointe_os\\backend\\src\\touchpointe.api\\Touchpointe.API.csproj",
+        "projectPath": "C:\\Users\\ajmal\\Desktop\\touchpointe\\touchpointe_os\\backend\\src\\Touchpointe.API\\Touchpointe.API.csproj",
         "packagesPath": "C:\\Users\\ajmal\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\ajmal\\Desktop\\touchpointe\\touchpointe_os\\backend\\src\\touchpointe.api\\obj\\",
+        "outputPath": "C:\\Users\\ajmal\\Desktop\\touchpointe\\touchpointe_os\\backend\\src\\Touchpointe.API\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\ajmal\\AppData\\Roaming\\NuGet\\NuGet.Config"

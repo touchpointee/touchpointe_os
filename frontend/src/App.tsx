@@ -11,6 +11,7 @@ import { AcceptInvitePage } from '@/pages/auth/AcceptInvitePage';
 import AiPage from '@/pages/AiPage';
 import { MyTasksPage } from '@/pages/MyTasksPage';
 import { MeetingHistoryPage } from './pages/meet/MeetingHistoryPage';
+import PublicFormPage from '@/pages/public/PublicFormPage';
 
 
 import { ToastProvider } from '@/contexts/ToastContext';
@@ -43,6 +44,9 @@ function App() {
 
                         {/* Public Meet Route */}
                         <Route path="/meet/:joinCode" element={<RoomPage />} />
+
+                        {/* Public Form Route */}
+                        <Route path="/forms/:token" element={<PublicFormPage />} />
 
                         {/* Protected Routes - Auth + Valid Workspace Required */}
                         <Route path="/home/inbox" element={
@@ -150,7 +154,7 @@ function App() {
                         } />
                         <Route path="/team/*" element={
                             <AuthGuard>
-                                <AppLayout>
+                                <AppLayout hideContextSidebar={true}>
                                     <TeamPage />
                                 </AppLayout>
                             </AuthGuard>
@@ -164,7 +168,7 @@ function App() {
                         } />
                         <Route path="/profile" element={
                             <AuthGuard>
-                                <AppLayout>
+                                <AppLayout hideContextSidebar={true}>
                                     <ProfilePage />
                                 </AppLayout>
                             </AuthGuard>

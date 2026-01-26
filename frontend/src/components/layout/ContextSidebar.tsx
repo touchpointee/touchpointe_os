@@ -1,19 +1,8 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
-    Home,
-    Inbox,
-    Star,
-    Building2,
-    Users,
-    Hash,
-    MessageCircle,
-    UserPlus,
-    Shield,
-    CreditCard,
-    Settings as SettingsIcon,
-    ChevronRight,
-    DollarSign,
-    Video
+    Home, Inbox, Star, Video, Hash, MessageCircle, Users, UserPlus,
+    CreditCard, Shield, LayoutTemplate, DollarSign, Plug, Building2,
+    Settings as SettingsIcon, ChevronRight
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MyTasksSidebar } from '@/components/tasks/MyTasksSidebar';
@@ -108,7 +97,9 @@ export function ContextSidebar({ className }: { className?: string }) {
     const crmItems: SidebarItem[] = activeWorkspace ? [
         { icon: Home, label: 'Dashboard', path: `/workspace/${activeWorkspace.id}/crm/dashboard` },
         { icon: UserPlus, label: 'Leads', path: `/workspace/${activeWorkspace.id}/crm/leads` },
+        { icon: LayoutTemplate, label: 'Forms', path: `/workspace/${activeWorkspace.id}/crm/forms` },
         { icon: DollarSign, label: 'Deals', path: `/workspace/${activeWorkspace.id}/crm/deals` },
+        { icon: Plug, label: 'Integrations', path: `/workspace/${activeWorkspace.id}/crm/integrations` },
         { icon: Building2, label: 'Companies', path: `/workspace/${activeWorkspace.id}/crm/companies` },
         { icon: Users, label: 'Contacts', path: `/workspace/${activeWorkspace.id}/crm/contacts` },
     ] : [];
