@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "eTRu+jMzqYc=",
+  "dgSpecHash": "+Z2NNjf+mQk=",
   "success": true,
-  "projectFilePath": "C:\\Users\\ajmal\\Desktop\\touchpointe\\touchpointe_os\\backend\\src\\Touchpointe.API\\Touchpointe.API.csproj",
+  "projectFilePath": "C:\\Users\\ajmal\\Desktop\\touchpointe\\touchpointe_os\\backend\\src\\touchpointe.api\\Touchpointe.API.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\ajmal\\.nuget\\packages\\bcrypt.net-next\\4.0.3\\bcrypt.net-next.4.0.3.nupkg.sha512",
     "C:\\Users\\ajmal\\.nuget\\packages\\communitytoolkit.highperformance\\8.4.0\\communitytoolkit.highperformance.8.4.0.nupkg.sha512",

@@ -59,11 +59,24 @@ export interface TaskCommentDto {
     createdAt: string;
 }
 
+export interface TaskAttachmentDto {
+    id: string;
+    taskId: string;
+    userId: string;
+    userName: string;
+    fileName: string;
+    contentType: string;
+    size: number;
+    url: string;
+    createdAt: string;
+}
+
 export interface TaskDetailDto {
     task: TaskDto;
     subtasks: SubtaskDto[];
     comments: TaskCommentDto[];
     activities: TaskActivityDto[];
+    attachments: TaskAttachmentDto[];
 }
 
 export interface CreateTaskRequest {

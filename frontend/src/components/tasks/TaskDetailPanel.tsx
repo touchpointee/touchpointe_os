@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
-import { X, Copy, MoreHorizontal, Calendar as CalendarIcon, Flag, ChevronDown, Check, Trash2, Plus } from 'lucide-react';
+import { X, Copy, MoreHorizontal, Calendar as CalendarIcon, Flag, ChevronDown, Check, Trash2, Plus, Paperclip } from 'lucide-react';
 import { useTaskStore } from '@/stores/taskStore';
 import { useTagStore } from '@/stores/tagStore';
 import { useWorkspaces, isValidUUID } from '@/stores/workspaceStore';
@@ -12,6 +12,7 @@ import { TaskComments } from './TaskComments';
 import { TaskActivityTimeline } from './TaskActivityTimeline';
 import type { TaskPriority } from '@/types/task';
 import { TimeTrackingPanel } from './TimeTrackingPanel';
+import TaskAttachments from './TaskAttachments';
 
 interface StatusOption {
     value: string;
@@ -223,6 +224,13 @@ export function TaskDetailPanel() {
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => document.getElementById('task-file-input')?.click()}
+                            className="p-2 hover:bg-muted rounded-md text-muted-foreground"
+                            title="Attach File"
+                        >
+                            <Paperclip className="w-4 h-4" />
+                        </button>
                         <button className="p-2 hover:bg-muted rounded-md text-muted-foreground"><Copy className="w-4 h-4" /></button>
                         {canEdit && <button
                             onClick={() => {
@@ -488,6 +496,15 @@ export function TaskDetailPanel() {
                                 onBlur={handleDescriptionBlur}
                                 placeholder="Add a description..."
                                 className="w-full min-h-[100px] p-3 rounded-md border border-transparent hover:border-border focus:border-primary bg-transparent outline-none resize-y transition-colors"
+                            />
+                        </div>
+
+                        {/* Attachments */}
+                        <div className="space-y-2">
+                            <TaskAttachments
+                                workspaceId={workspaceId}
+                                taskId={task.id}
+                                attachments={detail.attachments || []}
                             />
                         </div>
 

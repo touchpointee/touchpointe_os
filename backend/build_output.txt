@@ -1,101 +1,18 @@
-﻿Build started 26-01-2026 22:04:55.
-     1>Project "C:\Users\ajmal\Desktop\touchpointe\touchpointe_os\backend\src\Touchpointe.API\Touchpointe.API.csproj" on node 1 (Restore target(s)).
-     1>_GetAllRestoreProjectPathItems:
-         Determining projects to restore...
-       Restore:
-         X.509 certificate chain validation will use the default trust store selected by .NET for code signing.
-         X.509 certificate chain validation will use the default trust store selected by .NET for timestamping.
-         Assets file has not changed. Skipping assets file writing. Path: C:\Users\ajmal\Desktop\touchpointe\touchpointe_os\backend\src\Touchpointe.Application\obj\project.assets.json
-         Assets file has not changed. Skipping assets file writing. Path: C:\Users\ajmal\Desktop\touchpointe\touchpointe_os\backend\src\Touchpointe.Domain\obj\project.assets.json
-         Assets file has not changed. Skipping assets file writing. Path: C:\Users\ajmal\Desktop\touchpointe\touchpointe_os\backend\src\Touchpointe.Infrastructure\obj\project.assets.json
-         Assets file has not changed. Skipping assets file writing. Path: C:\Users\ajmal\Desktop\touchpointe\touchpointe_os\backend\src\Touchpointe.API\obj\project.assets.json
-         Restored C:\Users\ajmal\Desktop\touchpointe\touchpointe_os\backend\src\Touchpointe.Domain\Touchpointe.Domain.csproj (in 84 ms).
-         Restored C:\Users\ajmal\Desktop\touchpointe\touchpointe_os\backend\src\Touchpointe.Application\Touchpointe.Application.csproj (in 85 ms).
-         Restored C:\Users\ajmal\Desktop\touchpointe\touchpointe_os\backend\src\Touchpointe.API\Touchpointe.API.csproj (in 87 ms).
-         Restored C:\Users\ajmal\Desktop\touchpointe\touchpointe_os\backend\src\Touchpointe.Infrastructure\Touchpointe.Infrastructure.csproj (in 87 ms).
-         
-         NuGet Config files used:
-             C:\Users\ajmal\AppData\Roaming\NuGet\NuGet.Config
-         
-         Feeds used:
-             https://api.nuget.org/v3/index.json
-         All projects are up-to-date for restore.
-     1>Done Building Project "C:\Users\ajmal\Desktop\touchpointe\touchpointe_os\backend\src\Touchpointe.API\Touchpointe.API.csproj" (Restore target(s)).
-   1:7>Project "C:\Users\ajmal\Desktop\touchpointe\touchpointe_os\backend\src\Touchpointe.API\Touchpointe.API.csproj" on node 2 (default targets).
-   1:7>Project "C:\Users\ajmal\Desktop\touchpointe\touchpointe_os\backend\src\Touchpointe.API\Touchpointe.API.csproj" (1:7) is building "C:\Users\ajmal\Desktop\touchpointe\touchpointe_os\backend\src\Touchpointe.Domain\Touchpointe.Domain.csproj" (4:7) on node 3 (default targets).
-     4>GenerateTargetFrameworkMonikerAttribute:
-       Skipping target "GenerateTargetFrameworkMonikerAttribute" because all output files are up-to-date with respect to the input files.
-       CoreGenerateAssemblyInfo:
-       Skipping target "CoreGenerateAssemblyInfo" because all output files are up-to-date with respect to the input files.
-       _GenerateSourceLinkFile:
-         Source Link file 'obj\Debug\net9.0\Touchpointe.Domain.sourcelink.json' is up-to-date.
-       CoreCompile:
-       Skipping target "CoreCompile" because all output files are up-to-date with respect to the input files.
-       GenerateBuildDependencyFile:
-       Skipping target "GenerateBuildDependencyFile" because all output files are up-to-date with respect to the input files.
-       CopyFilesToOutputDirectory:
-         Touchpointe.Domain -> C:\Users\ajmal\Desktop\touchpointe\touchpointe_os\backend\src\Touchpointe.Domain\bin\Debug\net9.0\Touchpointe.Domain.dll
-     4>Done Building Project "C:\Users\ajmal\Desktop\touchpointe\touchpointe_os\backend\src\Touchpointe.Domain\Touchpointe.Domain.csproj" (default targets).
-   1:7>Project "C:\Users\ajmal\Desktop\touchpointe\touchpointe_os\backend\src\Touchpointe.API\Touchpointe.API.csproj" (1:7) is building "C:\Users\ajmal\Desktop\touchpointe\touchpointe_os\backend\src\Touchpointe.Application\Touchpointe.Application.csproj" (2:7) on node 2 (default targets).
-     2>GenerateTargetFrameworkMonikerAttribute:
-       Skipping target "GenerateTargetFrameworkMonikerAttribute" because all output files are up-to-date with respect to the input files.
-       CoreGenerateAssemblyInfo:
-       Skipping target "CoreGenerateAssemblyInfo" because all output files are up-to-date with respect to the input files.
-       _GenerateSourceLinkFile:
-         Source Link file 'obj\Debug\net9.0\Touchpointe.Application.sourcelink.json' is up-to-date.
-       CoreCompile:
-       Skipping target "CoreCompile" because all output files are up-to-date with respect to the input files.
-       GenerateBuildDependencyFile:
-       Skipping target "GenerateBuildDependencyFile" because all output files are up-to-date with respect to the input files.
-       CopyFilesToOutputDirectory:
-         Touchpointe.Application -> C:\Users\ajmal\Desktop\touchpointe\touchpointe_os\backend\src\Touchpointe.Application\bin\Debug\net9.0\Touchpointe.Application.dll
-     2>Done Building Project "C:\Users\ajmal\Desktop\touchpointe\touchpointe_os\backend\src\Touchpointe.Application\Touchpointe.Application.csproj" (default targets).
-   1:7>Project "C:\Users\ajmal\Desktop\touchpointe\touchpointe_os\backend\src\Touchpointe.API\Touchpointe.API.csproj" (1:7) is building "C:\Users\ajmal\Desktop\touchpointe\touchpointe_os\backend\src\Touchpointe.Infrastructure\Touchpointe.Infrastructure.csproj" (3:6) on node 1 (default targets).
-     3>GenerateTargetFrameworkMonikerAttribute:
-       Skipping target "GenerateTargetFrameworkMonikerAttribute" because all output files are up-to-date with respect to the input files.
-       CoreGenerateAssemblyInfo:
-       Skipping target "CoreGenerateAssemblyInfo" because all output files are up-to-date with respect to the input files.
-       _GenerateSourceLinkFile:
-         Source Link file 'obj\Debug\net9.0\Touchpointe.Infrastructure.sourcelink.json' is up-to-date.
-       CoreCompile:
-       Skipping target "CoreCompile" because all output files are up-to-date with respect to the input files.
-       GenerateBuildDependencyFile:
-       Skipping target "GenerateBuildDependencyFile" because all output files are up-to-date with respect to the input files.
-       GenerateBuildRuntimeConfigurationFiles:
-       Skipping target "GenerateBuildRuntimeConfigurationFiles" because all output files are up-to-date with respect to the input files.
-       CopyFilesToOutputDirectory:
-         Touchpointe.Infrastructure -> C:\Users\ajmal\Desktop\touchpointe\touchpointe_os\backend\src\Touchpointe.Infrastructure\bin\Debug\net9.0\Touchpointe.Infrastructure.dll
-     3>Done Building Project "C:\Users\ajmal\Desktop\touchpointe\touchpointe_os\backend\src\Touchpointe.Infrastructure\Touchpointe.Infrastructure.csproj" (default targets).
-     1>GenerateTargetFrameworkMonikerAttribute:
-       Skipping target "GenerateTargetFrameworkMonikerAttribute" because all output files are up-to-date with respect to the input files.
-       CoreGenerateAssemblyInfo:
-       Skipping target "CoreGenerateAssemblyInfo" because all output files are up-to-date with respect to the input files.
-       _DiscoverMvcApplicationParts:
-       Skipping target "_DiscoverMvcApplicationParts" because all output files are up-to-date with respect to the input files.
-       _GenerateSourceLinkFile:
-         Source Link file 'obj\Debug\net9.0\Touchpointe.API.sourcelink.json' is up-to-date.
-       CoreCompile:
-       Skipping target "CoreCompile" because all output files are up-to-date with respect to the input files.
-       _CreateAppHost:
-       Skipping target "_CreateAppHost" because all output files are up-to-date with respect to the input files.
-       _ProcessScopedCssFiles:
-       Skipping target "_ProcessScopedCssFiles" because it has no outputs.
-       _ProcessScopedCssFiles:
-       Skipping target "_ProcessScopedCssFiles" because it has no outputs.
-       _BuildCopyStaticWebAssetsPreserveNewest:
-       Skipping target "_BuildCopyStaticWebAssetsPreserveNewest" because it has no outputs.
-       _CopyOutOfDateSourceItemsToOutputDirectory:
-       Skipping target "_CopyOutOfDateSourceItemsToOutputDirectory" because all output files are up-to-date with respect to the input files.
-       GenerateBuildDependencyFile:
-       Skipping target "GenerateBuildDependencyFile" because all output files are up-to-date with respect to the input files.
-       GenerateBuildRuntimeConfigurationFiles:
-       Skipping target "GenerateBuildRuntimeConfigurationFiles" because all output files are up-to-date with respect to the input files.
-       CopyFilesToOutputDirectory:
-         Touchpointe.API -> C:\Users\ajmal\Desktop\touchpointe\touchpointe_os\backend\src\Touchpointe.API\bin\Debug\net9.0\Touchpointe.API.dll
-     1>Done Building Project "C:\Users\ajmal\Desktop\touchpointe\touchpointe_os\backend\src\Touchpointe.API\Touchpointe.API.csproj" (default targets).
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  Touchpointe.Domain -> C:\Users\ajmal\Desktop\touchpointe\touchpointe_os\backend\src\Touchpointe.Domain\bin\Debug\net9.0\Touchpointe.Domain.dll
+C:\Users\ajmal\Desktop\touchpointe\touchpointe_os\backend\src\Touchpointe.Application\Common\Interfaces\ITaskAttachmentService.cs(1,17): error CS0234: The type or namespace name 'AspNetCore' does not exist in the namespace 'Microsoft' (are you missing an assembly reference?) [C:\Users\ajmal\Desktop\touchpointe\touchpointe_os\backend\src\Touchpointe.Application\Touchpointe.Application.csproj]
+C:\Users\ajmal\Desktop\touchpointe\touchpointe_os\backend\src\Touchpointe.Application\Services\Tasks\TaskAttachmentService.cs(1,17): error CS0234: The type or namespace name 'AspNetCore' does not exist in the namespace 'Microsoft' (are you missing an assembly reference?) [C:\Users\ajmal\Desktop\touchpointe\touchpointe_os\backend\src\Touchpointe.Application\Touchpointe.Application.csproj]
+C:\Users\ajmal\Desktop\touchpointe\touchpointe_os\backend\src\Touchpointe.Application\Common\Interfaces\ITaskAttachmentService.cs(8,99): error CS0246: The type or namespace name 'IFormFile' could not be found (are you missing a using directive or an assembly reference?) [C:\Users\ajmal\Desktop\touchpointe\touchpointe_os\backend\src\Touchpointe.Application\Touchpointe.Application.csproj]
+C:\Users\ajmal\Desktop\touchpointe\touchpointe_os\backend\src\Touchpointe.Application\Services\Tasks\TaskAttachmentService.cs(20,112): error CS0246: The type or namespace name 'IFormFile' could not be found (are you missing a using directive or an assembly reference?) [C:\Users\ajmal\Desktop\touchpointe\touchpointe_os\backend\src\Touchpointe.Application\Touchpointe.Application.csproj]
 
-Build succeeded.
+Build FAILED.
+
+C:\Users\ajmal\Desktop\touchpointe\touchpointe_os\backend\src\Touchpointe.Application\Common\Interfaces\ITaskAttachmentService.cs(1,17): error CS0234: The type or namespace name 'AspNetCore' does not exist in the namespace 'Microsoft' (are you missing an assembly reference?) [C:\Users\ajmal\Desktop\touchpointe\touchpointe_os\backend\src\Touchpointe.Application\Touchpointe.Application.csproj]
+C:\Users\ajmal\Desktop\touchpointe\touchpointe_os\backend\src\Touchpointe.Application\Services\Tasks\TaskAttachmentService.cs(1,17): error CS0234: The type or namespace name 'AspNetCore' does not exist in the namespace 'Microsoft' (are you missing an assembly reference?) [C:\Users\ajmal\Desktop\touchpointe\touchpointe_os\backend\src\Touchpointe.Application\Touchpointe.Application.csproj]
+C:\Users\ajmal\Desktop\touchpointe\touchpointe_os\backend\src\Touchpointe.Application\Common\Interfaces\ITaskAttachmentService.cs(8,99): error CS0246: The type or namespace name 'IFormFile' could not be found (are you missing a using directive or an assembly reference?) [C:\Users\ajmal\Desktop\touchpointe\touchpointe_os\backend\src\Touchpointe.Application\Touchpointe.Application.csproj]
+C:\Users\ajmal\Desktop\touchpointe\touchpointe_os\backend\src\Touchpointe.Application\Services\Tasks\TaskAttachmentService.cs(20,112): error CS0246: The type or namespace name 'IFormFile' could not be found (are you missing a using directive or an assembly reference?) [C:\Users\ajmal\Desktop\touchpointe\touchpointe_os\backend\src\Touchpointe.Application\Touchpointe.Application.csproj]
     0 Warning(s)
-    0 Error(s)
+    4 Error(s)
 
-Time Elapsed 00:00:02.22
+Time Elapsed 00:00:01.88

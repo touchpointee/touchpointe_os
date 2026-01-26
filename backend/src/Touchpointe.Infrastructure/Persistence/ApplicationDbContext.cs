@@ -71,6 +71,7 @@ namespace Touchpointe.Infrastructure.Persistence
         public DbSet<ListStatus> ListStatuses => Set<ListStatus>();
         public DbSet<Tag> Tags => Set<Tag>();
         public DbSet<TaskTimeEntry> TaskTimeEntries => Set<TaskTimeEntry>();
+        public DbSet<TaskAttachment> TaskAttachments => Set<TaskAttachment>();
         
         // CRM - Leads
         public DbSet<Lead> Leads => Set<Lead>();
@@ -615,6 +616,31 @@ namespace Touchpointe.Infrastructure.Persistence
             modelBuilder.Entity<TaskTimeEntry>()
                 .HasIndex(t => new { t.UserId, t.EndTime });
 
+            modelBuilder.Entity<TaskTimeEntry>()
+                .HasIndex(t => new { t.UserId, t.EndTime });
+
+            // TaskAttachment
+            modelBuilder.Entity<TaskAttachment>()
+                .HasOne(a => a.Task)
+                .WithMany(t => t.Attachments)
+                .HasForeignKey(a => a.TaskId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<TaskAttachment>()
+                .HasOne(a => a.User)
+                .WithMany()
+                .HasForeignKey(a => a.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<TaskAttachment>()
+                .HasOne(a => a.Workspace)
+                .WithMany()
+                .HasForeignKey(a => a.WorkspaceId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<TaskAttachment>()
+                .HasIndex(a => a.TaskId);
+            
             // ========== CRM LEADS ==========
 
             // Lead

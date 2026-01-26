@@ -67,7 +67,10 @@ namespace Touchpointe.Infrastructure
             services.AddSingleton<IMinioService, Touchpointe.Infrastructure.Services.MinioService>();
             
             services.AddHttpClient();
+            services.AddHttpContextAccessor();
             services.AddScoped<IFacebookService, Touchpointe.Infrastructure.Services.FacebookService>();
+            services.AddScoped<ICurrentUserService, Touchpointe.Infrastructure.Services.CurrentUserService>();
+            services.AddScoped<ITaskAttachmentService, Touchpointe.Application.Services.Tasks.TaskAttachmentService>();
 
             var jwtSettings = new JwtSettings();
             configuration.Bind(JwtSettings.SectionName, jwtSettings);

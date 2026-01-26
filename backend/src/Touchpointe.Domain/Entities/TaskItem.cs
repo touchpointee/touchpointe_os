@@ -68,5 +68,6 @@ namespace Touchpointe.Domain.Entities
         public ICollection<TaskTimeEntry> TimeEntries { get; set; } = new List<TaskTimeEntry>();
         public ICollection<Subtask> Subtasks { get; set; } = new List<Subtask>();
         public ICollection<TaskComment> Comments { get; set; } = new List<TaskComment>();
+        public ICollection<TaskAttachment> Attachments { get; set; } = new List<TaskAttachment>();
     }
 }

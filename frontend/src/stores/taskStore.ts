@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { apiGet, apiPost, apiPut, apiDelete } from '@/lib/api';
+import { apiGet, apiPost, apiPut, apiDelete, apiPostMultipart } from '@/lib/api';
 import type { TaskDto, CreateTaskRequest, UpdateTaskRequest, TaskActivityDto, TaskDetailDto } from '@/types/task';
 import type { TimeEntryDto, StartTimerRequest, ManualTimeRequest } from '@/types/timeTracking';
 
@@ -40,6 +40,8 @@ interface TaskState {
     addSubtask: (workspaceId: string, taskId: string, title: string, assigneeId?: string) => Promise<void>;
     toggleSubtask: (workspaceId: string, subtaskId: string) => Promise<void>;
     addComment: (workspaceId: string, taskId: string, content: string) => Promise<void>;
+    uploadAttachment: (workspaceId: string, taskId: string, file: File) => Promise<void>;
+    deleteAttachment: (workspaceId: string, taskId: string, attachmentId: string) => Promise<void>;
     deleteTask: (workspaceId: string, taskId: string) => Promise<void>;
     reset: () => void;
 }
@@ -216,6 +218,39 @@ export const useTaskStore = create<TaskState>((set, get) => ({
         }
     },
 
+    uploadAttachment: async (workspaceId, taskId, file) => {
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+            await apiPostMultipart(`/workspaces/${workspaceId}/tasks/${taskId}/attachments`, formData);
+            await get().fetchTaskDetails(workspaceId, taskId);
+        } catch (e) {
+            set({ error: (e as Error).message });
+            throw e;
+        }
+    },
+
+    deleteAttachment: async (workspaceId, taskId, attachmentId) => {
+        try {
+            await apiDelete(`/workspaces/${workspaceId}/tasks/${taskId}/attachments/${attachmentId}`);
+            // Optimistic update
+            const details = get().taskDetails[taskId];
+            if (details) {
+                set(state => ({
+                    taskDetails: {
+                        ...state.taskDetails,
+                        [taskId]: {
+                            ...details,
+                            attachments: details.attachments.filter(a => a.id !== attachmentId)
+                        }
+                    }
+                }));
+            }
+        } catch (e) {
+            set({ error: (e as Error).message });
+        }
+    },
+
     deleteTask: async (workspaceId, taskId) => {
         try {
             await apiDelete(`/workspaces/${workspaceId}/tasks/${taskId}`);
@@ -228,7 +263,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
                 for (const [listId, taskData] of Object.entries(state.tasks)) {
                     updatedTasks[listId] = {
                         ...taskData,
-                        items: taskData.items.filter(t => t.id !== taskId)
+                        items: taskData.items.filter((t: TaskDto) => t.id !== taskId)
                     };
                 }
 

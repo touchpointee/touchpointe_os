@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Touchpointe.Application.Common.Interfaces;
 using Touchpointe.Application.DTOs;
+using Touchpointe.Application.DTOs.Tasks;
 using Touchpointe.Domain.Entities;
 using TaskStatus = Touchpointe.Domain.Entities.TaskStatus;
 using TaskPriority = Touchpointe.Domain.Entities.TaskPriority;
@@ -14,11 +15,13 @@ namespace Touchpointe.Application.Services.Tasks
     {
         private readonly IApplicationDbContext _context;
         private readonly INotificationService _notificationService;
+        private readonly ITaskAttachmentService _attachmentService;
 
-        public TaskService(IApplicationDbContext context, INotificationService notificationService)
+        public TaskService(IApplicationDbContext context, INotificationService notificationService, ITaskAttachmentService attachmentService)
         {
             _context = context;
             _notificationService = notificationService;
+            _attachmentService = attachmentService;
         }
 
         public async Task<PaginatedList<TaskDto>> GetTasksByListAsync(Guid workspaceId, Guid listId, int pageNumber, int pageSize, CancellationToken cancellationToken = default)
@@ -335,8 +338,10 @@ namespace Touchpointe.Application.Services.Tasks
                 .ToListAsync(cancellationToken);
 
             var activities = await GetTaskActivitiesAsync(workspaceId, taskId, cancellationToken);
+            
+            var attachments = await _attachmentService.GetAttachmentsAsync(workspaceId, taskId);
 
-            return new TaskDetailDto(MapToDto(task), subtasks, comments, activities);
+            return new TaskDetailDto(MapToDto(task), subtasks, comments, activities, attachments);
         }
 
         public async Task<SubtaskDto> AddSubtaskAsync(Guid workspaceId, Guid userId, Guid taskId, CreateSubtaskRequest request, CancellationToken cancellationToken = default)

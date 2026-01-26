@@ -1,4 +1,5 @@
 using Touchpointe.Domain.Entities;
+using Touchpointe.Application.DTOs.Tasks;
 
 namespace Touchpointe.Application.DTOs
 {
@@ -104,7 +105,8 @@ namespace Touchpointe.Application.DTOs
         TaskDto Task,
         List<SubtaskDto> Subtasks,
         List<TaskCommentDto> Comments,
-        List<TaskActivityDto> Activities
+        List<TaskActivityDto> Activities,
+        List<TaskAttachmentDto> Attachments
     );
 
     public record CreateSubtaskRequest(string Title, Guid? AssigneeId = null);
