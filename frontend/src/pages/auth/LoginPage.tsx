@@ -11,7 +11,7 @@ import { cn } from '@/lib/utils';
 export function LoginPage() {
     const navigate = useNavigate();
     const { fetchUser } = useUserStore();
-    const { fetchWorkspaces } = useWorkspaces();
+    const { fetchWorkspaces, setActiveWorkspace } = useWorkspaces();
 
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
@@ -45,20 +45,14 @@ export function LoginPage() {
 
             // Navigation Logic
             if (lastActiveWorkspaceId) {
-                // Verify user is still a member of this workspace
-                const targetWorkspace = workspaces.find(w => {
-                    const match = w.id.toLowerCase() === lastActiveWorkspaceId.toLowerCase();
-                    return match;
-                });
-
+                const targetWorkspace = workspaces.find(w => w.id.toLowerCase() === lastActiveWorkspaceId.toLowerCase());
                 if (targetWorkspace) {
-                    navigate(`/workspace/${targetWorkspace.id}/home`);
-                    return;
+                    setActiveWorkspace(targetWorkspace.id);
                 }
             }
 
             if (workspaces.length > 0) {
-                navigate(`/workspace/${workspaces[0].id}/home`);
+                navigate('/my-tasks');
             } else {
                 navigate('/create-workspace');
             }

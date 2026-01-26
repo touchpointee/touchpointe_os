@@ -64,7 +64,6 @@ export function HomePage() {
 
     // Header scroll effect
     useEffect(() => {
-        let lastScroll = 0;
         const header = document.getElementById('header');
 
         const handleScroll = () => {
@@ -77,8 +76,6 @@ export function HomePage() {
                     header.classList.remove('shadow-lg');
                 }
             }
-
-            lastScroll = currentScroll;
         };
 
         window.addEventListener('scroll', handleScroll);
