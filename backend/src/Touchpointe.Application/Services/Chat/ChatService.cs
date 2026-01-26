@@ -136,6 +136,7 @@ namespace Touchpointe.Application.Services.Chat
                     null,
                     m.SenderId,
                     m.Sender.FullName,
+                    m.Sender.AvatarUrl,
                     m.Content,
                     m.CreatedAt,
                     m.Reactions.Select(r => new MessageReactionDto(
@@ -260,6 +261,7 @@ namespace Touchpointe.Application.Services.Chat
                 null,
                 message.SenderId,
                 sender?.FullName ?? "Unknown",
+                sender?.AvatarUrl,
                 message.Content,
                 message.CreatedAt,
                 new List<MessageReactionDto>(),
@@ -385,6 +387,7 @@ namespace Touchpointe.Application.Services.Chat
                     m.DirectMessageGroupId,
                     m.SenderId,
                     m.Sender.FullName,
+                    m.Sender.AvatarUrl,
                     m.Content,
                     m.CreatedAt,
                     m.Reactions.Select(r => new MessageReactionDto(
@@ -453,6 +456,7 @@ namespace Touchpointe.Application.Services.Chat
                 message.DirectMessageGroupId,
                 message.SenderId,
                 sender?.FullName ?? "Unknown",
+                sender?.AvatarUrl,
                 message.Content,
                 message.CreatedAt,
                 new List<MessageReactionDto>(),
@@ -535,7 +539,7 @@ namespace Touchpointe.Application.Services.Chat
         {
             var message = await _context.Messages
                 .Include(m => m.Channel)
-                .Include(m => m.DirectMessageGroup)
+                .Include(m => m.DirectMessageGroup!)
                 .ThenInclude(dm => dm.Members)
                 .FirstOrDefaultAsync(m => m.Id == messageId && m.WorkspaceId == workspaceId);
 
@@ -612,7 +616,7 @@ namespace Touchpointe.Application.Services.Chat
 
             // Broadcast
             var reactionDto = new MessageReactionDto(reaction.Id, messageId, userId, user?.FullName ?? "Unknown", emoji, reaction.CreatedAt);
-            string channelKey = message.ChannelId.HasValue ? message.ChannelId.Value.ToString() : message.DirectMessageGroupId.Value.ToString();
+            string channelKey = message.ChannelId.HasValue ? message.ChannelId.Value.ToString() : (message.DirectMessageGroupId.HasValue ? message.DirectMessageGroupId.Value.ToString() : "unknown");
             
             await _chatNotification.NotifyReactionAddedAsync(channelKey, reactionDto);
         }

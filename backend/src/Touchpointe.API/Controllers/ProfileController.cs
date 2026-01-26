@@ -67,5 +67,47 @@ namespace Touchpointe.API.Controllers
 
             return Ok(new ProfileDto(user.Id, user.Email, user.Username, user.FullName, user.AvatarUrl));
         }
+
+        [HttpPost("avatar")]
+        public async Task<IActionResult> UploadAvatar(IFormFile file, [FromServices] IConfiguration config)
+        {
+            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null || !Guid.TryParse(userIdClaim, out var userId))
+            {
+                return Unauthorized();
+            }
+
+            if (file == null || file.Length == 0)
+                return BadRequest("No file uploaded.");
+
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null) return NotFound();
+
+            // Validate file type (basic check)
+            if (!file.ContentType.StartsWith("image/"))
+                return BadRequest("Only image files are allowed.");
+
+            try 
+            {
+                var bucketName = config["MinioSettings:BucketName"] ?? "user-profiles";
+                var ext = Path.GetExtension(file.FileName);
+                var objectName = $"{userId}/{Guid.NewGuid()}{ext}";
+
+                var minioService = HttpContext.RequestServices.GetRequiredService<IMinioService>();
+                using var stream = file.OpenReadStream();
+                var avatarUrl = await minioService.UploadFileAsync(stream, file.ContentType, bucketName, objectName);
+
+                user.AvatarUrl = avatarUrl;
+                await _context.SaveChangesAsync(CancellationToken.None);
+
+                return Ok(new ProfileDto(user.Id, user.Email, user.Username, user.FullName, user.AvatarUrl));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+
+        }
+
     }
 }

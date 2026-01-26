@@ -64,6 +64,18 @@ export async function apiPost<T>(path: string, body: unknown): Promise<T> {
     return handleResponse(res);
 }
 
+export async function apiPostMultipart<T>(path: string, formData: FormData): Promise<T> {
+    const res = await fetch(`${API_BASE}${path}`, {
+        method: 'POST',
+        headers: {
+            // 'Content-Type': 'multipart/form-data' // Do NOT set this header, browser sets it with boundary
+        },
+        credentials: 'include',
+        body: formData,
+    });
+    return handleResponse(res);
+}
+
 export async function apiPut<T>(path: string, body: unknown): Promise<T> {
     const res = await fetch(`${API_BASE}${path}`, {
         method: 'PUT',

@@ -179,7 +179,7 @@ if (!string.IsNullOrEmpty(redisConnection))
     try 
     {
         signalRBuilder.AddStackExchangeRedis(parsedRedisConnection, options => {
-            options.Configuration.ChannelPrefix = "Touchpointe";
+            options.Configuration.ChannelPrefix = StackExchange.Redis.RedisChannel.Literal("Touchpointe");
         });
     }
     catch (Exception ex)

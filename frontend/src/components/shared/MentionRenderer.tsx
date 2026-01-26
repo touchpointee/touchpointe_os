@@ -1,4 +1,4 @@
-import twemoji from 'twemoji';
+import * as twemoji from 'twemoji';
 
 interface MentionRendererProps {
     content: string;

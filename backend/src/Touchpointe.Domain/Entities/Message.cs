@@ -8,7 +8,7 @@ namespace Touchpointe.Domain.Entities
     {
         public bool IsDeleted { get; set; }
         public DateTime? DeletedAt { get; set; }
-        public Guid Id { get; set; }
+        // Id inherited from BaseAuditableEntity
         public Guid WorkspaceId { get; set; }
         
         public Guid? ChannelId { get; set; }
@@ -16,7 +16,7 @@ namespace Touchpointe.Domain.Entities
         
         public Guid SenderId { get; set; }
         public string Content { get; set; } = string.Empty;
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        // CreatedAt inherited from BaseAuditableEntity
 
         // Snapshot-based Reply
         public Guid? ReplyToMessageId { get; set; }

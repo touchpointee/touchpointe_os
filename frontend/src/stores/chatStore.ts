@@ -28,6 +28,7 @@ export interface Message {
     directMessageGroupId?: string;
     senderId: string;
     senderName: string;
+    senderAvatarUrl?: string;
     content: string;
     createdAt: string;
     isOptimistic?: boolean;

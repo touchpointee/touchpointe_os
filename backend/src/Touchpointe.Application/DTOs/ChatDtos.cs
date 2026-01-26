@@ -14,6 +14,7 @@ namespace Touchpointe.Application.DTOs
         Guid? DirectMessageGroupId, 
         Guid SenderId, 
         string SenderName, 
+        string? SenderAvatarUrl,
         string Content, 
         DateTime CreatedAt,
         List<MessageReactionDto> Reactions,

@@ -20,7 +20,12 @@ export function GlobalHeader({ workspaceName = 'My Workspace', userName = 'User'
     const location = useLocation();
     const { theme, toggleTheme } = useTheme();
     const { workspaces, activeWorkspace, setActiveWorkspace, clear: resetWorkspaces } = useWorkspaces();
-    const userInitial = userName.charAt(0).toUpperCase();
+    const { user } = useUserStore();
+
+    // Prefer store user data over props
+    const displayName = user?.fullName || userName;
+    const userInitial = displayName.charAt(0).toUpperCase();
+    const avatarUrl = user?.avatarUrl;
 
     // Dropdown states
     const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -212,9 +217,13 @@ export function GlobalHeader({ workspaceName = 'My Workspace', userName = 'User'
                 <div className="relative" ref={profileRef}>
                     <button
                         onClick={() => setIsProfileOpen(!isProfileOpen)}
-                        className="w-9 h-9 rounded-full bg-primary flex items-center justify-center hover:opacity-90 transition-opacity"
+                        className="w-9 h-9 rounded-full bg-primary flex items-center justify-center hover:opacity-90 transition-opacity overflow-hidden"
                     >
-                        <span className="text-primary-foreground text-sm font-medium">{userInitial}</span>
+                        {avatarUrl ? (
+                            <img src={avatarUrl} alt={displayName} className="w-full h-full object-cover" />
+                        ) : (
+                            <span className="text-primary-foreground text-sm font-medium">{userInitial}</span>
+                        )}
                     </button>
 
                     {/* Dropdown Menu */}
@@ -226,7 +235,7 @@ export function GlobalHeader({ workspaceName = 'My Workspace', userName = 'User'
                     )}>
                         {/* User Info */}
                         <div className="px-4 py-3 border-b border-border">
-                            <p className="text-sm font-medium truncate">{userName}</p>
+                            <p className="text-sm font-medium truncate">{displayName}</p>
                         </div>
 
                         {/* Menu Items */}

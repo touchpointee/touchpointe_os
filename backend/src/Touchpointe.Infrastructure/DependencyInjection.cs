@@ -43,7 +43,8 @@ namespace Touchpointe.Infrastructure
             }
             else
             {
-                connectionString = dbUrl ?? configuration.GetConnectionString("DefaultConnection");
+                // Fix CS8600: explicit null handling or nullable string
+                connectionString = dbUrl ?? configuration.GetConnectionString("DefaultConnection") ?? string.Empty;
             }
 
             if (string.IsNullOrEmpty(connectionString))
@@ -63,6 +64,7 @@ namespace Touchpointe.Infrastructure
 
             services.AddScoped<IWorkspaceContext, Touchpointe.Infrastructure.Services.WorkspaceContext>();
             services.AddScoped<IAuditService, Touchpointe.Infrastructure.Services.AuditService>();
+            services.AddSingleton<IMinioService, Touchpointe.Infrastructure.Services.MinioService>();
 
             var jwtSettings = new JwtSettings();
             configuration.Bind(JwtSettings.SectionName, jwtSettings);

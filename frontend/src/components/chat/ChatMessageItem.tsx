@@ -86,9 +86,17 @@ export function ChatMessageItem({
         >
             {/* Avatar */}
             {showHeader ? (
-                <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground shrink-0 select-none">
-                    <User className="w-5 h-5" />
-                </div>
+                message.senderAvatarUrl ? (
+                    <img
+                        src={message.senderAvatarUrl}
+                        alt={message.senderName}
+                        className="w-8 h-8 rounded-full object-cover shrink-0 select-none bg-muted"
+                    />
+                ) : (
+                    <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground shrink-0 select-none">
+                        <User className="w-5 h-5" />
+                    </div>
+                )
             ) : (
                 <div className="w-8 shrink-0" /> // Spacer
             )}

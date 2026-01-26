@@ -88,6 +88,17 @@ namespace Touchpointe.Infrastructure.Persistence
                 }
             }
 
+            // Fix for EF Core Warning 10622: Dependent entities must also be filtered if principal is soft-deleted
+            modelBuilder.Entity<ChatMention>().HasQueryFilter(x => !x.Message.IsDeleted);
+            modelBuilder.Entity<CommentMention>().HasQueryFilter(x => !x.Comment.IsDeleted);
+            modelBuilder.Entity<ListStatus>().HasQueryFilter(x => !x.List.IsDeleted);
+            modelBuilder.Entity<MessageReaction>().HasQueryFilter(x => !x.Message.IsDeleted);
+            modelBuilder.Entity<Subtask>().HasQueryFilter(x => !x.Task.IsDeleted);
+            modelBuilder.Entity<TaskActivity>().HasQueryFilter(x => !x.Task.IsDeleted);
+            modelBuilder.Entity<TaskMention>().HasQueryFilter(x => !x.Task.IsDeleted);
+            modelBuilder.Entity<TaskTimeEntry>().HasQueryFilter(x => !x.Task.IsDeleted);
+            modelBuilder.Entity<TaskWatcher>().HasQueryFilter(x => !x.Task.IsDeleted);
+
             // User
             modelBuilder.Entity<User>()
                 .HasKey(u => u.Id);

@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "NoYM942ruiM=",
+  "dgSpecHash": "CVd+CxxVI4A=",
   "success": true,
-  "projectFilePath": "C:\\Users\\ajmal\\Desktop\\kravino Innovations\\touchpointe\\touchpointe_os\\backend\\src\\Touchpointe.Application\\Touchpointe.Application.csproj",
+  "projectFilePath": "C:\\Users\\ajmal\\Desktop\\touchpointe\\touchpointe_os\\backend\\src\\Touchpointe.Application\\Touchpointe.Application.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\ajmal\\.nuget\\packages\\fluentvalidation\\12.1.1\\fluentvalidation.12.1.1.nupkg.sha512",
     "C:\\Users\\ajmal\\.nuget\\packages\\fluentvalidation.dependencyinjectionextensions\\12.1.1\\fluentvalidation.dependencyinjectionextensions.12.1.1.nupkg.sha512",
