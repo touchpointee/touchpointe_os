@@ -17,7 +17,7 @@ export function PublicRoute({ children }: PublicRouteProps) {
         // Since we don't assume we have workspaces loaded yet if we just hit /login while having a token in LS,
         // We might default to /home or check store.
         // Let's rely on the assumption that if they are authenticated, they should be in the app.
-        return <Navigate to="/" replace />;
+        return <Navigate to="/my-tasks" replace />;
     }
 
     return <>{children}</>;
