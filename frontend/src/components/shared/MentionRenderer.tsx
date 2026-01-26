@@ -14,7 +14,7 @@ export function MentionRenderer({ content, className }: MentionRendererProps) {
     const hasMentions = /<@([a-zA-Z0-9-]+)\|([^>]+)/.test(content);
 
     if (!hasMentions) {
-        const parsed = twemoji.parse(content);
+        const parsed = (twemoji as any).parse(content);
         const stripped = parsed.replace(/<img[^>]*>/g, '').trim();
         if (stripped.length === 0) {
             const count = (parsed.match(/<img/g) || []).length;
@@ -37,7 +37,7 @@ export function MentionRenderer({ content, className }: MentionRendererProps) {
                 <span
                     key={`text-${lastIndex}`}
                     dangerouslySetInnerHTML={{
-                        __html: twemoji.parse(text, {
+                        __html: (twemoji as any).parse(text, {
                             folder: 'svg',
                             ext: '.svg',
                             className: 'inline-block w-5 h-5 align-text-bottom mx-0.5'
@@ -67,7 +67,7 @@ export function MentionRenderer({ content, className }: MentionRendererProps) {
             <span
                 key={`text-${lastIndex}`}
                 dangerouslySetInnerHTML={{
-                    __html: twemoji.parse(text, {
+                    __html: (twemoji as any).parse(text, {
                         folder: 'svg',
                         ext: '.svg',
                         className: emojiClass

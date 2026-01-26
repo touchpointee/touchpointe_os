@@ -7,7 +7,7 @@ import { apiPut, apiPostMultipart } from '@/lib/api';
 
 export function ProfilePage() {
     const navigate = useNavigate();
-    const { user, fetchUser, isLoading: isUserLoading } = useUserStore();
+    const { user, fetchUser } = useUserStore();
 
     const [fullName, setFullName] = useState(user?.fullName || '');
     const [isSaving, setIsSaving] = useState(false);
