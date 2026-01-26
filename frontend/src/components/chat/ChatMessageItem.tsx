@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import type { Message } from '@/stores/chatStore';
 import { MentionRenderer } from '../shared/MentionRenderer';
-import { MessageSquare, Smile } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
+import { Reply, Smile, User } from 'lucide-react';
+import { format } from 'date-fns';
 
 interface ChatMessageItemProps {
     message: Message;
@@ -12,9 +12,32 @@ interface ChatMessageItemProps {
     onReply: (message: Message) => void;
     onReact: (messageId: string, emoji: string) => void;
     onRemoveReaction: (messageId: string, emoji: string) => void;
+    onOpenReactionDetails: (message: Message) => void;
 }
 
 const COMMON_EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🔥'];
+
+const USER_COLORS = [
+    '#a13ee7ff', '#ff9b04ff', '#fd543adb',
+    '#ee32ffff', '#d6be00', '#178d7d94', '#6d65dbff',
+];
+
+function getUserColor(name?: string | null) {
+    if (!name) return USER_COLORS[0];
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+        hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return USER_COLORS[Math.abs(hash) % USER_COLORS.length];
+}
+
+// Helper function to detect if message contains only a single emoji
+function isSingleEmoji(text: string): boolean {
+    const trimmed = text.trim();
+    // Regex to match a single emoji (including compound emojis with ZWJ, skin tones, etc.)
+    const emojiRegex = /^(\p{Emoji_Presentation}|\p{Emoji}\uFE0F)(\u200D(\p{Emoji_Presentation}|\p{Emoji}\uFE0F))*$/u;
+    return emojiRegex.test(trimmed);
+}
 
 export function ChatMessageItem({
     message,
@@ -23,15 +46,25 @@ export function ChatMessageItem({
     showHeader,
     onReply,
     onReact,
-    onRemoveReaction
+    onRemoveReaction,
+    onOpenReactionDetails
 }: ChatMessageItemProps) {
     const [showReactions, setShowReactions] = useState(false);
 
     const handleReactionClick = (emoji: string) => {
-        const hasReacted = message.reactions?.some(r => r.userId === currentUser?.id && r.emoji === emoji);
-        if (hasReacted) {
-            onRemoveReaction(message.id, emoji);
+        const existingReaction = message.reactions?.find(r => r.userId === currentUser?.id);
+
+        if (existingReaction) {
+            // If clicking the same emoji, toggle it off
+            if (existingReaction.emoji === emoji) {
+                onRemoveReaction(message.id, emoji);
+            } else {
+                // If clicking a different emoji, remove the old one and add the new one
+                onRemoveReaction(message.id, existingReaction.emoji);
+                onReact(message.id, emoji);
+            }
         } else {
+            // No existing reaction, just add the new one
             onReact(message.id, emoji);
         }
         setShowReactions(false);
@@ -48,102 +81,164 @@ export function ChatMessageItem({
     return (
         <div
             id={message.id}
-            className={`group flex ${isMe ? 'flex-row-reverse' : 'flex-row'} items-start gap-3 py-1 px-2 hover:bg-muted/30 rounded-lg transition-colors relative ${message.isOptimistic ? 'animate-pulse opacity-70' : ''}`}
+            className={`group flex ${isMe ? 'flex-row-reverse' : 'flex-row'} items-start gap-3 px-2 hover:bg-muted/30 rounded-lg transition-colors relative ${message.isOptimistic ? 'animate-pulse opacity-70' : ''} ${Object.keys(reactionCounts).length > 0 ? 'mb-7' : ''}`}
             onMouseLeave={() => { setShowReactions(false); }}
         >
             {/* Avatar */}
             {showHeader ? (
-                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary shrink-0 select-none">
-                    {message.senderName.substring(0, 2).toUpperCase()}
+                <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground shrink-0 select-none">
+                    <User className="w-5 h-5" />
                 </div>
             ) : (
                 <div className="w-8 shrink-0" /> // Spacer
             )}
 
             <div className={`flex-1 min-w-0 flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
-                {/* Header */}
-                {showHeader && (
-                    <div className={`flex items-center gap-2 mb-0.5 ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
-                        <span className="text-sm font-semibold hover:underline cursor-pointer">{message.senderName}</span>
-                        <span className="text-[10px] text-muted-foreground">
-                            {formatDistanceToNow(new Date(message.createdAt), { addSuffix: true })}
+
+                {/* Single Emoji - No Bubble */}
+                {isSingleEmoji(message.content) ? (
+                    <div className="flex flex-col items-center gap-4 py-2.5">
+                        <span className="text-5xl leading-none">{message.content.trim()}</span>
+                        <span className={`text-[11px] select-none whitespace-nowrap px-2 py-1 rounded-md ${isMe ? 'bg-[#005c4b] text-[#e9edef]/60' : 'bg-[#202c33] text-[#8696a0]'}`}>
+                            {format(new Date(message.createdAt), 'h:mm a')}
                         </span>
                     </div>
-                )}
+                ) : (
+                    /* Regular Message with Bubble */
+                    <div className={`flex items-center max-w-[75%] ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
+                        {/* Message Content Bubble */}
+                        <div className={`relative px-3 py-1 shadow-sm text-sm 
+                            ${isMe
+                                ? `bg-[#005c4b] text-[#e9edef] rounded-lg ${showHeader ? 'rounded-tr-none' : ''}`
+                                : `bg-[#202c33] text-[#e9edef] rounded-lg ${showHeader ? 'rounded-tl-none' : ''}`
+                            }`}
+                        >
+                            {/* Tail SVG - Only for first message in group */}
+                            {showHeader && (
+                                isMe ? (
+                                    <span className="absolute top-0 -right-[8px] text-[#005c4b]">
+                                        <svg viewBox="0 0 8 13" height="13" width="8" preserveAspectRatio="none" className="block fill-current">
+                                            <path d="M5.188 0H0v11.193l6.467-8.625C7.526 2.156 6.958 0 5.188 0z"></path>
+                                        </svg>
+                                    </span>
+                                ) : (
+                                    <span className="absolute top-0 -left-[8px] text-[#202c33] -scale-x-100">
+                                        <svg viewBox="0 0 8 13" height="13" width="8" preserveAspectRatio="none" className="block fill-current">
+                                            <path d="M5.188 0H0v11.193l6.467-8.625C7.526 2.156 6.958 0 5.188 0z"></path>
+                                        </svg>
+                                    </span>
+                                )
+                            )}
 
-                {/* Reply Preview */}
-                {message.replyToMessageId && (
-                    <div
-                        onClick={() => {
-                            document.getElementById(message.replyToMessageId!)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        }}
-                        className={`mb-1 flex items-center gap-2 cursor-pointer opacity-80 hover:opacity-100 group/reply ${isMe ? 'flex-row-reverse text-right' : 'flex-row'}`}
-                    >
-                        <div className="w-0.5 h-4 bg-primary/40 rounded-full"></div>
-                        <span className="text-xs text-muted-foreground group-hover/reply:text-primary transition-colors">
-                            Replying into <span className="font-medium">{message.replyPreviewSenderName}</span>: <span className="italic truncate max-w-[200px] inline-block align-bottom">{message.replyPreviewText}</span>
-                        </span>
-                    </div>
-                )}
+                            {/* WhatsApp-style Reply Preview */}
+                            {message.replyToMessageId && (
+                                <div
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        document.getElementById(message.replyToMessageId!)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                    }}
+                                    className="mb-1 rounded bg-black/20 flex relative cursor-pointer overflow-hidden border-l-[4px] border-l-[#00a884]"
+                                    style={{ borderLeftColor: getUserColor(message.replyPreviewSenderName) }}
+                                >
+                                    <div className="p-1 pl-2 flex flex-col justify-center min-w-0">
+                                        <span
+                                            className="text-[12px] font-bold leading-tight truncate"
+                                            style={{ color: getUserColor(message.replyPreviewSenderName) }}
+                                        >
+                                            {message.replyPreviewSenderName}
+                                        </span>
+                                        <span className="text-[12px] text-[#e9edef]/80 truncate leading-tight">
+                                            {message.replyPreviewText}
+                                        </span>
+                                    </div>
+                                </div>
+                            )}
 
-                {/* Message Content */}
-                <div className={`relative px-4 py-2 rounded-2xl shadow-sm text-sm leading-relaxed max-w-fit
-                    ${isMe
-                        ? 'bg-primary text-primary-foreground rounded-tr-sm'
-                        : 'bg-muted text-foreground rounded-tl-sm border border-border/50'
-                    }`}
-                >
-                    <MentionRenderer content={message.content} />
-                </div>
+                            {/* Sender Name in Bubble (Only for others) */}
+                            {!isMe && showHeader && (
+                                <div
+                                    style={{ color: getUserColor(message.senderName) }}
+                                    className="font-bold text-[11px] mb-1 leading-tight cursor-pointer hover:underline"
+                                >
+                                    {message.senderName}
+                                </div>
+                            )}
 
-                {/* Reactions Display */}
-                {(Object.keys(reactionCounts).length > 0) && (
-                    <div className={`mt-1.5 flex flex-wrap gap-1.5 ${isMe ? 'justify-end' : 'justify-start'}`}>
-                        {Object.entries(reactionCounts).map(([emoji, count]) => (
+                            <div className="leading-snug whitespace-pre-wrap break-all">
+                                <MentionRenderer content={message.content} />
+                                <span className={`text-[10px] select-none whitespace-nowrap ml-2 float-right mt-3 ${isMe ? 'text-[#e9edef]/60' : 'text-[#8696a0]'}`}>
+                                    {format(new Date(message.createdAt), 'h:mm a')}
+                                </span>
+                            </div>
+
+                            {/* Reactions Display (Floating Pill) */}
+                            {(Object.keys(reactionCounts).length > 0) && (
+                                <div className={`absolute -bottom-5 ${isMe ? 'right-1' : 'left-3'} z-10`}>
+                                    <div
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            onOpenReactionDetails(message);
+                                        }}
+                                        className="bg-[#202c33] border border-[#2a3942] rounded-full px-1.5 py-[1px] flex items-center gap-0 shadow-md cursor-pointer hover:bg-[#2a3942] transition-colors"
+                                    >
+                                        {Object.entries(reactionCounts).map(([emoji]) => (
+                                            <div
+                                                key={emoji}
+                                                className={`
+                                                    flex items-center justify-center h-5 w-4 rounded-full text-sm transition-all
+                                                `}
+                                            >
+                                                <span>{emoji}</span>
+                                            </div>
+                                        ))}
+                                        {(message.reactions || []).length > 1 && (
+                                            <span className="text-[#8696a0] font-medium text-[11px] px-1">
+                                                {(message.reactions || []).length}
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Hover Actions */}
+                        <div className={`flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity ${isMe ? 'mr-1' : 'ml-1'}`}>
                             <button
-                                key={emoji}
-                                onClick={() => handleReactionClick(emoji)}
-                                className={`
-                                    flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border transition-all
-                                    ${myReactions.has(emoji)
-                                        ? 'bg-primary/10 border-primary/30 text-primary'
-                                        : 'bg-muted/30 border-transparent text-muted-foreground hover:bg-muted hover:border-border'}
-                                `}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setShowReactions(!showReactions);
+                                }}
+                                className="p-1.5 hover:bg-muted/50 rounded-full transition-colors"
+                                title="React"
                             >
-                                <span>{emoji}</span>
-                                <span className={`${myReactions.has(emoji) ? 'font-semibold' : ''}`}>{count}</span>
+                                <Smile className="w-4 h-4 text-muted-foreground" />
                             </button>
-                        ))}
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onReply(message);
+                                }}
+                                className="p-1.5 hover:bg-muted/50 rounded-full transition-colors"
+                                title="Reply"
+                            >
+                                <Reply className="w-4 h-4 text-muted-foreground" />
+                            </button>
+                        </div>
                     </div>
                 )}
-            </div>
 
-            {/* Hover Actions (Absolute Right/Left) */}
-            <div className={`opacity-0 group-hover:opacity-100 transition-opacity absolute top-2 bg-background border border-border shadow-sm rounded-md flex items-center p-0.5 z-10 ${isMe ? 'left-4' : 'right-4'}`}>
-                <button
-                    onClick={() => onReply(message)}
-                    className="p-1.5 hover:bg-muted rounded text-muted-foreground hover:text-foreground transition-colors"
-                    title="Reply"
-                >
-                    <MessageSquare className="w-4 h-4" />
-                </button>
-                <div className="w-px h-4 bg-border mx-0.5"></div>
-                <button
-                    onClick={() => setShowReactions(!showReactions)}
-                    className="p-1.5 hover:bg-muted rounded text-muted-foreground hover:text-foreground transition-colors"
-                    title="Add reaction"
-                >
-                    <Smile className="w-4 h-4" />
-                </button>
-
-                {/* Emoji Picker Popup */}
-                {showReactions && (
-                    <div className={`absolute top-8 ${isMe ? 'left-0' : 'right-0'} bg-popover border border-border shadow-lg rounded-lg p-2 flex gap-1 z-20 animate-in fade-in zoom-in-95 duration-100 w-max`}>
+                {/* Reaction Picker Popup */}
+                {showReactions && !isSingleEmoji(message.content) && (
+                    <div className={`mt-1 bg-[#202c33] border border-[#2a3942] rounded-full px-2 py-1 flex items-center gap-1 shadow-lg ${isMe ? 'self-end' : 'self-start'}`}>
                         {COMMON_EMOJIS.map(emoji => (
                             <button
                                 key={emoji}
                                 onClick={() => handleReactionClick(emoji)}
-                                className={`w-8 h-8 flex items-center justify-center text-lg rounded hover:bg-muted ${myReactions.has(emoji) ? 'bg-primary/10' : ''}`}
+                                className={`
+                                    w-8 h-8 flex items-center justify-center rounded-full text-lg
+                                    hover:bg-muted/30 transition-all
+                                    ${myReactions.has(emoji) ? 'bg-muted/50 scale-110' : ''}
+                                `}
                             >
                                 {emoji}
                             </button>
@@ -151,6 +246,8 @@ export function ChatMessageItem({
                     </div>
                 )}
             </div>
-        </div>
+
+
+        </div >
     );
 }

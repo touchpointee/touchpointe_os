@@ -115,15 +115,6 @@ export const useChatStore = create<ChatState>()((set, get) => ({
         try {
             const channels = await apiGet<Channel[]>(`/workspaces/${workspaceId}/chat/channels`);
             set({ channels, isLoading: false });
-
-            // Auto-select general if nothing active
-            if (!get().activeChannelId && !get().activeDmGroupId) {
-                const general = channels.find(c => c.name === 'general');
-                if (general) {
-                    set({ activeChannelId: general.id });
-                    // Don't auto-fetch messages yet, let the component do it
-                }
-            }
         } catch (e: any) {
             set({ isLoading: false, error: e.message });
         }
