@@ -288,10 +288,11 @@ export function ChatWindow() {
         if (!content) return;
 
         setIsSending(true);
-        setIsSending(true);
         try {
             await postMessage(activeWorkspace.id, content, currentUser.id, currentUser.name || currentUser.email, replyingTo?.id);
-            inputRef.current.innerHTML = '';
+            if (inputRef.current) {
+                inputRef.current.innerHTML = '';
+            }
             setHasContent(false);
             setMentionQuery(null);
             setReplyingTo(null);
@@ -343,13 +344,18 @@ export function ChatWindow() {
                         </div>
                     ) : activeDm ? (
                         (() => {
-                            const otherMembers = activeDm.members.filter(m => m.id !== currentUser?.id);
-                            // Single DM
-                            if (otherMembers.length === 1 && otherMembers[0].avatarUrl) {
+                            const otherMembers = activeDm.members.filter(m => (m.id || (m as any).Id) !== currentUser?.id);
+                            const displayName = otherMembers.length > 0 ? otherMembers.map(m => m.fullName).join(', ') : "Me";
+                            const avatarUrl = otherMembers.length > 0
+                                ? (otherMembers[0].avatarUrl || (otherMembers[0] as any).AvatarUrl)
+                                : (currentUser?.avatarUrl || (currentUser as any)?.AvatarUrl);
+
+                            // Single DM or Me
+                            if (avatarUrl) {
                                 return (
                                     <img
-                                        src={otherMembers[0].avatarUrl}
-                                        alt={otherMembers[0].fullName}
+                                        src={avatarUrl}
+                                        alt={displayName}
                                         className="w-8 h-8 rounded-full object-cover border border-border"
                                     />
                                 );

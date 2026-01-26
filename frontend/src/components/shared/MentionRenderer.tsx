@@ -1,4 +1,4 @@
-import * as twemoji from 'twemoji';
+import twemoji from 'twemoji';
 
 interface MentionRendererProps {
     content: string;
@@ -13,8 +13,15 @@ export function MentionRenderer({ content, className }: MentionRendererProps) {
     let emojiClass = 'inline-block w-5 h-5 align-text-bottom mx-0.5'; // Default
     const hasMentions = /<@([a-zA-Z0-9-]+)\|([^>]+)/.test(content);
 
+    // Fallback for twemoji.parse being on .default in some environments
+    const parseEmoji = (text: string, options?: any) => {
+        const p = (twemoji as any).parse || (twemoji as any).default?.parse;
+        if (typeof p === 'function') return p(text, options);
+        return text;
+    };
+
     if (!hasMentions) {
-        const parsed = (twemoji as any).parse(content);
+        const parsed = parseEmoji(content);
         const stripped = parsed.replace(/<img[^>]*>/g, '').trim();
         if (stripped.length === 0) {
             const count = (parsed.match(/<img/g) || []).length;
@@ -37,7 +44,7 @@ export function MentionRenderer({ content, className }: MentionRendererProps) {
                 <span
                     key={`text-${lastIndex}`}
                     dangerouslySetInnerHTML={{
-                        __html: (twemoji as any).parse(text, {
+                        __html: parseEmoji(text, {
                             folder: 'svg',
                             ext: '.svg',
                             className: 'inline-block w-5 h-5 align-text-bottom mx-0.5'
@@ -67,7 +74,7 @@ export function MentionRenderer({ content, className }: MentionRendererProps) {
             <span
                 key={`text-${lastIndex}`}
                 dangerouslySetInnerHTML={{
-                    __html: (twemoji as any).parse(text, {
+                    __html: parseEmoji(text, {
                         folder: 'svg',
                         ext: '.svg',
                         className: emojiClass
