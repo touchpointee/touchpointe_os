@@ -4,6 +4,16 @@ import { Link } from 'react-router-dom';
 export function HomePage() {
     const particlesRef = useRef<HTMLDivElement>(null);
 
+    // Hide scrollbar on mount
+    useEffect(() => {
+        document.documentElement.classList.add('no-scrollbar');
+        document.body.classList.add('no-scrollbar');
+        return () => {
+            document.documentElement.classList.remove('no-scrollbar');
+            document.body.classList.remove('no-scrollbar');
+        };
+    }, []);
+
     // Scroll reveal animation
     useEffect(() => {
         const observerOptions = {
@@ -116,7 +126,7 @@ export function HomePage() {
     }, []);
 
     return (
-        <div className="bg-background-dark text-white font-display overflow-x-hidden antialiased selection:bg-primary/30 selection:text-white">
+        <div className="no-scrollbar bg-background-dark text-white font-display overflow-x-hidden antialiased selection:bg-primary/30 selection:text-white">
             {/* Galaxy Background */}
             <div className="fixed inset-0 z-0 pointer-events-none">
                 <div className="stars"></div>

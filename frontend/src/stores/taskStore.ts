@@ -20,6 +20,9 @@ interface TaskState {
     taskDetails: Record<string, TaskDetailDto>; // Cache details
     timeEntries: Record<string, TimeEntryDto[]>; // keyed by taskId
 
+    // Global Active Timer (Client-side sync)
+    activeTimer: { taskId: string; startTime: string } | null;
+
     // Actions
     fetchTasks: (workspaceId: string, listId: string, page?: number) => Promise<void>;
     createTask: (workspaceId: string, request: CreateTaskRequest) => Promise<TaskDto>;
@@ -32,6 +35,8 @@ interface TaskState {
     stopTimer: (workspaceId: string, taskId: string) => Promise<void>;
     logManualTime: (workspaceId: string, taskId: string, request: ManualTimeRequest) => Promise<void>;
     deleteTimeEntry: (workspaceId: string, entryId: string) => Promise<void>;
+    setActiveTimer: (taskId: string, startTime: string) => void;
+    clearActiveTimer: () => void;
 
     // Detail Actions
     openTaskDetail: (taskId: string) => void;
@@ -55,6 +60,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
     isDetailPanelOpen: false,
     loading: false,
     error: null,
+    activeTimer: null,
 
     reset: () => set({
         tasks: {},
@@ -64,7 +70,8 @@ export const useTaskStore = create<TaskState>((set, get) => ({
         activeTaskId: null,
         isDetailPanelOpen: false,
         loading: false,
-        error: null
+        error: null,
+        activeTimer: null
     }),
 
     fetchTasks: async (workspaceId, listId, page = 1) => {
@@ -290,17 +297,26 @@ export const useTaskStore = create<TaskState>((set, get) => ({
         }
     },
 
+    setActiveTimer: (taskId, startTime) => set({ activeTimer: { taskId, startTime } }),
+    clearActiveTimer: () => set({ activeTimer: null }),
+
     startTimer: async (workspaceId, taskId, request) => {
         try {
+            // Optimistic / Immediate Client State Update
+            const startTime = new Date().toISOString();
+            set({ activeTimer: { taskId, startTime } });
+
             await apiPost(`/workspaces/${workspaceId}/tasks/${taskId}/time/start`, request || {});
             await get().fetchTimeEntries(workspaceId, taskId);
         } catch (e) {
             set({ error: (e as Error).message });
+            set({ activeTimer: null }); // Revert on error
         }
     },
 
     stopTimer: async (workspaceId, taskId) => {
         try {
+            set({ activeTimer: null }); // Immediate UI feedback
             await apiPost(`/workspaces/${workspaceId}/tasks/${taskId}/time/stop`, {});
             await get().fetchTimeEntries(workspaceId, taskId);
         } catch (e) {

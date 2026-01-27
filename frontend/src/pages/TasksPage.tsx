@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { toast } from '@/contexts/ToastContext';
-import { Plus } from 'lucide-react';
+import { Plus, Filter } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { TaskViewSwitcher, type TaskViewType } from '@/components/tasks/TaskViewSwitcher';
 import { TaskListView } from '@/components/tasks/TaskListView';
 import { TaskBoardView } from '@/components/tasks/TaskBoardView';
@@ -93,6 +94,12 @@ export function TasksPage() {
                         onViewChange={handleViewChange}
                     />
 
+                    {/* Filter Button */}
+                    <button className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-md transition-colors">
+                        <Filter className="w-4 h-4" />
+                        Filter
+                    </button>
+
                     {/* Add Task Button */}
                     <button
                         onClick={() => setIsCreateModalOpen(true)}
@@ -106,7 +113,10 @@ export function TasksPage() {
             </div>
 
             {/* Main Content */}
-            <div className="flex-1 overflow-auto">
+            <div className={cn(
+                "flex-1",
+                currentView === 'board' ? "overflow-hidden" : "overflow-auto"
+            )}>
                 {listId ? (
                     renderView()
                 ) : (

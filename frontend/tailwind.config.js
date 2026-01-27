@@ -60,6 +60,7 @@ export default {
 					'5': 'hsl(var(--chart-5))'
 				},
 				'task-card': {
+					DEFAULT: 'var(--task-card-bg)',
 					border: 'var(--task-card-border)',
 					'hover-border': 'var(--task-card-hover-border)',
 					foreground: 'var(--task-card-text)',
@@ -115,10 +116,8 @@ export default {
 				},
 			},
 			boxShadow: {
-				'task-card': 'var(--task-card-shadow)',
 			},
 			backgroundImage: {
-				'task-card': 'var(--task-card-bg)',
 				'grid-pattern': 'linear-gradient(to right, #3b82f610 1px, transparent 1px), linear-gradient(to bottom, #3b82f610 1px, transparent 1px)',
 			},
 			animation: {

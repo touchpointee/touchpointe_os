@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useHierarchyStore } from '@/stores/hierarchyStore';
 import { useWorkspaces } from '@/stores/workspaceStore';
+import { useChatStore } from '@/stores/chatStore';
 import { X, Loader2, LayoutTemplate } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -49,6 +50,16 @@ export function CreateListModal({ isOpen, onClose, defaultSpaceId, defaultFolder
                 name: name.trim()
                 // Description and Privacy are not yet supported by API, but UI is compliant
             });
+
+            // Automatically create a channel for this project
+            const { createChannel } = useChatStore.getState();
+            await createChannel(
+                activeWorkspace.id,
+                name.trim(), // Channel Name matches Project Name
+                isPrivate, // Match privacy setting
+                `Channel for project: ${name.trim()}` // Auto-generated description
+            );
+
             onClose();
         } catch (error) {
             console.error("Failed to create list", error);

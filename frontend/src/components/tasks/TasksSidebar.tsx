@@ -8,7 +8,8 @@ import {
     MoreVertical,
     Pencil,
     Trash,
-    X
+    X,
+    Search
 } from 'lucide-react';
 import { useHierarchyStore } from '@/stores/hierarchyStore';
 import type { SpaceHierarchyDto, FolderHierarchyDto, ListDto } from '@/types/hierarchy';
@@ -24,6 +25,7 @@ export function TasksSidebar({ workspaceId }: TasksSidebarProps) {
     const { spaces, loading, fetchHierarchy, expandedSpaces, expandedFolders, toggleSpace, toggleFolder, createSpace } = useHierarchyStore();
     const [showNewSpace, setShowNewSpace] = useState(false);
     const [newSpaceName, setNewSpaceName] = useState('');
+    const [searchQuery, setSearchQuery] = useState('');
     const [createListModalState, setCreateListModalState] = useState<{ isOpen: boolean, spaceId?: string, folderId?: string }>({ isOpen: false });
 
     const { activeWorkspace } = useWorkspaces();
@@ -48,6 +50,26 @@ export function TasksSidebar({ workspaceId }: TasksSidebarProps) {
         }
     };
 
+    // Filter spaces based on search query
+    const filteredSpaces = spaces.filter(space => {
+        if (!searchQuery) return true;
+        const query = searchQuery.toLowerCase();
+
+        // Match space name
+        if (space.name.toLowerCase().includes(query)) return true;
+
+        // Match folder name
+        if (space.folders.some(f => f.name.toLowerCase().includes(query))) return true;
+
+        // Match list within space
+        if (space.lists.some(l => l.name.toLowerCase().includes(query))) return true;
+
+        // Match list within folder
+        if (space.folders.some(f => f.lists.some(l => l.name.toLowerCase().includes(query)))) return true;
+
+        return false;
+    });
+
     if (loading) {
         return (
             <div className="p-4 pb-20 select-none animate-pulse">
@@ -71,16 +93,25 @@ export function TasksSidebar({ workspaceId }: TasksSidebarProps) {
 
     return (
         <div className="p-4 pb-20 select-none">
-            <div className="flex items-center justify-between mb-4 group/header">
-                <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    Spaces
-                </h2>
+            <div className="flex items-center justify-between mb-4 gap-2">
+                <div className="relative flex-1">
+                    <input
+                        type="text"
+                        placeholder="Search by Project, Task"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full bg-white dark:bg-white/5 shadow-sm border border-transparent rounded-md text-xs py-1.5 pl-3 pr-8 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/20 focus:bg-background transition-all"
+                    />
+                    <Search className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                </div>
+
                 {canManageStructure && (
                     <button
                         onClick={() => setShowNewSpace(true)}
-                        className="p-1 rounded hover:bg-accent transition-colors opacity-0 group-hover/header:opacity-100"
+                        className="p-1.5 rounded-md hover:bg-accent transition-colors text-muted-foreground hover:text-foreground"
+                        title="Create New Space"
                     >
-                        <Plus className="w-3.5 h-3.5 text-muted-foreground" />
+                        <Plus className="w-4 h-4" />
                     </button>
                 )}
             </div>
@@ -103,20 +134,26 @@ export function TasksSidebar({ workspaceId }: TasksSidebarProps) {
             )}
 
             <nav className="space-y-1">
-                {spaces.map((space) => (
+                {filteredSpaces.map((space) => (
                     <SpaceItem
                         key={space.id}
                         space={space}
                         workspaceId={workspaceId}
-                        isExpanded={expandedSpaces.has(space.id)}
+                        isExpanded={expandedSpaces.has(space.id) || !!searchQuery}
                         expandedFolders={expandedFolders}
                         onToggle={() => toggleSpace(space.id)}
                         onToggleFolder={toggleFolder}
                         canManageStructure={canManageStructure}
                         activeListId={activeListId}
                         onCreateList={(spaceId, folderId) => setCreateListModalState({ isOpen: true, spaceId, folderId })}
+                        searchQuery={searchQuery}
                     />
                 ))}
+                {filteredSpaces.length === 0 && searchQuery && (
+                    <div className="text-center py-4 text-xs text-muted-foreground">
+                        No results found
+                    </div>
+                )}
             </nav>
 
             <CreateListModal
@@ -140,18 +177,20 @@ interface SpaceItemProps {
     canManageStructure: boolean;
     activeListId?: string;
     onCreateList: (spaceId: string, folderId?: string) => void;
+    searchQuery?: string;
 }
 
-function SpaceItem({ space, workspaceId, isExpanded, expandedFolders, onToggle, onToggleFolder, canManageStructure, activeListId, onCreateList }: SpaceItemProps) {
+function SpaceItem({ space, workspaceId, isExpanded, expandedFolders, onToggle, onToggleFolder, canManageStructure, activeListId, onCreateList, searchQuery }: SpaceItemProps) {
     const { createFolder, updateSpace, deleteSpace } = useHierarchyStore();
 
-    // Calculate Highlight State
-    const isChildFolderExpanded = space.folders.some(f => expandedFolders.has(f.id));
-    const isChildListActive = space.lists.some(l => l.id === activeListId) ||
+    // Check if this Space contains the active list
+    const containsActiveList = space.lists.some(l => l.id === activeListId) ||
         space.folders.some(f => f.lists.some(l => l.id === activeListId));
 
-    // Only highlight if expanded AND no child interaction (folder open or list active)
-    const shouldHighlight = isExpanded && !isChildFolderExpanded && !isChildListActive;
+    // Highlight Rule:
+    // 1. If a List is active -> Only highlight the Space containing it.
+    // 2. If NO List is active -> Highlight any expanded Space (fallback behavior).
+    const shouldHighlight = activeListId ? containsActiveList : isExpanded;
 
     // UI State
     const [isEditing, setIsEditing] = useState(false);
@@ -182,6 +221,23 @@ function SpaceItem({ space, workspaceId, isExpanded, expandedFolders, onToggle, 
         }
     };
 
+    // Filter children if search query exists
+    const query = searchQuery?.toLowerCase() || '';
+
+    // Filter folders: Include if folder name matches OR if any of its lists match
+    const filteredFolders = !query ? space.folders : space.folders.filter(f =>
+        f.name.toLowerCase().includes(query) ||
+        f.lists.some(l => l.name.toLowerCase().includes(query))
+    );
+
+    // Filter lists: Include if list name matches (Space matches are handled at parent)
+    const filteredLists = !query ? space.lists : space.lists.filter(l =>
+        l.name.toLowerCase().includes(query)
+    );
+
+    // Determine if we should show this space at all (if it's a direct match or has matching children)
+    // Parent TasksSidebar already does this for top-level optimization, but good to ensure children are filtered.
+
     return (
         <div className="mb-2">
             <div
@@ -200,7 +256,7 @@ function SpaceItem({ space, workspaceId, isExpanded, expandedFolders, onToggle, 
                 {/* Icon */}
                 <div className={cn(
                     "flex items-center justify-center w-5 h-5 rounded bg-primary/5 text-primary group-hover:bg-primary/10 transition-colors mr-2",
-                    shouldHighlight && "bg-transparent dark:bg-transparent"
+                    shouldHighlight && "bg-transparent dark:bg-transparent text-white"
                 )}>
                     <Layers className="w-3.5 h-3.5" />
                 </div>
@@ -232,8 +288,7 @@ function SpaceItem({ space, workspaceId, isExpanded, expandedFolders, onToggle, 
                     ) : (
                         <span className={cn(
                             "text-sm tracking-tight truncate block transition-colors font-semibold",
-                            isExpanded ? "text-foreground" : "text-muted-foreground group-hover:text-foreground",
-                            shouldHighlight && ""
+                            shouldHighlight ? "text-white" : (isExpanded ? "text-foreground" : "text-muted-foreground group-hover:text-foreground")
                         )}>
                             {space.name}
                         </span>
@@ -284,20 +339,20 @@ function SpaceItem({ space, workspaceId, isExpanded, expandedFolders, onToggle, 
                     {/* Vertical Tree Line */}
                     <div className="absolute left-[3px] top-0 bottom-2 w-px bg-primary/20" />
 
-                    {space.folders.map((folder) => (
+                    {filteredFolders.map((folder) => (
                         <FolderItem
                             key={folder.id}
                             folder={folder}
                             spaceId={space.id}
                             workspaceId={workspaceId}
-                            isExpanded={expandedFolders.has(folder.id)}
+                            isExpanded={expandedFolders.has(folder.id) || !!searchQuery}
                             onToggle={() => onToggleFolder(folder.id)}
                             canManageStructure={canManageStructure}
-                            activeListId={activeListId}
                             onCreateList={onCreateList} // Pass down
+                            searchQuery={searchQuery}
                         />
                     ))}
-                    {space.lists.map((list) => (
+                    {filteredLists.map((list) => (
                         <ListItem
                             key={list.id}
                             list={list}
@@ -319,18 +374,12 @@ interface FolderItemProps {
     isExpanded: boolean;
     onToggle: () => void;
     canManageStructure: boolean;
-    activeListId?: string;
     onCreateList: (spaceId: string, folderId?: string) => void;
+    searchQuery?: string;
 }
 
-function FolderItem({ folder, spaceId, workspaceId, isExpanded, onToggle, canManageStructure, activeListId, onCreateList }: FolderItemProps) {
+function FolderItem({ folder, spaceId, workspaceId, isExpanded, onToggle, canManageStructure, onCreateList, searchQuery }: FolderItemProps) {
     const { updateFolder, deleteFolder } = useHierarchyStore();
-
-    // Calculate Highlight State
-    const isChildListActive = folder.lists.some(l => l.id === activeListId);
-
-    // Only highlight if expanded AND no child list active
-    const shouldHighlight = isExpanded && !isChildListActive;
 
     const [isEditing, setIsEditing] = useState(false);
     const [editName, setEditName] = useState(folder.name);
@@ -348,28 +397,24 @@ function FolderItem({ folder, spaceId, workspaceId, isExpanded, onToggle, canMan
         }
     };
 
+    // Filter lists
+    const query = searchQuery?.toLowerCase() || '';
+    const filteredLists = !query ? folder.lists : folder.lists.filter(l => l.name.toLowerCase().includes(query));
+
     return (
-        <div className="relative pl-4">
+        <div className="relative pl-0">
             {/* Tree Branch Line */}
             <div className="absolute left-[3px] top-3 w-3.5 h-px bg-primary/20" />
 
             <div
                 className={cn(
-                    "group flex items-center gap-2 px-2 py-1 rounded-md hover:bg-accent transition-colors cursor-pointer select-none",
-                    shouldHighlight && "text-white font-medium shadow-sm"
+                    "group flex items-center gap-2 px-2 py-1 rounded-md hover:bg-accent transition-colors cursor-pointer select-none text-muted-foreground hover:text-foreground"
                 )}
-                style={shouldHighlight ? { background: 'linear-gradient(94.03deg, #925FF8 -8.9%, #4175E4 100%)' } : undefined}
                 onClick={onToggle}
             >
-                {/* Active Indicator */}
-                {shouldHighlight && (
-                    <div className="absolute left-0 top-1.5 bottom-1.5 w-0.5 bg-primary/40 rounded-full" />
-                )}
-
                 <Folder className={cn(
-                    "w-3.5 h-3.5 transition-colors",
-                    isExpanded ? "text-foreground" : "text-muted-foreground group-hover:text-foreground",
-                    shouldHighlight && ""
+                    "w-3.5 h-3.5 transition-colors group-hover:text-foreground",
+                    isExpanded ? "text-foreground" : "text-muted-foreground"
                 )} />
 
                 <div className="flex-1 min-w-0">
@@ -396,10 +441,7 @@ function FolderItem({ folder, spaceId, workspaceId, isExpanded, onToggle, canMan
                             </button>
                         </div>
                     ) : (
-                        <span className={cn(
-                            "text-xs font-medium truncate block transition-colors",
-                            shouldHighlight ? "" : "text-muted-foreground group-hover:text-foreground"
-                        )}>{folder.name}</span>
+                        <span className="text-sm font-normal truncate block transition-colors group-hover:text-foreground">{folder.name}</span>
                     )}
                 </div>
 
@@ -426,11 +468,11 @@ function FolderItem({ folder, spaceId, workspaceId, isExpanded, onToggle, canMan
 
 
             {isExpanded && (
-                <div className="relative ml-3 pl-1 flex flex-col gap-0.5 mt-0.5">
+                <div className="relative ml-2 pl-1 flex flex-col gap-0.5 mt-0.5">
                     {/* Sub-level Vertical Line */}
                     <div className="absolute left-[3px] top-0 bottom-2 w-px bg-primary/20" />
 
-                    {folder.lists.map((list) => (
+                    {filteredLists.map((list) => (
                         <ListItem
                             key={list.id}
                             list={list}
@@ -475,7 +517,7 @@ function ListItem({ list, workspaceId, canManageStructure }: { list: ListDto, wo
                         if (e.key === 'Enter') handleRename();
                         if (e.key === 'Escape') setIsEditing(false);
                     }}
-                    className="w-full text-[11px] bg-background border border-primary px-1 py-0.5 rounded outline-none h-6 pr-6"
+                    className="w-full text-xs bg-background border border-primary px-1 py-0.5 rounded outline-none h-6 pr-6"
                     autoFocus
                     onClick={(e) => e.stopPropagation()}
                 />
@@ -494,25 +536,25 @@ function ListItem({ list, workspaceId, canManageStructure }: { list: ListDto, wo
             to={`/tasks/list/${list.id}`}
             className={({ isActive }) =>
                 cn(
-                    'group relative flex items-center gap-2 px-2 py-1.5 rounded-md text-[11px] transition-all select-none pl-2',
+                    'group relative flex items-center gap-2 px-2 py-1.5 rounded-md text-xs transition-all select-none pl-2',
                     isActive
-                        ? 'text-white font-medium shadow-sm'
+                        ? 'text-foreground font-medium text-xs' // Active: medium weight (reduced from bold), consistent size
                         : 'text-muted-foreground hover:bg-accent hover:text-foreground'
                 )
             }
-            style={({ isActive }) => isActive ? { background: 'linear-gradient(94.03deg, #925FF8 -8.9%, #4175E4 100%)' } : undefined}
+        // Removed style prop for background gradient
         >
             {({ isActive }) => (
                 <>
                     {/* Tree Branch Line */}
                     <div className="absolute left-[-2px] bottom-1/2 w-[18px] h-px bg-primary/20" />
 
-                    {/* Active Indicator */}
-                    {isActive && (
+                    {/* Active Indicator - Removed for text-only style */}
+                    {/* {isActive && (
                         <div className="absolute left-0 top-1.5 bottom-1.5 w-0.5 bg-primary/40 rounded-full" />
-                    )}
+                    )} */}
 
-                    <Rocket className={cn("w-3.5 h-3.5 ml-0", isActive ? "" : "text-muted-foreground group-hover:text-foreground")} />
+                    <Rocket className={cn("w-3.5 h-3.5 ml-0", isActive ? "text-primary fill-primary/10" : "text-muted-foreground group-hover:text-foreground")} />
                     <span className="truncate flex-1">{list.name}</span>
 
                     {/* Context Menu - Restricted to Admins/Owners */}
