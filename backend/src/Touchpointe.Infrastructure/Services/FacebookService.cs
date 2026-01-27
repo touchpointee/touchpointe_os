@@ -43,7 +43,7 @@ namespace Touchpointe.Infrastructure.Services
                    $"?client_id={appId}" +
                    $"&redirect_uri={Uri.EscapeDataString(redirectUrl)}" +
                    $"&state={state}" +
-                   $"&scope=pages_show_list,pages_read_engagement,leads_retrieval,pages_manage_ads,pages_manage_metadata";
+                   $"&scope=pages_show_list,pages_read_engagement,leads_retrieval,pages_manage_ads,pages_manage_metadata,business_management";
         }
 
         public async Task<string> ExchangeCodeForTokenAsync(string code, string redirectUrl)
