@@ -439,5 +439,75 @@ namespace Touchpointe.Application.Services.Crm
                 d.CreatedAt
             );
         }
+
+        // --- Deal Comments ---
+
+        public async Task<List<DealCommentDto>> GetDealCommentsAsync(Guid workspaceId, Guid dealId)
+        {
+            var comments = await _context.DealComments
+                .Include(c => c.User)
+                .Where(c => c.DealId == dealId && c.Deal.WorkspaceId == workspaceId)
+                .OrderByDescending(c => c.CreatedAt)
+                .ToListAsync();
+
+            return comments.Select(c => new DealCommentDto
+            {
+                Id = c.Id,
+                DealId = c.DealId,
+                UserId = c.UserId,
+                UserName = c.User?.FullName ?? "Unknown",
+                UserAvatarUrl = c.User?.AvatarUrl ?? "",
+                Content = c.Content,
+                CreatedAt = c.CreatedAt
+            }).ToList();
+        }
+
+        public async Task<DealCommentDto> AddDealCommentAsync(Guid workspaceId, Guid userId, Guid dealId, string content)
+        {
+            var deal = await _context.Deals.FirstOrDefaultAsync(d => d.Id == dealId && d.WorkspaceId == workspaceId);
+            if (deal == null) throw new Exception("Deal not found");
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+
+            var comment = new DealComment
+            {
+                Id = Guid.NewGuid(),
+                DealId = dealId,
+                UserId = userId,
+                Content = content,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _context.DealComments.Add(comment);
+            await _context.SaveChangesAsync(CancellationToken.None);
+
+            return new DealCommentDto
+            {
+                Id = comment.Id,
+                DealId = comment.DealId,
+                UserId = comment.UserId,
+                UserName = user?.FullName ?? "Unknown",
+                UserAvatarUrl = user?.AvatarUrl ?? "",
+                Content = comment.Content,
+                CreatedAt = comment.CreatedAt
+            };
+        }
+
+        public async Task<bool> DeleteDealCommentAsync(Guid workspaceId, Guid userId, Guid commentId)
+        {
+            var comment = await _context.DealComments
+                .Include(c => c.Deal)
+                .FirstOrDefaultAsync(c => c.Id == commentId && c.Deal.WorkspaceId == workspaceId);
+
+            if (comment == null) return false;
+
+            // Optional: Check if the user is the owner of the comment
+            // if (comment.UserId != userId) return false;
+
+            _context.DealComments.Remove(comment);
+            await _context.SaveChangesAsync(CancellationToken.None);
+            return true;
+        }
     }
 }
+

@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { apiGet, apiPost, apiPut, apiDelete } from '@/lib/api';
+import { apiGet, apiPost, apiPut, apiDelete, apiPostMultipart } from '@/lib/api';
 
 export interface BaseCrmEntity {
     id: string;
@@ -46,6 +46,27 @@ export interface CrmActivity extends BaseCrmEntity {
     userName: string;
 }
 
+export interface DealComment {
+    id: string;
+    dealId: string;
+    userId: string;
+    userName: string;
+    userAvatarUrl?: string;
+    content: string;
+    createdAt: string;
+}
+
+export interface DealAttachment {
+    id: string;
+    fileName: string;
+    contentType: string;
+    size: number;
+    url: string;
+    userId: string;
+    userName: string;
+    createdAt: string;
+}
+
 interface CrmStore {
     companies: Company[];
     contacts: Contact[];
@@ -78,6 +99,18 @@ interface CrmStore {
 
     fetchActivities: (workspaceId: string, entityId?: string, entityType?: string) => Promise<void>;
     reset: () => void;
+
+    // Deal Comments
+    dealComments: DealComment[];
+    fetchDealComments: (workspaceId: string, dealId: string) => Promise<void>;
+    addDealComment: (workspaceId: string, dealId: string, content: string) => Promise<DealComment>;
+    deleteDealComment: (workspaceId: string, commentId: string) => Promise<void>;
+
+    // Deal Attachments
+    dealAttachments: DealAttachment[];
+    fetchDealAttachments: (workspaceId: string, dealId: string) => Promise<void>;
+    uploadDealAttachment: (workspaceId: string, dealId: string, file: File) => Promise<DealAttachment>;
+    deleteDealAttachment: (workspaceId: string, dealId: string, attachmentId: string) => Promise<void>;
 }
 
 export const useCrmStore = create<CrmStore>()((set, get) => ({
@@ -277,5 +310,48 @@ export const useCrmStore = create<CrmStore>()((set, get) => ({
         } finally {
             set({ isLoading: false });
         }
+    },
+
+    // --- Deal Comments ---
+    dealComments: [],
+    fetchDealComments: async (workspaceId, dealId) => {
+        try {
+            const data = await apiGet<DealComment[]>(`/workspaces/${workspaceId}/crm/deals/${dealId}/comments`);
+            set({ dealComments: data });
+        } catch (e: any) {
+            console.error('Failed to fetch deal comments', e);
+        }
+    },
+    addDealComment: async (workspaceId, dealId, content) => {
+        const data = await apiPost<DealComment>(`/workspaces/${workspaceId}/crm/deals/${dealId}/comments`, { content });
+        set((state) => ({ dealComments: [data, ...state.dealComments] }));
+        return data;
+    },
+    deleteDealComment: async (workspaceId, commentId) => {
+        await apiDelete(`/workspaces/${workspaceId}/crm/deals/comments/${commentId}`);
+        set((state) => ({ dealComments: state.dealComments.filter(c => c.id !== commentId) }));
+    },
+
+    // --- Deal Attachments ---
+    dealAttachments: [],
+    fetchDealAttachments: async (workspaceId, dealId) => {
+        try {
+            const data = await apiGet<DealAttachment[]>(`/workspaces/${workspaceId}/deals/${dealId}/attachments`);
+            set({ dealAttachments: data });
+        } catch (e: any) {
+            console.error('Failed to fetch deal attachments', e);
+        }
+    },
+    uploadDealAttachment: async (workspaceId, dealId, file) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        const data = await apiPostMultipart<DealAttachment>(`/workspaces/${workspaceId}/deals/${dealId}/attachments`, formData);
+        set((state) => ({ dealAttachments: [data, ...state.dealAttachments] }));
+        return data;
+    },
+    deleteDealAttachment: async (workspaceId, dealId, attachmentId) => {
+        await apiDelete(`/workspaces/${workspaceId}/deals/${dealId}/attachments/${attachmentId}`);
+        set((state) => ({ dealAttachments: state.dealAttachments.filter(a => a.id !== attachmentId) }));
     }
 }));
+

@@ -4,6 +4,8 @@ import { useCrmStore } from '@/stores/crmStore';
 import { useWorkspaces } from '@/stores/workspaceStore';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
+import { DealComments } from './DealComments';
+import { DealAttachments } from './DealAttachments';
 
 const DEAL_STAGES = [
     { id: 'NEW', label: 'New', color: 'bg-blue-500' },
@@ -239,6 +241,16 @@ export function DealDetailPanel() {
                                 <div className="text-sm text-muted-foreground italic">No activity recorded yet</div>
                             )}
                         </div>
+                    </div>
+
+                    {/* Comments Section */}
+                    <div className="border-t pt-6">
+                        <DealComments dealId={activeDealId} workspaceId={activeWorkspace.id} />
+                    </div>
+
+                    {/* Attachments Section */}
+                    <div className="border-t pt-6">
+                        <DealAttachments dealId={activeDealId} workspaceId={activeWorkspace.id} />
                     </div>
 
                 </div>

@@ -175,5 +175,30 @@ namespace Touchpointe.API.Controllers
         {
             return Ok(await _crmService.GetActivitiesAsync(workspaceId, entityId, entityType));
         }
+
+        // --- Deal Comments ---
+
+        [HttpGet("deals/{dealId}/comments")]
+        public async Task<ActionResult<List<DealCommentDto>>> GetDealComments(Guid workspaceId, Guid dealId)
+        {
+            return Ok(await _crmService.GetDealCommentsAsync(workspaceId, dealId));
+        }
+
+        [HttpPost("deals/{dealId}/comments")]
+        public async Task<ActionResult<DealCommentDto>> AddDealComment(Guid workspaceId, Guid dealId, [FromBody] CreateDealCommentRequest request)
+        {
+            var comment = await _crmService.AddDealCommentAsync(workspaceId, GetUserId(), dealId, request.Content);
+            return Ok(comment);
+        }
+
+        [HttpDelete("deals/comments/{commentId}")]
+        public async Task<ActionResult> DeleteDealComment(Guid workspaceId, Guid commentId)
+        {
+            var success = await _crmService.DeleteDealCommentAsync(workspaceId, GetUserId(), commentId);
+            if (!success) return NotFound();
+            return NoContent();
+        }
     }
+
+    public record CreateDealCommentRequest(string Content);
 }

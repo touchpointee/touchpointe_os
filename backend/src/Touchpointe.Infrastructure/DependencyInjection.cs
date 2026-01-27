@@ -71,6 +71,7 @@ namespace Touchpointe.Infrastructure
             services.AddScoped<IFacebookService, Touchpointe.Infrastructure.Services.FacebookService>();
             services.AddScoped<ICurrentUserService, Touchpointe.Infrastructure.Services.CurrentUserService>();
             services.AddScoped<ITaskAttachmentService, Touchpointe.Application.Services.Tasks.TaskAttachmentService>();
+            services.AddScoped<IDealAttachmentService, Touchpointe.Application.Services.Crm.DealAttachmentService>();
 
             var jwtSettings = new JwtSettings();
             configuration.Bind(JwtSettings.SectionName, jwtSettings);

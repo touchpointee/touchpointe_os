@@ -50,6 +50,11 @@ namespace Touchpointe.Application.Common.Interfaces
         DbSet<LeadActivity> LeadActivities { get; }
         DbSet<FacebookIntegration> FacebookIntegrations { get; }
         DbSet<TaskAttachment> TaskAttachments { get; }
+        
+        // Deal Comments and Attachments
+        DbSet<DealComment> DealComments { get; }
+        DbSet<DealCommentMention> DealCommentMentions { get; }
+        DbSet<DealAttachment> DealAttachments { get; }
 
         Task<int> SaveChangesAsync(CancellationToken cancellationToken);
     }
