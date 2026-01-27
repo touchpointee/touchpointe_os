@@ -285,6 +285,8 @@ namespace Touchpointe.Infrastructure.Services
             {
                 _logger.LogError(ex, "Error processing Facebook lead");
             }
+        }
+
         public async Task<List<FacebookFormDto>> GetFormsAsync(string pageId, string pageAccessToken)
         {
             var response = await _httpClient.GetAsync(
@@ -341,3 +343,5 @@ namespace Touchpointe.Infrastructure.Services
             }
             return leads;
         }
+    }
+}
