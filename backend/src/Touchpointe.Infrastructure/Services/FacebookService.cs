@@ -65,8 +65,15 @@ namespace Touchpointe.Infrastructure.Services
 
         public async Task<List<FacebookPageDto>> GetPagesAsync(string userAccessToken)
         {
+            // 1. Verify User Identity (Debug)
+            try {
+                var meResp = await _httpClient.GetAsync($"{BaseUrl}/{GraphApiVersion}/me?access_token={userAccessToken}");
+                var meJson = await meResp.Content.ReadAsStringAsync();
+                _logger.LogInformation($"Facebook User Identity: {meJson}");
+            } catch {}
+
             var response = await _httpClient.GetAsync(
-                $"{BaseUrl}/{GraphApiVersion}/me/accounts?access_token={userAccessToken}&limit=100");
+                $"{BaseUrl}/{GraphApiVersion}/me/accounts?access_token={userAccessToken}&limit=100&fields=id,name,access_token,category,tasks");
 
             response.EnsureSuccessStatusCode();
             var rawJson = await response.Content.ReadAsStringAsync();
