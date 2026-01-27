@@ -17,6 +17,7 @@ interface FacebookIntegration {
     pageName: string;
     isActive: boolean;
     connectedAt: string;
+    pageAccessToken?: string; // Added for API calls
 }
 
 export function CrmIntegrationsPage() {
@@ -132,7 +133,72 @@ export function CrmIntegrationsPage() {
         alert("Disconnect feature coming soon. You can revoke access in Facebook Business Settings.");
     };
 
-    if (isLoading && !fbToken) {
+    // --- Import Modal State ---
+    const [showImportModal, setShowImportModal] = useState(false);
+    const [forms, setForms] = useState<any[]>([]); // simplified type
+    const [selectedForm, setSelectedForm] = useState<string>("");
+    const [leads, setLeads] = useState<any[]>([]); // simplified type
+    const [selectedLeads, setSelectedLeads] = useState<Set<string>>(new Set());
+    const [isImporting, setIsImporting] = useState(false);
+
+    const handleOpenImport = async () => {
+        if (!integration) return;
+        setShowImportModal(true);
+        setIsLoading(true);
+        try {
+            const res = await apiGet<any[]>(`/workspaces/${effectiveWorkspaceId}/integrations/facebook/forms?pageId=${integration.pageId}&accessToken=${integration.pageAccessToken || fbToken}`);
+            setForms(res);
+        } catch (err: any) {
+            console.error("Failed to load forms", err);
+            setError(err.message);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleFormSelect = async (formId: string) => {
+        setSelectedForm(formId);
+        setIsLoading(true);
+        try {
+            const res = await apiGet<any[]>(`/workspaces/${effectiveWorkspaceId}/integrations/facebook/forms/${formId}/leads?accessToken=${integration?.pageAccessToken || fbToken}`);
+            setLeads(res);
+            setSelectedLeads(new Set()); // clear previous selection
+        } catch (err: any) {
+            console.error("Failed to load leads", err);
+            setError(err.message);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const toggleLead = (leadId: string) => {
+        const next = new Set(selectedLeads);
+        if (next.has(leadId)) next.delete(leadId);
+        else next.add(leadId);
+        setSelectedLeads(next);
+    };
+
+    const handleImport = async () => {
+        if (!integration || !selectedForm || selectedLeads.size === 0) return;
+        setIsImporting(true);
+        try {
+            const payload = {
+                pageId: integration.pageId,
+                formId: selectedForm,
+                leadIds: Array.from(selectedLeads)
+            };
+            const res = await apiPost<{ imported: number, failed: number }>(`/workspaces/${effectiveWorkspaceId}/integrations/facebook/leads/import`, payload);
+            alert(`Imported ${res.imported} leads! (${res.failed} failed)`);
+            setShowImportModal(false);
+        } catch (err: any) {
+            alert("Import failed: " + err.message);
+        } finally {
+            setIsImporting(false);
+        }
+    };
+
+
+    if (isLoading && !fbToken && !showImportModal) {
         return (
             <div className="flex items-center justify-center p-12">
                 <Loader2 className="animate-spin text-muted-foreground" />
@@ -181,12 +247,20 @@ export function CrmIntegrationsPage() {
                                         <p className="text-lg font-semibold">{integration.pageName}</p>
                                         <p className="text-xs text-muted-foreground mt-1">ID: {integration.pageId}</p>
                                     </div>
-                                    <button
-                                        onClick={handleDisconnect}
-                                        className="text-sm text-destructive hover:underline"
-                                    >
-                                        Disconnect
-                                    </button>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={handleOpenImport}
+                                            className="px-3 py-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-md text-sm font-medium"
+                                        >
+                                            Import Existing Leads
+                                        </button>
+                                        <button
+                                            onClick={handleDisconnect}
+                                            className="text-sm text-destructive hover:underline px-2"
+                                        >
+                                            Disconnect
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         ) : fbToken && availablePages.length > 0 ? (
@@ -239,6 +313,88 @@ export function CrmIntegrationsPage() {
                     )}
                 </div>
             </div>
+
+            {/* Import Modal */}
+            {showImportModal && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-background rounded-lg shadow-lg w-full max-w-2xl max-h-[90vh] flex flex-col">
+                        <div className="p-4 border-b flex justify-between items-center">
+                            <h2 className="text-lg font-semibold">Import Historical Leads</h2>
+                            <button onClick={() => setShowImportModal(false)}><X size={20} /></button>
+                        </div>
+                        <div className="p-4 flex-1 overflow-y-auto">
+                            {!selectedForm ? (
+                                <div>
+                                    <p className="mb-4 text-sm text-muted-foreground">Select a Lead Form to view leads:</p>
+                                    <div className="grid gap-2">
+                                        {forms.map(form => (
+                                            <button
+                                                key={form.id}
+                                                onClick={() => handleFormSelect(form.id)}
+                                                className="flex justify-between p-3 border rounded text-left hover:bg-muted"
+                                            >
+                                                <span className="font-medium">{form.name}</span>
+                                                <span className="text-sm text-muted-foreground">{form.leadCount} leads • {form.status}</span>
+                                            </button>
+                                        ))}
+                                        {forms.length === 0 && <p className="text-center text-muted-foreground py-4">No forms found.</p>}
+                                    </div>
+                                </div>
+                            ) : (
+                                <div>
+                                    <button onClick={() => setSelectedForm("")} className="mb-4 text-sm text-blue-600 hover:underline">← Back to Forms</button>
+
+                                    <div className="border rounded-md overflow-hidden">
+                                        <table className="w-full text-sm text-left">
+                                            <thead className="bg-muted text-muted-foreground">
+                                                <tr>
+                                                    <th className="p-2 w-10">
+                                                        {/* Select All Checkbox could go here */}
+                                                    </th>
+                                                    <th className="p-2">Name</th>
+                                                    <th className="p-2">Email</th>
+                                                    <th className="p-2">Date</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {leads.map(lead => (
+                                                    <tr key={lead.id} className="border-t hover:bg-muted/50">
+                                                        <td className="p-2">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={selectedLeads.has(lead.id)}
+                                                                onChange={() => toggleLead(lead.id)}
+                                                            />
+                                                        </td>
+                                                        <td className="p-2 font-medium">{lead.fullName || "N/A"}</td>
+                                                        <td className="p-2">{lead.email || "N/A"}</td>
+                                                        <td className="p-2 text-muted-foreground">{new Date(lead.createdTime).toLocaleDateString()}</td>
+                                                    </tr>
+                                                ))}
+                                                {leads.length === 0 && (
+                                                    <tr><td colSpan={4} className="p-4 text-center text-muted-foreground">No leads found for this form.</td></tr>
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                        <div className="p-4 border-t flex justify-end gap-2">
+                            <button onClick={() => setShowImportModal(false)} className="px-4 py-2 text-sm">Cancel</button>
+                            {selectedForm && (
+                                <button
+                                    onClick={handleImport}
+                                    disabled={selectedLeads.size === 0 || isImporting}
+                                    className="px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium disabled:opacity-50"
+                                >
+                                    {isImporting ? "Importing..." : `Import ${selectedLeads.size} Leads`}
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

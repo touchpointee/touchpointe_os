@@ -99,11 +99,73 @@ namespace Touchpointe.API.Controllers
                 return StatusCode(500, new { error = ex.Message });
             }
         }
+        [HttpGet("api/workspaces/{workspaceId}/integrations/facebook/forms")]
+        public async Task<ActionResult> GetForms(Guid workspaceId, [FromQuery] string pageId, [FromQuery] string accessToken)
+        {
+            try
+            {
+                var forms = await _facebookService.GetFormsAsync(pageId, accessToken);
+                return Ok(forms);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = ex.Message });
+            }
+        }
+
+        [HttpGet("api/workspaces/{workspaceId}/integrations/facebook/forms/{formId}/leads")]
+        public async Task<ActionResult> GetLeads(Guid workspaceId, string formId, [FromQuery] string accessToken)
+        {
+            try
+            {
+                var leads = await _facebookService.GetLeadsAsync(formId, accessToken);
+                return Ok(leads);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = ex.Message });
+            }
+        }
+        [HttpPost("api/workspaces/{workspaceId}/integrations/facebook/leads/import")]
+        public async Task<ActionResult> ImportLeads(Guid workspaceId, [FromBody] ImportLeadsRequest request)
+        {
+            try
+            {
+                int successCount = 0;
+                int failCount = 0;
+
+                foreach (var leadId in request.LeadIds)
+                {
+                    try
+                    {
+                        await _facebookService.ProcessLeadAsync(leadId, request.PageId, request.FormId);
+                        successCount++;
+                    }
+                    catch
+                    {
+                        failCount++;
+                    }
+                }
+
+                return Ok(new { imported = successCount, failed = failCount });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = ex.Message });
+            }
+        }
     }
 
     public class ConnectPageRequest
     {
         public string PageId { get; set; } = string.Empty;
         public string UserAccessToken { get; set; } = string.Empty;
+    }
+
+    public class ImportLeadsRequest
+    {
+        public string PageId { get; set; } = string.Empty;
+        public string FormId { get; set; } = string.Empty;
+        public List<string> LeadIds { get; set; } = new();
     }
 }

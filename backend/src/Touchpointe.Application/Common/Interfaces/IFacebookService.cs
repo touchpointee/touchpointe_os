@@ -14,6 +14,9 @@ namespace Touchpointe.Application.Common.Interfaces
         Task<FacebookIntegration?> GetIntegrationAsync(Guid workspaceId);
         Task SubscribeToWebhooksAsync(string pageId, string pageAccessToken);
         Task ProcessWebhookPayloadAsync(string payload);
+        Task<List<FacebookFormDto>> GetFormsAsync(string pageId, string pageAccessToken);
+        Task<List<FacebookLeadDto>> GetLeadsAsync(string formId, string pageAccessToken, int limit = 50);
+        Task ProcessLeadAsync(string leadgenId, string pageId, string formId);
     }
 
     public class FacebookPageDto
@@ -22,5 +25,21 @@ namespace Touchpointe.Application.Common.Interfaces
         public string Name { get; set; } = string.Empty;
         public string AccessToken { get; set; } = string.Empty;
         public string? Category { get; set; }
+    }
+
+    public class FacebookFormDto
+    {
+        public string Id { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public string Status { get; set; } = string.Empty;
+        public int LeadCount { get; set; }
+    }
+
+    public class FacebookLeadDto
+    {
+        public string Id { get; set; } = string.Empty;
+        public DateTime CreatedTime { get; set; }
+        public string? Email { get; set; }
+        public string? FullName { get; set; }
     }
 }
