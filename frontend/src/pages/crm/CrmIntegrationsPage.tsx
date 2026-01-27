@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useWorkspaces } from '@/stores/workspaceStore';
 import { apiGet, apiPost } from '@/lib/api';
 import { Facebook, Loader2, CheckCircle, AlertCircle, X } from 'lucide-react';
-import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
+import { useSearchParams, useNavigate, useLocation, useParams } from 'react-router-dom';
 
 interface FacebookPage {
     id: string;
@@ -21,6 +21,8 @@ interface FacebookIntegration {
 
 export function CrmIntegrationsPage() {
     const { activeWorkspace } = useWorkspaces();
+    const { workspaceId } = useParams<{ workspaceId: string }>();
+    const effectiveWorkspaceId = activeWorkspace?.id || workspaceId;
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const location = useLocation();
@@ -32,26 +34,32 @@ export function CrmIntegrationsPage() {
     const [error, setError] = useState<string | null>(null);
 
     // Check for OAuth callback token
-    const fbToken = searchParams.get('facebook_token');
+    // Check for OAuth callback token - Robust check
+    let fbToken = searchParams.get('facebook_token');
+    if (!fbToken) {
+        // Fallback for some browsers/situations where searchParams might miss it
+        const params = new URLSearchParams(window.location.search);
+        fbToken = params.get('facebook_token');
+    }
     const oauthError = searchParams.get('error');
 
     useEffect(() => {
-        if (!activeWorkspace) return;
+        if (!effectiveWorkspaceId) return;
         checkStatus();
-    }, [activeWorkspace]);
+    }, [effectiveWorkspaceId]);
 
     useEffect(() => {
-        if (activeWorkspace && fbToken) {
+        if (effectiveWorkspaceId && fbToken && !integration) {
             fetchPages(fbToken);
         } else if (oauthError) {
             setError(decodeURIComponent(oauthError));
             setIsLoading(false);
         }
-    }, [activeWorkspace, fbToken, oauthError]);
+    }, [effectiveWorkspaceId, fbToken, oauthError, integration]);
 
     const checkStatus = async () => {
         try {
-            const data = await apiGet<FacebookIntegration>(`/workspaces/${activeWorkspace!.id}/integrations/facebook`);
+            const data = await apiGet<FacebookIntegration>(`/workspaces/${effectiveWorkspaceId}/integrations/facebook`);
             // data might be {} if 204 No Content
             if (data && data.id) {
                 setIntegration(data);
@@ -67,10 +75,10 @@ export function CrmIntegrationsPage() {
     };
 
     const handleConnectClick = async () => {
-        if (!activeWorkspace) return;
+        if (!effectiveWorkspaceId) return;
         setIsConnecting(true);
         try {
-            const res = await apiGet<{ url: string }>(`/workspaces/${activeWorkspace.id}/integrations/facebook/connect`);
+            const res = await apiGet<{ url: string }>(`/workspaces/${effectiveWorkspaceId}/integrations/facebook/connect`);
             window.location.href = res.url;
         } catch (err: any) {
             setError(err.message || "Failed to start connection");
@@ -81,7 +89,7 @@ export function CrmIntegrationsPage() {
     const fetchPages = async (token: string) => {
         setIsLoading(true);
         try {
-            const pages = await apiGet<FacebookPage[]>(`/workspaces/${activeWorkspace!.id}/integrations/facebook/pages?userAccessToken=${token}`);
+            const pages = await apiGet<FacebookPage[]>(`/workspaces/${effectiveWorkspaceId}/integrations/facebook/pages?userAccessToken=${token}`);
             setAvailablePages(pages);
 
             // Clean URL params but keep token in state? 
@@ -95,10 +103,10 @@ export function CrmIntegrationsPage() {
     };
 
     const handlePageSelect = async (page: FacebookPage) => {
-        if (!activeWorkspace || !fbToken) return;
+        if (!effectiveWorkspaceId || !fbToken) return;
         setIsConnecting(true);
         try {
-            await apiPost(`/workspaces/${activeWorkspace.id}/integrations/facebook/subscribe`, {
+            await apiPost(`/workspaces/${effectiveWorkspaceId}/integrations/facebook/subscribe`, {
                 pageId: page.id,
                 userAccessToken: fbToken
             });
@@ -200,8 +208,18 @@ export function CrmIntegrationsPage() {
                                 </div>
                             </div>
                         ) : (
-                            <div className="bg-blue-50/50 p-4 rounded-lg text-sm text-blue-900 mb-4">
-                                <p>Connect your Facebook account to import leads automatically. You will need to select which Facebook Page you want to sync.</p>
+                            <div className="bg-amber-50 p-4 rounded-lg text-sm text-amber-900 mb-4 border border-amber-200">
+                                <p className="font-semibold mb-1">No Facebook Pages Found</p>
+                                <p className="mb-3">We couldn't find any Facebook Pages managed by you. Please ensure you granted "Pages" permission when connecting.</p>
+                                <button
+                                    onClick={() => {
+                                        // Clear token from URL to reset state
+                                        window.location.href = window.location.pathname;
+                                    }}
+                                    className="px-3 py-1.5 bg-amber-100 hover:bg-amber-200 text-amber-800 rounded-md font-medium transition-colors"
+                                >
+                                    Try Again
+                                </button>
                             </div>
                         )}
                     </div>
