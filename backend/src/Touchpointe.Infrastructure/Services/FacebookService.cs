@@ -324,20 +324,22 @@ namespace Touchpointe.Infrastructure.Services
             {
                 var lead = new FacebookLeadDto
                 {
-                    Id = item.GetProperty("id").GetString() ?? "",
-                    CreatedTime = item.GetProperty("created_time").GetDateTime(),
+                    Id = item.TryGetProperty("id", out var idProp) ? idProp.GetString() ?? "" : "",
+                    CreatedTime = item.TryGetProperty("created_time", out var timeProp) ? timeProp.GetDateTime() : DateTime.MinValue,
                 };
 
                 // Simple field parsing for preview
-                var fieldData = item.GetProperty("field_data");
-                foreach (var field in fieldData.EnumerateArray())
+                if (item.TryGetProperty("field_data", out var fieldData))
                 {
-                    var name = field.GetProperty("name").GetString();
-                    var values = field.GetProperty("values");
-                    var val = values.GetArrayLength() > 0 ? values[0].GetString() : null;
-                    
-                    if (name == "email") lead.Email = val;
-                    if (name == "full_name") lead.FullName = val;
+                    foreach (var field in fieldData.EnumerateArray())
+                    {
+                        var name = field.GetProperty("name").GetString();
+                        var values = field.GetProperty("values");
+                        var val = values.GetArrayLength() > 0 ? values[0].GetString() : null;
+                        
+                        if (name == "email") lead.Email = val;
+                        if (name == "full_name") lead.FullName = val;
+                    }
                 }
                 leads.Add(lead);
             }
