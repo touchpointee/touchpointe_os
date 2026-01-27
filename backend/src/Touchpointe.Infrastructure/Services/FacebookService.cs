@@ -337,10 +337,23 @@ namespace Touchpointe.Infrastructure.Services
                 {
                     try
                     {
+                        var id = item.TryGetProperty("id", out var idProp) ? idProp.GetString() ?? "" : "";
+                        
+                        // Fix Date Parsing
+                        DateTime createdTime = DateTime.MinValue;
+                        if (item.TryGetProperty("created_time", out var timeProp) && timeProp.ValueKind == JsonValueKind.String)
+                        {
+                            var timeStr = timeProp.GetString();
+                            if (DateTime.TryParse(timeStr, out var dt))
+                            {
+                                createdTime = dt;
+                            }
+                        }
+
                         var lead = new FacebookLeadDto
                         {
-                            Id = item.TryGetProperty("id", out var idProp) ? idProp.GetString() ?? "" : "",
-                            CreatedTime = item.TryGetProperty("created_time", out var timeProp) ? timeProp.GetDateTime() : DateTime.MinValue,
+                            Id = id,
+                            CreatedTime = createdTime,
                         };
 
                         // Simple field parsing for preview
