@@ -219,7 +219,7 @@ export function ChatSidebar() {
                     </div>
 
                     {isChannelsOpen && (
-                        <div className="px-2 space-y-[2px]">
+                        <div className="px-3 space-y-[2px]">
                             {filteredChannels.map(channel => (
                                 <button
                                     key={channel.id}
@@ -261,7 +261,7 @@ export function ChatSidebar() {
                     </div>
 
                     {isDmsOpen && (
-                        <div>
+                        <div className="px-3">
                             {filteredDmGroups.map(group => {
                                 const isOnline = isGroupOnline(group);
                                 const groupMessages = messages[group.id] || [];
@@ -287,7 +287,7 @@ export function ChatSidebar() {
                                     <div
                                         key={group.id}
                                         onClick={() => setActiveDmInfo(group.id)}
-                                        className={`flex items-center gap-3 px-3 py-3 rounded-[6px] cursor-pointer transition-colors relative group/item mx-2 border-b border-[#2f3b43]/30 last:border-0 ${activeDmGroupId === group.id
+                                        className={`flex items-center gap-3 px-3 py-3 rounded-[6px] cursor-pointer transition-colors relative group/item border-b border-[#2f3b43]/30 last:border-0 ${activeDmGroupId === group.id
                                             ? 'bg-[#202c33]'
                                             : 'hover:bg-[#202c33]'
                                             }`}
