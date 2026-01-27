@@ -137,6 +137,8 @@ namespace Touchpointe.Infrastructure.Services
                 .FirstOrDefaultAsync(f => f.WorkspaceId == workspaceId);
         }
 
+        public async Task SubscribeToWebhooksAsync(string pageId, string pageAccessToken)
+        {
             try
             {
                 var content = new FormUrlEncodedContent(new Dictionary<string, string>
@@ -160,6 +162,7 @@ namespace Touchpointe.Infrastructure.Services
                 _logger.LogError(ex, $"Exception during webhook subscription for page {pageId}");
                 throw; // Rethrow to let caller handle/expose it
             }
+        }
 
         public async Task ProcessWebhookPayloadAsync(string payload)
         {
