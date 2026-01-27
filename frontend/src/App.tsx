@@ -4,6 +4,8 @@ import { AppLayout } from '@/components/layout';
 import { HomePage, TasksPage, CrmPage, ChatPage, TeamPage, SettingsPage, ProfilePage, InboxPage } from '@/pages';
 import { LoginPage } from '@/pages/auth/LoginPage';
 import { RegisterPage } from '@/pages/auth/RegisterPage';
+import { PrivacyPolicy } from '@/pages/public/PrivacyPolicy';
+import { TermsOfService } from '@/pages/public/TermsOfService';
 import { RoomPage } from './pages/meet/RoomPage';
 import { AuthGuard } from '@/components/auth/AuthGuard';
 import { PublicRoute } from '@/components/auth/PublicRoute';
@@ -45,8 +47,14 @@ function App() {
                         {/* Public Meet Route */}
                         <Route path="/meet/:joinCode" element={<RoomPage />} />
 
+
                         {/* Public Form Route */}
                         <Route path="/forms/:token" element={<PublicFormPage />} />
+
+                        {/* Privacy Policy */}
+                        <Route path="/privacy" element={<PrivacyPolicy />} />
+                        {/* Terms of Service */}
+                        <Route path="/terms" element={<TermsOfService />} />
 
                         {/* Protected Routes - Auth + Valid Workspace Required */}
                         <Route path="/home/inbox" element={
