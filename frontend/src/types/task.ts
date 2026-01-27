@@ -29,6 +29,7 @@ export interface TaskDto {
     subDescription: string | null;
     customStatus: string | null;
     tags: TagDto[];
+    estimate: number | null;
 }
 
 export interface TaskActivityDto {
@@ -89,6 +90,7 @@ export interface CreateTaskRequest {
     assigneeId?: string;
     dueDate?: string;
     tagIds?: string[];
+    estimate?: number;
 }
 
 export interface UpdateTaskRequest {
@@ -102,4 +104,5 @@ export interface UpdateTaskRequest {
     dueDate?: string | null;
     orderIndex?: number;
     tagIds?: string[];
+    estimate?: number;
 }

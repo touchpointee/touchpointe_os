@@ -478,7 +478,7 @@ function TaskCard({ task, isOverlay, subtitle, onOpenDetail }: { task: TaskDto; 
         URGENT: 'text-[#F97316] bg-[#F97316]/10 border-[#F97316]/20',
         HIGH: 'text-[#F59E0B] bg-[#F59E0B]/10 border-[#F59E0B]/20',
         MEDIUM: 'text-[#2563EB] bg-[#2563EB]/10 border-[#2563EB]/20',
-        LOW: 'text-[#6B7280]',
+        LOW: 'text-[#6B7280] bg-[#6B7280]/10 border-[#6B7280]/20',
         NONE: 'text-muted-foreground',
     };
 
@@ -592,7 +592,7 @@ function TaskCard({ task, isOverlay, subtitle, onOpenDetail }: { task: TaskDto; 
 
                 {/* Subtitle - Near Title */}
                 {subtitle && (
-                    <div className="text-[12px] text-task-card-muted font-normal truncate mb-2 ">
+                    <div className="text-[12px] text-task-card-muted font-normal truncate mb-2 text-[#747474]">
                         {subtitle}
                     </div>
                 )}
@@ -601,10 +601,16 @@ function TaskCard({ task, isOverlay, subtitle, onOpenDetail }: { task: TaskDto; 
                 <div className="flex flex-col mt-auto pb-1">
                     {task.dueDate && (
                         <div className="flex items-center gap-1.5 transition-colors">
-                            <span className="font-['Inter'] font-normal text-[10px] leading-none tracking-normal text-task-card-muted">Due Date</span>
+                            <span className="font-['Inter'] font-normal text-[10px] leading-none tracking-normal text-[#747474]">Due Date</span>
                             <span className="font-['Inter'] font-normal text-[11px] leading-none tracking-normal text-task-card-foreground">
                                 {new Date(task.dueDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
                             </span>
+                        </div>
+                    )}
+                    {task.estimate && (
+                        <div className="flex items-center gap-1.5 transition-colors mt-0.5">
+                            <span className="font-['Inter'] font-normal text-[10px] leading-none tracking-normal text-[#747474]">Estimates</span>
+                            <span className="font-['Inter'] font-normal text-[11px] leading-none tracking-normal text-task-card-foreground">{task.estimate}h</span>
                         </div>
                     )}
                 </div>
