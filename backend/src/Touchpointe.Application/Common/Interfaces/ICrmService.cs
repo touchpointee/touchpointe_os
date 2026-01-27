@@ -28,5 +28,10 @@ namespace Touchpointe.Application.Common.Interfaces
 
         // Activity
         Task<List<CrmActivityDto>> GetActivitiesAsync(Guid workspaceId, Guid? entityId = null, string? entityType = null);
+
+        // Comments
+        Task<List<DealCommentDto>> GetDealCommentsAsync(Guid workspaceId, Guid dealId);
+        Task<DealCommentDto> AddDealCommentAsync(Guid workspaceId, Guid userId, Guid dealId, string content);
+        Task<bool> DeleteDealCommentAsync(Guid workspaceId, Guid userId, Guid commentId);
     }
 }

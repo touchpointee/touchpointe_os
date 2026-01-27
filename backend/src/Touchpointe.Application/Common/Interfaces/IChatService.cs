@@ -31,6 +31,9 @@ namespace Touchpointe.Application.Common.Interfaces
         Task MarkDmAsReadAsync(Guid workspaceId, Guid dmGroupId, Guid userId, Guid messageId);
 
         Task AddReactionAsync(Guid workspaceId, Guid messageId, Guid userId, string emoji);
+
         Task RemoveReactionAsync(Guid workspaceId, Guid messageId, Guid userId, string emoji);
+        
+        Task<MessageAttachmentDto> UploadAttachmentAsync(Guid workspaceId, Guid userId, System.IO.Stream fileStream, string fileName, string contentType, long size);
     }
 }

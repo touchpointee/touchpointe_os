@@ -18,16 +18,19 @@ namespace Touchpointe.Application.DTOs
         string Content, 
         DateTime CreatedAt,
         List<MessageReactionDto> Reactions,
+        List<MessageAttachmentDto> Attachments,
         Guid? ReplyToMessageId = null,
         string? ReplyPreviewSenderName = null,
         string? ReplyPreviewText = null
     );
 
+    public record MessageAttachmentDto(Guid Id, string FileName, string FileUrl, string ContentType, long Size);
     public record MessageReactionDto(Guid Id, Guid MessageId, Guid UserId, string UserName, string Emoji, DateTime CreatedAt);
     public record AddReactionRequest(string Emoji);
     public record MarkReadRequest(Guid MessageId);
 
-    public record PostMessageRequest(string Content, Guid? ReplyToMessageId = null);
+    public record AttachmentRequest(string FileName, string FileUrl, string ContentType, long Size);
+    public record PostMessageRequest(string Content, Guid? ReplyToMessageId = null, List<AttachmentRequest>? Attachments = null);
 
     public record DmGroupDto(Guid Id, Guid WorkspaceId, List<UserDto> Members);
     

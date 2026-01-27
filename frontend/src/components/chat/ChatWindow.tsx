@@ -2,14 +2,14 @@ import { useEffect, useState, useRef, useMemo } from 'react';
 import type { KeyboardEvent } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useChatStore } from '@/stores/chatStore';
-import type { Message } from '@/stores/chatStore';
+import type { Message, MessageAttachment } from '@/stores/chatStore';
 import { useWorkspaces } from '@/stores/workspaceStore';
 import { useRealtimeStore } from '@/stores/realtimeStore';
 import { getCurrentUser } from '@/lib/auth';
 import { ChatMessageItem } from './ChatMessageItem';
 import { MentionSuggestion } from '../shared/MentionSuggestion';
 import { format, isToday, isYesterday } from 'date-fns';
-import { X, Plus, Send, Mic, Smile } from 'lucide-react';
+import { X, Plus, Send, Mic, Smile, File as FileIcon, Trash2, CheckCircle2 } from 'lucide-react';
 import EmojiPicker, { Theme } from 'emoji-picker-react';
 import type { EmojiClickData } from 'emoji-picker-react';
 import { ReactionDetailsModal } from './ReactionDetailsModal';
@@ -28,12 +28,23 @@ function getUserColor(name?: string) {
     return USER_COLORS[Math.abs(hash) % USER_COLORS.length];
 }
 
+
+
+interface LocalAttachment {
+    id: string;
+    file: File;
+    uploading: boolean;
+    error?: string;
+    data?: MessageAttachment;
+}
+
 export function ChatWindow() {
     const {
         activeChannelId, activeDmGroupId,
         channels, dmGroups, messages, members,
         fetchMessages, postMessage, fetchWorkspaceMembers,
         addReaction, removeReaction,
+        uploadAttachment,
         isLoading, error
     } = useChatStore();
     const {
@@ -56,10 +67,107 @@ export function ChatWindow() {
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const [showMoreMenu, setShowMoreMenu] = useState(false);
     const [selectedMessageForReactionDetails, setSelectedMessageForReactionDetails] = useState<Message | null>(null);
+    const [localAttachments, setLocalAttachments] = useState<LocalAttachment[]>([]);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLDivElement>(null);
     const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    // Recording State
+    const [isRecording, setIsRecording] = useState(false);
+    const [recordingDuration, setRecordingDuration] = useState(0);
+    const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+    const audioChunksRef = useRef<Blob[]>([]);
+    const timerIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+    const startRecording = async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const mediaRecorder = new MediaRecorder(stream);
+            mediaRecorderRef.current = mediaRecorder;
+            audioChunksRef.current = [];
+
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0) {
+                    audioChunksRef.current.push(event.data);
+                }
+            };
+
+            mediaRecorder.start();
+            setIsRecording(true);
+            setRecordingDuration(0);
+
+            timerIntervalRef.current = setInterval(() => {
+                setRecordingDuration(prev => prev + 1);
+            }, 1000);
+
+        } catch (err) {
+            console.error("Error accessing microphone:", err);
+            alert("Could not access microphone.");
+        }
+    };
+
+    const stopRecording = async (shouldSend: boolean) => {
+        if (!mediaRecorderRef.current) return;
+
+        return new Promise<void>((resolve) => {
+            if (!mediaRecorderRef.current) return resolve();
+
+            mediaRecorderRef.current.onstop = async () => {
+                const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+                audioChunksRef.current = []; // Clear chunks
+
+                // Stop all tracks to release microphone
+                mediaRecorderRef.current?.stream.getTracks().forEach(track => track.stop());
+
+                if (shouldSend && activeWorkspace) {
+                    setIsSending(true); // Show sending state
+                    const file = new File([audioBlob], `voice-message-${Date.now()}.webm`, { type: 'audio/webm' });
+
+                    try {
+                        // Upload as attachment
+                        const attachment = await uploadAttachment(activeWorkspace.id, file);
+                        if (attachment) {
+                            // Send message with empty content but including attachment
+                            await postMessage(
+                                activeWorkspace.id,
+                                "", // Empty text content
+                                currentUser?.id || "",
+                                currentUser?.name || currentUser?.email || "Unknown",
+                                replyingTo?.id,
+                                [attachment]
+                            );
+                        }
+                    } catch (err) {
+                        console.error("Failed to send voice message", err);
+                    } finally {
+                        setIsSending(false);
+                    }
+                }
+                resolve();
+            };
+
+            mediaRecorderRef.current.stop();
+            setIsRecording(false);
+            if (timerIntervalRef.current) {
+                clearInterval(timerIntervalRef.current);
+                timerIntervalRef.current = null;
+            }
+        });
+    };
+
+    const cancelRecording = () => {
+        stopRecording(false);
+    };
+
+    const formatDuration = (seconds: number) => {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+    };
+
 
     const onEmojiClick = (emojiData: EmojiClickData) => {
         if (inputRef.current) {
@@ -285,22 +393,75 @@ export function ChatWindow() {
         });
 
         content = content.trim();
-        if (!content) return;
+        if (!content && localAttachments.length === 0) return;
 
         setIsSending(true);
         try {
-            await postMessage(activeWorkspace.id, content, currentUser.id, currentUser.name || currentUser.email, replyingTo?.id);
+            const validAttachments = localAttachments
+                .filter(a => a.data && !a.error)
+                .map(a => a.data!);
+
+            await postMessage(
+                activeWorkspace.id,
+                content,
+                currentUser.id,
+                currentUser.name || currentUser.email,
+                replyingTo?.id,
+                validAttachments.length > 0 ? validAttachments : undefined
+            );
+
             if (inputRef.current) {
                 inputRef.current.innerHTML = '';
             }
             setHasContent(false);
             setMentionQuery(null);
             setReplyingTo(null);
+            setLocalAttachments([]);
         } catch (err) {
             console.error("Failed to send", err);
         } finally {
             setIsSending(false);
         }
+    };
+
+    const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files || !activeWorkspace) return;
+
+        const files = Array.from(e.target.files);
+        if (files.length === 0) return;
+
+        const newAttachments: LocalAttachment[] = files.map(file => ({
+            id: Math.random().toString(36).substring(7),
+            file,
+            uploading: true
+        }));
+
+        setLocalAttachments(prev => [...prev, ...newAttachments]);
+
+        for (const local of newAttachments) {
+            try {
+                const result = await uploadAttachment(activeWorkspace.id, local.file);
+                setLocalAttachments(prev => prev.map(p =>
+                    p.id === local.id
+                        ? { ...p, uploading: false, data: result || undefined, error: result ? undefined : 'Upload failed' }
+                        : p
+                ));
+            } catch (err) {
+                setLocalAttachments(prev => prev.map(p =>
+                    p.id === local.id
+                        ? { ...p, uploading: false, error: 'Upload failed' }
+                        : p
+                ));
+            }
+        }
+
+        // Reset input so same file can be selected again if needed
+        e.target.value = '';
+        setHasContent(true); // Enable send button
+    };
+
+    const removeAttachment = (id: string) => {
+        setLocalAttachments(prev => prev.filter(a => a.id !== id));
     };
 
     const getHeaderTitle = () => {
@@ -609,125 +770,189 @@ export function ChatWindow() {
                     </div>
                 )}
 
+                {localAttachments.length > 0 && (
+                    <div className="flex gap-2 p-2 overflow-x-auto mb-2">
+                        {localAttachments.map(att => (
+                            <div key={att.id} className="relative group bg-[#2a3942] rounded-lg p-2 flex items-center gap-2 min-w-[200px]">
+                                <div className="bg-[#202c33] p-2 rounded">
+                                    <FileIcon className="w-5 h-5 text-[#8696a0]" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <div className="text-sm text-[#e9edef] truncate">{att.file.name}</div>
+                                    <div className="text-xs text-[#8696a0]">
+                                        {att.uploading ? 'Uploading...' : att.error ? 'Failed' : `${(att.file.size / 1024).toFixed(1)} KB`}
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => removeAttachment(att.id)}
+                                    className="absolute -top-1 -right-1 bg-[#374045] rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                                >
+                                    <X className="w-3 h-3 text-[#e9edef]" />
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                )}
+
                 <div className="flex items-end gap-2 bg-[#202c33] rounded-[24px] p-1 border border-[#2a3942] relative">
-                    {showEmojiPicker && (
-                        <div className="absolute bottom-full left-0 mb-2 z-50 bg-[#202c33] border border-[#2a3942] rounded-[16px] shadow-2xl flex flex-col overflow-hidden w-[430px]">
-                            <div className="flex-1 bg-[#111b21] emoji-picker-custom">
-                                <style>{`
-                                    .emoji-picker-custom aside.EmojiPickerReact {
-                                        --epr-emoji-size: 26px !important;
-                                        --epr-search-input-height: 32px !important;
-                                        --epr-category-label-height: 28px !important;
-                                        --epr-category-navigation-button-size: 24px !important;
-                                    }
-                                    /* Reduce icon scaling */
-                                    .emoji-picker-custom .epr-cat-btn > img {
-                                        width: 20px !important;
-                                        height: 20px !important;
-                                    }
-                                    /* Active Category Circle */
-                                    /* Active Category Circle */
-                                    .emoji-picker-custom .epr-cat-btn[aria-selected="true"] {
-                                        background-color: #374045 !important;
-                                        border-radius: 50% !important;
-                                        border: none !important;
-                                        outline: none !important;
-                                        box-shadow: 0 0 0 6px #374045 !important;
-                                        color: white !important;
-                                    }
-                                    /* Remove pseudo-elements */
-                                    .emoji-picker-custom .epr-cat-btn[aria-selected="true"]::before,
-                                    .emoji-picker-custom .epr-cat-btn[aria-selected="true"]::after {
-                                        display: none !important;
-                                        content: none !important;
-                                    }
-                                    /* White Icon for Active */
-                                    .emoji-picker-custom .epr-cat-btn[aria-selected="true"] > * {
-                                        filter: grayscale(1) brightness(0) invert(1) !important;
-                                        opacity: 1 !important;
-                                    }
-                                    .emoji-picker-custom .epr-emoji-img {
-                                        width: 25px !important;
-                                        height: 25px !important;
-                                        max-width: 25px !important;
-                                        max-height: 25px !important;
-                                    }
-                                    .emoji-picker-custom li.epr-emoji-category > .epr-emoji-category-content {
-                                        grid-template-columns: repeat(auto-fill, 36px) !important;
-                                    }
-                                    .emoji-picker-custom .epr-body {
-                                        padding: 0 0 0 0 !important;
-                                    }
-                                    /* Compact Search */
-                                    .emoji-picker-custom .epr-search-container {
-                                        padding: 10px 10px 8px 10px !important;
-                                        margin-bottom: 0 !important;
-                                    }
-                                    .emoji-picker-custom .epr-category-nav {
-                                        padding-top: 0 !important;
-                                        padding-bottom: 0 !important;
-                                        margin-top: 5px !important;
-                                        margin-bottom: 20px !important;
-                                    }
-                                    .emoji-picker-custom input.epr-search {
-                                        height: 32px !important;
-                                        font-size: 13px !important;
-                                        border-radius: 8px !important;
-                                    }
-                                    /* Smaller Text */
-                                    .emoji-picker-custom .epr-emoji-category-label {
-                                        font-size: 12px !important;
-                                        line-height: 28px !important;
-                                    }
-                                `}</style>
-                                <EmojiPicker
-                                    onEmojiClick={onEmojiClick}
-                                    theme={Theme.DARK}
-                                    width="100%"
-                                    height={350}
-                                    previewConfig={{ showPreview: false }}
-                                    skinTonesDisabled
-                                />
+                    {isRecording ? (
+                        <div className="flex-1 flex items-center justify-between px-3 h-[40px]">
+                            <div className="flex items-center gap-3 text-red-500 animate-pulse">
+                                <Mic className="w-5 h-5 fill-current" />
+                                <span className="font-mono text-sm">{formatDuration(recordingDuration)}</span>
+                            </div>
+                            <div className="text-[#8696a0] text-sm hidden sm:block">
+                                Recording... Click check to send
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={cancelRecording}
+                                    className="p-2 text-red-500 hover:bg-red-500/10 rounded-full transition-colors"
+                                    title="Cancel recording"
+                                >
+                                    <Trash2 className="w-5 h-5" />
+                                </button>
+                                <button
+                                    onClick={() => stopRecording(true)}
+                                    className="p-2 text-[#00a884] hover:bg-[#00a884]/10 rounded-full transition-colors"
+                                    title="Send voice message"
+                                >
+                                    <CheckCircle2 className="w-6 h-6 fill-current" />
+                                </button>
                             </div>
                         </div>
+                    ) : (
+                        <>
+                            {showEmojiPicker && (
+                                <div className="absolute bottom-full left-0 mb-2 z-50 bg-[#202c33] border border-[#2a3942] rounded-[16px] shadow-2xl flex flex-col overflow-hidden w-[430px]">
+                                    <div className="flex-1 bg-[#111b21] emoji-picker-custom">
+                                        <style>{`
+                                            .emoji-picker-custom aside.EmojiPickerReact {
+                                                --epr-emoji-size: 26px !important;
+                                                --epr-search-input-height: 32px !important;
+                                                --epr-category-label-height: 28px !important;
+                                                --epr-category-navigation-button-size: 24px !important;
+                                            }
+                                            /* Reduce icon scaling */
+                                            .emoji-picker-custom .epr-cat-btn > img {
+                                                width: 20px !important;
+                                                height: 20px !important;
+                                            }
+                                            /* Active Category Circle */
+                                            /* Active Category Circle */
+                                            .emoji-picker-custom .epr-cat-btn[aria-selected="true"] {
+                                                background-color: #374045 !important;
+                                                border-radius: 50% !important;
+                                                border: none !important;
+                                                outline: none !important;
+                                                box-shadow: 0 0 0 6px #374045 !important;
+                                                color: white !important;
+                                            }
+                                            /* Remove pseudo-elements */
+                                            .emoji-picker-custom .epr-cat-btn[aria-selected="true"]::before,
+                                            .emoji-picker-custom .epr-cat-btn[aria-selected="true"]::after {
+                                                display: none !important;
+                                                content: none !important;
+                                            }
+                                            /* White Icon for Active */
+                                            .emoji-picker-custom .epr-cat-btn[aria-selected="true"] > * {
+                                                filter: grayscale(1) brightness(0) invert(1) !important;
+                                                opacity: 1 !important;
+                                            }
+                                            .emoji-picker-custom .epr-emoji-img {
+                                                width: 25px !important;
+                                                height: 25px !important;
+                                                max-width: 25px !important;
+                                                max-height: 25px !important;
+                                            }
+                                            .emoji-picker-custom li.epr-emoji-category > .epr-emoji-category-content {
+                                                grid-template-columns: repeat(auto-fill, 36px) !important;
+                                            }
+                                            .emoji-picker-custom .epr-body {
+                                                padding: 0 0 0 0 !important;
+                                            }
+                                            /* Compact Search */
+                                            .emoji-picker-custom .epr-search-container {
+                                                padding: 10px 10px 8px 10px !important;
+                                                margin-bottom: 0 !important;
+                                            }
+                                            .emoji-picker-custom .epr-category-nav {
+                                                padding-top: 0 !important;
+                                                padding-bottom: 0 !important;
+                                                margin-top: 5px !important;
+                                                margin-bottom: 20px !important;
+                                            }
+                                            .emoji-picker-custom input.epr-search {
+                                                height: 32px !important;
+                                                font-size: 13px !important;
+                                                border-radius: 8px !important;
+                                            }
+                                            /* Smaller Text */
+                                            .emoji-picker-custom .epr-emoji-category-label {
+                                                font-size: 12px !important;
+                                                line-height: 28px !important;
+                                            }
+                                        `}</style>
+                                        <EmojiPicker
+                                            onEmojiClick={onEmojiClick}
+                                            theme={Theme.DARK}
+                                            width="100%"
+                                            height={350}
+                                            previewConfig={{ showPreview: false }}
+                                            skinTonesDisabled
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
+                            <input
+                                type="file"
+                                ref={fileInputRef}
+                                className="hidden"
+                                multiple
+                                onChange={handleFileSelect}
+                            />
+                            <button
+                                onClick={() => fileInputRef.current?.click()}
+                                className="p-1.5 text-[#8696a0] hover:text-[#e9edef] transition-colors shrink-0 rounded-full hover:bg-white/5 pb-1.5"
+                            >
+                                <Plus className="w-6 h-6" />
+                            </button>
+
+                            <button
+                                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                                className={`p-1.5 transition-colors shrink-0 rounded-full hover:bg-white/5 pb-1.5 -ml-1 ${showEmojiPicker ? 'text-[#00a884]' : 'text-[#8696a0] hover:text-[#e9edef]'}`}
+                            >
+                                <Smile className="w-6 h-6" />
+                            </button>
+
+                            <div
+                                ref={inputRef}
+                                contentEditable
+                                onInput={handleInput}
+                                onKeyDown={handleKeyDown}
+                                className="flex-1 max-h-[100px] overflow-y-auto py-2 px-2 text-[15px] text-[#e9edef] outline-none min-h-[24px] empty:before:content-[attr(data-placeholder)] empty:before:text-[#8696a0]"
+                                role="textbox"
+                                aria-multiline="true"
+                                data-placeholder={`Message ${getHeaderTitle()}...`}
+                            />
+
+                            <button
+                                onClick={hasContent || localAttachments.length > 0 ? handleSend : startRecording}
+                                disabled={isSending}
+                                className={`p-1.5 rounded-full shrink-0 transition-all pb-1.5 ${hasContent || localAttachments.length > 0
+                                    ? 'text-[#00a884] hover:bg-[#00a884]/10'
+                                    : 'text-[#8696a0] hover:bg-white/5'
+                                    }`}
+                            >
+                                {hasContent || localAttachments.length > 0 ? (
+                                    <Send className="w-5 h-5 ml-0.5" />
+                                ) : (
+                                    <Mic className="w-5 h-5" />
+                                )}
+                            </button>
+                        </>
                     )}
-
-                    <button className="p-1.5 text-[#8696a0] hover:text-[#e9edef] transition-colors shrink-0 rounded-full hover:bg-white/5 pb-1.5">
-                        <Plus className="w-6 h-6" />
-                    </button>
-
-                    <button
-                        onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                        className={`p-1.5 transition-colors shrink-0 rounded-full hover:bg-white/5 pb-1.5 -ml-1 ${showEmojiPicker ? 'text-[#00a884]' : 'text-[#8696a0] hover:text-[#e9edef]'}`}
-                    >
-                        <Smile className="w-6 h-6" />
-                    </button>
-
-                    <div
-                        ref={inputRef}
-                        contentEditable
-                        onInput={handleInput}
-                        onKeyDown={handleKeyDown}
-                        className="flex-1 max-h-[100px] overflow-y-auto py-2 px-2 text-[15px] text-[#e9edef] outline-none min-h-[24px] empty:before:content-[attr(data-placeholder)] empty:before:text-[#8696a0]"
-                        role="textbox"
-                        aria-multiline="true"
-                        data-placeholder={`Message ${getHeaderTitle()}...`}
-                    />
-
-                    <button
-                        onClick={handleSend}
-                        disabled={isSending || !hasContent}
-                        className={`p-1.5 rounded-full shrink-0 transition-all pb-1.5 ${hasContent
-                            ? 'text-[#00a884] hover:bg-[#00a884]/10'
-                            : 'text-[#8696a0] hover:bg-white/5'
-                            }`}
-                    >
-                        {hasContent ? (
-                            <Send className="w-5 h-5 ml-0.5" />
-                        ) : (
-                            <Mic className="w-5 h-5" />
-                        )}
-                    </button>
                 </div>
             </div>
             {/* Reaction Details Modal */}

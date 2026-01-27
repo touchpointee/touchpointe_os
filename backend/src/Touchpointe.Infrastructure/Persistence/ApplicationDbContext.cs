@@ -57,10 +57,16 @@ namespace Touchpointe.Infrastructure.Persistence
         public DbSet<DirectMessageGroup> DirectMessageGroups { get; set; }
         public DbSet<DirectMessageMember> DirectMessageMembers { get; set; }
 
+        public DbSet<MessageAttachment> MessageAttachments => Set<MessageAttachment>();
+
         public DbSet<Company> Companies { get; set; }
+
         public DbSet<Contact> Contacts { get; set; }
         public DbSet<Deal> Deals { get; set; }
         public DbSet<DealContact> DealContacts => Set<DealContact>();
+        public DbSet<DealComment> DealComments => Set<DealComment>();
+        public DbSet<DealCommentMention> DealCommentMentions => Set<DealCommentMention>();
+        public DbSet<DealAttachment> DealAttachments => Set<DealAttachment>();
         public DbSet<CrmActivity> CrmActivities => Set<CrmActivity>();
         public DbSet<AiChatMessage> AiChatMessages => Set<AiChatMessage>();
         public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
@@ -424,6 +430,62 @@ namespace Touchpointe.Infrastructure.Persistence
             modelBuilder.Entity<Deal>()
                 .HasIndex(d => d.WorkspaceId);
 
+            // CRM: DealComment
+            modelBuilder.Entity<DealComment>()
+                .HasOne(c => c.Deal)
+                .WithMany(d => d.Comments)
+                .HasForeignKey(c => c.DealId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<DealComment>()
+                .HasOne(c => c.User)
+                .WithMany()
+                .HasForeignKey(c => c.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<DealComment>()
+                .HasIndex(c => c.DealId);
+
+            // CRM: DealCommentMention
+            modelBuilder.Entity<DealCommentMention>()
+                .HasOne(cm => cm.Comment)
+                .WithMany(c => c.Mentions)
+                .HasForeignKey(cm => cm.CommentId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<DealCommentMention>()
+                .HasOne(cm => cm.User)
+                .WithMany()
+                .HasForeignKey(cm => cm.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<DealCommentMention>()
+                .HasIndex(cm => cm.UserId);
+            
+            modelBuilder.Entity<DealCommentMention>().HasQueryFilter(x => !x.Comment.IsDeleted);
+
+            // CRM: DealAttachment
+            modelBuilder.Entity<DealAttachment>()
+                .HasOne(a => a.Deal)
+                .WithMany(d => d.Attachments)
+                .HasForeignKey(a => a.DealId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<DealAttachment>()
+                .HasOne(a => a.User)
+                .WithMany()
+                .HasForeignKey(a => a.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<DealAttachment>()
+                .HasOne(a => a.Workspace)
+                .WithMany()
+                .HasForeignKey(a => a.WorkspaceId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<DealAttachment>()
+                .HasIndex(a => a.DealId);
+
             // CRM: Activity
             modelBuilder.Entity<CrmActivity>()
                 .HasOne(a => a.User)
@@ -526,6 +588,23 @@ namespace Touchpointe.Infrastructure.Persistence
             modelBuilder.Entity<MessageReaction>()
                 .HasIndex(r => new { r.MessageId, r.UserId, r.Emoji })
                 .IsUnique();
+
+            // Chat: Attachments
+            modelBuilder.Entity<MessageAttachment>()
+                .HasOne(a => a.Message)
+                .WithMany(m => m.Attachments)
+                .HasForeignKey(a => a.MessageId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<MessageAttachment>()
+                .HasOne(a => a.User)
+                .WithMany()
+                .HasForeignKey(a => a.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<MessageAttachment>()
+                .HasIndex(a => a.MessageId);
+
             // AiChatMessage
             modelBuilder.Entity<AiChatMessage>()
                 .HasOne(m => m.User)

@@ -16,12 +16,14 @@ namespace Touchpointe.Application.Services.Chat
         private readonly IApplicationDbContext _context;
         private readonly INotificationService _notificationService;
         private readonly IChatNotificationService _chatNotification;
+        private readonly IMinioService _minioService;
 
-        public ChatService(IApplicationDbContext context, INotificationService notificationService, IChatNotificationService chatNotification)
+        public ChatService(IApplicationDbContext context, INotificationService notificationService, IChatNotificationService chatNotification, IMinioService minioService)
         {
             _context = context;
             _notificationService = notificationService;
             _chatNotification = chatNotification;
+            _minioService = minioService;
         }
 
         // --- Channels ---
@@ -125,6 +127,7 @@ namespace Touchpointe.Application.Services.Chat
 
             return await _context.Messages
                 .Include(m => m.Sender)
+                .Include(m => m.Attachments)
                 .Where(m => m.ChannelId == channelId && m.WorkspaceId == workspaceId)
                 .OrderByDescending(m => m.CreatedAt) // newest first for pagination
                 .Take(take)
@@ -146,6 +149,9 @@ namespace Touchpointe.Application.Services.Chat
                         r.User.FullName, 
                         r.Emoji, 
                         r.CreatedAt
+                    )).ToList(),
+                    m.Attachments.Select(a => new MessageAttachmentDto(
+                        a.Id, a.FileName, a.FileUrl, a.ContentType, a.Size
                     )).ToList(),
                     m.ReplyToMessageId,
                     m.ReplyPreviewSenderName,
@@ -181,6 +187,22 @@ namespace Touchpointe.Application.Services.Chat
                 SenderId = userId,
                 Content = request.Content
             };
+
+            if (request.Attachments != null)
+            {
+                foreach (var att in request.Attachments)
+                {
+                    message.Attachments.Add(new MessageAttachment
+                    {
+                        UserId = userId,
+                        WorkspaceId = workspaceId,
+                        FileName = att.FileName,
+                        FileUrl = att.FileUrl,
+                        ContentType = att.ContentType,
+                        Size = att.Size
+                    });
+                }
+            }
 
             if (request.ReplyToMessageId.HasValue)
             {
@@ -265,6 +287,7 @@ namespace Touchpointe.Application.Services.Chat
                 message.Content,
                 message.CreatedAt,
                 new List<MessageReactionDto>(),
+                message.Attachments.Select(a => new MessageAttachmentDto(a.Id, a.FileName, a.FileUrl, a.ContentType, a.Size)).ToList(),
                 message.ReplyToMessageId,
                 message.ReplyPreviewSenderName,
                 message.ReplyPreviewText
@@ -376,6 +399,7 @@ namespace Touchpointe.Application.Services.Chat
 
             return await _context.Messages
                 .Include(m => m.Sender)
+                .Include(m => m.Attachments)
                 .Where(m => m.DirectMessageGroupId == dmGroupId && m.WorkspaceId == workspaceId)
                 .OrderByDescending(m => m.CreatedAt)
                 .Take(take)
@@ -397,6 +421,9 @@ namespace Touchpointe.Application.Services.Chat
                         r.User.FullName, 
                         r.Emoji, 
                         r.CreatedAt
+                    )).ToList(),
+                    m.Attachments.Select(a => new MessageAttachmentDto(
+                        a.Id, a.FileName, a.FileUrl, a.ContentType, a.Size
                     )).ToList(),
                     m.ReplyToMessageId,
                     m.ReplyPreviewSenderName,
@@ -423,6 +450,22 @@ namespace Touchpointe.Application.Services.Chat
                 SenderId = userId,
                 Content = request.Content
             };
+
+            if (request.Attachments != null)
+            {
+                foreach (var att in request.Attachments)
+                {
+                    message.Attachments.Add(new MessageAttachment
+                    {
+                        UserId = userId,
+                        WorkspaceId = workspaceId,
+                        FileName = att.FileName,
+                        FileUrl = att.FileUrl,
+                        ContentType = att.ContentType,
+                        Size = att.Size
+                    });
+                }
+            }
 
             if (request.ReplyToMessageId.HasValue)
             {
@@ -460,6 +503,7 @@ namespace Touchpointe.Application.Services.Chat
                 message.Content,
                 message.CreatedAt,
                 new List<MessageReactionDto>(),
+                message.Attachments.Select(a => new MessageAttachmentDto(a.Id, a.FileName, a.FileUrl, a.ContentType, a.Size)).ToList(),
                 message.ReplyToMessageId,
                 message.ReplyPreviewSenderName,
                 message.ReplyPreviewText
@@ -682,6 +726,13 @@ namespace Touchpointe.Application.Services.Chat
              await _context.SaveChangesAsync(CancellationToken.None);
 
              await _chatNotification.NotifyReadReceiptAsync(dmGroupId.ToString(), userId, messageId);
+        }
+
+        public async Task<MessageAttachmentDto> UploadAttachmentAsync(Guid workspaceId, Guid userId, System.IO.Stream fileStream, string fileName, string contentType, long size)
+        {
+            var objectName = $"chat/{workspaceId}/{Guid.NewGuid()}_{fileName}";
+            var url = await _minioService.UploadFileAsync(fileStream, contentType, "touchpointe-core", objectName);
+            return new MessageAttachmentDto(Guid.NewGuid(), fileName, url, contentType, size);
         }
     }
 }

@@ -43,7 +43,7 @@ namespace Touchpointe.Infrastructure.Services
                    $"?client_id={appId}" +
                    $"&redirect_uri={Uri.EscapeDataString(redirectUrl)}" +
                    $"&state={state}" +
-                   $"&scope=pages_show_list,pages_read_engagement,leads_retrieval,pages_manage_ads";
+                   $"&scope=pages_show_list,pages_read_engagement,leads_retrieval,pages_manage_ads,pages_manage_metadata,business_management";
         }
 
         public async Task<string> ExchangeCodeForTokenAsync(string code, string redirectUrl)
@@ -65,11 +65,21 @@ namespace Touchpointe.Infrastructure.Services
 
         public async Task<List<FacebookPageDto>> GetPagesAsync(string userAccessToken)
         {
+            // 1. Verify User Identity (Debug)
+            try {
+                var meResp = await _httpClient.GetAsync($"{BaseUrl}/{GraphApiVersion}/me?access_token={userAccessToken}");
+                var meJson = await meResp.Content.ReadAsStringAsync();
+                _logger.LogInformation($"Facebook User Identity: {meJson}");
+            } catch {}
+
             var response = await _httpClient.GetAsync(
-                $"{BaseUrl}/{GraphApiVersion}/me/accounts?access_token={userAccessToken}&limit=100");
+                $"{BaseUrl}/{GraphApiVersion}/me/accounts?access_token={userAccessToken}&limit=100&fields=id,name,access_token,category,tasks");
 
             response.EnsureSuccessStatusCode();
-            var content = await response.Content.ReadFromJsonAsync<JsonElement>();
+            var rawJson = await response.Content.ReadAsStringAsync();
+            _logger.LogInformation($"Facebook GetPages Response: {rawJson}");
+
+            var content = JsonDocument.Parse(rawJson).RootElement;
             var data = content.GetProperty("data");
             
             var pages = new List<FacebookPageDto>();
@@ -139,20 +149,28 @@ namespace Touchpointe.Infrastructure.Services
 
         public async Task SubscribeToWebhooksAsync(string pageId, string pageAccessToken)
         {
-            var content = new FormUrlEncodedContent(new Dictionary<string, string>
+            try
             {
-                { "subscribed_fields", "leadgen" },
-                { "access_token", pageAccessToken }
-            });
+                var content = new FormUrlEncodedContent(new Dictionary<string, string>
+                {
+                    { "subscribed_fields", "leadgen" },
+                    { "access_token", pageAccessToken }
+                });
 
-            var response = await _httpClient.PostAsync(
-                $"{BaseUrl}/{GraphApiVersion}/{pageId}/subscribed_apps", content);
+                var response = await _httpClient.PostAsync(
+                    $"{BaseUrl}/{GraphApiVersion}/{pageId}/subscribed_apps", content);
 
-            if (!response.IsSuccessStatusCode)
+                if (!response.IsSuccessStatusCode)
+                {
+                    var error = await response.Content.ReadAsStringAsync();
+                    _logger.LogError($"Failed to subscribe page {pageId} to webhooks. Status: {response.StatusCode}. Error: {error}");
+                    throw new Exception($"Facebook Webhook Subscription Failed: {error}");
+                }
+            }
+            catch (Exception ex)
             {
-                var error = await response.Content.ReadAsStringAsync();
-                _logger.LogError($"Failed to subscribe page {pageId} to webhooks: {error}");
-                throw new Exception("Failed to subscribe to Facebook webhooks");
+                _logger.LogError(ex, $"Exception during webhook subscription for page {pageId}");
+                throw; // Rethrow to let caller handle/expose it
             }
         }
 
@@ -188,7 +206,7 @@ namespace Touchpointe.Infrastructure.Services
             }
         }
 
-        private async Task ProcessLeadAsync(string leadgenId, string pageId, string formId)
+        public async Task ProcessLeadAsync(string leadgenId, string pageId, string formId)
         {
             // 1. Find integration to get token
             var integration = await _context.FacebookIntegrations
@@ -266,6 +284,122 @@ namespace Touchpointe.Infrastructure.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error processing Facebook lead");
+            }
+        }
+
+        public async Task<List<FacebookFormDto>> GetFormsAsync(string pageId, string pageAccessToken)
+        {
+            var response = await _httpClient.GetAsync(
+                $"{BaseUrl}/{GraphApiVersion}/{pageId}/leadgen_forms?access_token={pageAccessToken}&limit=100&fields=id,name,status,leads_count");
+
+            response.EnsureSuccessStatusCode();
+            var content = await response.Content.ReadFromJsonAsync<JsonElement>();
+            var data = content.GetProperty("data");
+
+            var forms = new List<FacebookFormDto>();
+            foreach (var item in data.EnumerateArray())
+            {
+                forms.Add(new FacebookFormDto
+                {
+                    Id = item.GetProperty("id").GetString() ?? "",
+                    Name = item.GetProperty("name").GetString() ?? "",
+                    Status = item.GetProperty("status").GetString() ?? "",
+                    LeadCount = item.TryGetProperty("leads_count", out var count) ? count.GetInt32() : 0 
+                });
+            }
+            return forms;
+        }
+
+        public async Task<List<FacebookLeadDto>> GetLeadsAsync(string formId, string pageAccessToken, int limit = 50)
+        {
+            try
+            {
+                var response = await _httpClient.GetAsync(
+                    $"{BaseUrl}/{GraphApiVersion}/{formId}/leads?access_token={pageAccessToken}&limit={limit}&fields=id,created_time,field_data");
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    var errorBody = await response.Content.ReadAsStringAsync();
+                    _logger.LogError($"Facebook GetLeads Failed: {response.StatusCode} - {errorBody}");
+                    return new List<FacebookLeadDto>();
+                }
+                
+                var rawJson = await response.Content.ReadAsStringAsync();
+                var content = JsonDocument.Parse(rawJson).RootElement;
+                
+                if (!content.TryGetProperty("data", out var data) || data.ValueKind != JsonValueKind.Array)
+                {
+                     return new List<FacebookLeadDto>();
+                }
+
+                var leads = new List<FacebookLeadDto>();
+                foreach (var item in data.EnumerateArray())
+                {
+                    try
+                    {
+                        var id = item.TryGetProperty("id", out var idProp) ? idProp.GetString() ?? "" : "";
+                        
+                        // Fix Date Parsing
+                        DateTime createdTime = DateTime.MinValue;
+                        if (item.TryGetProperty("created_time", out var timeProp) && timeProp.ValueKind == JsonValueKind.String)
+                        {
+                            var timeStr = timeProp.GetString();
+                            if (DateTime.TryParse(timeStr, out var dt))
+                            {
+                                createdTime = dt;
+                            }
+                        }
+
+                        var lead = new FacebookLeadDto
+                        {
+                            Id = id,
+                            CreatedTime = createdTime,
+                        };
+
+                        // Simple field parsing for preview
+                        if (item.TryGetProperty("field_data", out var fieldData) && fieldData.ValueKind == JsonValueKind.Array)
+                        {
+                            string firstName = "";
+                            string lastName = "";
+
+                            foreach (var field in fieldData.EnumerateArray())
+                            {
+                                var name = field.TryGetProperty("name", out var n) ? n.GetString() : null;
+                                var val = "";
+                                
+                                if (field.TryGetProperty("values", out var values) && values.ValueKind == JsonValueKind.Array && values.GetArrayLength() > 0)
+                                {
+                                     val = values[0].GetString();
+                                }
+
+                                if (string.IsNullOrEmpty(name)) continue;
+                                
+                                if (name == "email") lead.Email = val;
+                                if (name == "full_name") lead.FullName = val;
+                                if (name == "first_name") firstName = val;
+                                if (name == "last_name") lastName = val;
+                            }
+
+                            if (string.IsNullOrEmpty(lead.FullName) && (!string.IsNullOrEmpty(firstName) || !string.IsNullOrEmpty(lastName)))
+                            {
+                                lead.FullName = $"{firstName} {lastName}".Trim();
+                            }
+                        }
+                        leads.Add(lead);
+                    }
+                    catch (Exception ex)
+                    {
+                        // Log singular lead error but continue
+                        _logger.LogError(ex, "Error parsing single Facebook lead");
+                    }
+                }
+                return leads;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Start-level Error in GetLeadsAsync");
+                // Return empty list instead of crashing
+                return new List<FacebookLeadDto>();
             }
         }
     }

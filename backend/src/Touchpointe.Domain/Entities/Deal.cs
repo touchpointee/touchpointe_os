@@ -31,5 +31,7 @@ namespace Touchpointe.Domain.Entities
         // Navigation properties
         public Company? Company { get; set; }
         public ICollection<DealContact> DealContacts { get; set; } = new List<DealContact>();
+        public ICollection<DealComment> Comments { get; set; } = new List<DealComment>();
+        public ICollection<DealAttachment> Attachments { get; set; } = new List<DealAttachment>();
     }
 }

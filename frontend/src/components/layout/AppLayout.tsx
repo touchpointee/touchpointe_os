@@ -37,10 +37,13 @@ export function AppLayout({ children, hideContextSidebar = false, hidePrimarySid
             <main className={cn(
                 "h-[calc(100vh-56px)] overflow-hidden transition-all duration-300",
                 // If primary sidebar hidden -> ml-0
-                // Else -> standard margins
-                hidePrimarySidebar ? "ml-0" : (hideContextSidebar ? "md:ml-[72px]" : "md:ml-[72px] lg:ml-[332px]")
+                // Else -> standard margins. Chat uses wider sidebar (320px + 72px = 392px)
+                hidePrimarySidebar ? "ml-0" : (
+                    hideContextSidebar ? "md:ml-[72px]" :
+                        (location.pathname.includes('/chat') ? "md:ml-[72px] lg:ml-[392px]" : "md:ml-[72px] lg:ml-[332px]")
+                )
             )}>
-                {location.pathname.startsWith('/chat') || location.pathname.startsWith('/ai') || hideContextSidebar ? (
+                {(location.pathname.startsWith('/chat') || location.pathname.includes('/chat')) || location.pathname.startsWith('/ai') || hideContextSidebar ? (
                     children
                 ) : (
                     <div className="h-full pt-4 pl-4 md:pt-6 md:pl-6">

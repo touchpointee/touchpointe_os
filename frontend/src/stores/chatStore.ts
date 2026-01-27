@@ -43,6 +43,15 @@ export interface Message {
         emoji: string;
         createdAt: string;
     }[];
+    attachments?: MessageAttachment[];
+}
+
+export interface MessageAttachment {
+    id: string;
+    fileName: string;
+    fileUrl: string;
+    contentType: string;
+    size: number;
 }
 
 export interface UserDto {
@@ -76,7 +85,8 @@ interface ChatState {
 
     fetchMessages: (workspaceId: string, id: string, isDm?: boolean) => Promise<void>;
 
-    postMessage: (workspaceId: string, content: string, currentUserId: string, currentUserName: string, replyToMessageId?: string) => Promise<void>;
+    postMessage: (workspaceId: string, content: string, currentUserId: string, currentUserName: string, replyToMessageId?: string, attachments?: MessageAttachment[]) => Promise<void>;
+    uploadAttachment: (workspaceId: string, file: File) => Promise<MessageAttachment | null>;
     addMessage: (message: Message) => void;
 
     addReaction: (workspaceId: string, messageId: string, emoji: string) => Promise<void>;
@@ -167,7 +177,7 @@ export const useChatStore = create<ChatState>()((set, get) => ({
         }
     },
 
-    postMessage: async (workspaceId, content, currentUserId, currentUserName, replyToMessageId) => {
+    postMessage: async (workspaceId, content, currentUserId, currentUserName, replyToMessageId, attachments) => {
         const { activeChannelId, activeDmGroupId } = get();
         const targetId = activeChannelId || activeDmGroupId;
         if (!targetId) return;
@@ -188,7 +198,8 @@ export const useChatStore = create<ChatState>()((set, get) => ({
             isOptimistic: true,
             replyToMessageId: replyToMessageId || undefined,
             // We'll trust backend to resolve name/text. For optimistic UI, we could look it up locally if we wanted.
-            reactions: []
+            reactions: [],
+            attachments: attachments || []
         };
 
         set(state => ({
@@ -203,7 +214,7 @@ export const useChatStore = create<ChatState>()((set, get) => ({
                 ? `/workspaces/${workspaceId}/chat/dm/${targetId}/messages`
                 : `/workspaces/${workspaceId}/chat/channels/${targetId}/messages`;
 
-            const realMessage = await apiPost<Message>(endpoint, { content, replyToMessageId });
+            const realMessage = await apiPost<Message>(endpoint, { content, replyToMessageId, attachments });
 
             // Replace optimistic
             set(state => {
@@ -385,6 +396,20 @@ export const useChatStore = create<ChatState>()((set, get) => ({
             }
             return found ? newState : state;
         });
+    },
+
+    uploadAttachment: async (workspaceId, file) => {
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            // Use apiPostMultipart from api.ts which handles authorization and headers correctly
+            const { apiPostMultipart } = await import('@/lib/api');
+            return await apiPostMultipart<MessageAttachment>(`/workspaces/${workspaceId}/chat/attachments`, formData);
+        } catch (e) {
+            console.error("Upload failed", e);
+            return null;
+        }
     }
 
 }));
