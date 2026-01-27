@@ -312,38 +312,72 @@ namespace Touchpointe.Infrastructure.Services
 
         public async Task<List<FacebookLeadDto>> GetLeadsAsync(string formId, string pageAccessToken, int limit = 50)
         {
-            var response = await _httpClient.GetAsync(
-                $"{BaseUrl}/{GraphApiVersion}/{formId}/leads?access_token={pageAccessToken}&limit={limit}&fields=id,created_time,field_data");
-
-            response.EnsureSuccessStatusCode();
-            var content = await response.Content.ReadFromJsonAsync<JsonElement>();
-            var data = content.GetProperty("data");
-
-            var leads = new List<FacebookLeadDto>();
-            foreach (var item in data.EnumerateArray())
+            try
             {
-                var lead = new FacebookLeadDto
-                {
-                    Id = item.TryGetProperty("id", out var idProp) ? idProp.GetString() ?? "" : "",
-                    CreatedTime = item.TryGetProperty("created_time", out var timeProp) ? timeProp.GetDateTime() : DateTime.MinValue,
-                };
+                var response = await _httpClient.GetAsync(
+                    $"{BaseUrl}/{GraphApiVersion}/{formId}/leads?access_token={pageAccessToken}&limit={limit}&fields=id,created_time,field_data");
 
-                // Simple field parsing for preview
-                if (item.TryGetProperty("field_data", out var fieldData))
+                if (!response.IsSuccessStatusCode)
                 {
-                    foreach (var field in fieldData.EnumerateArray())
+                    var errorBody = await response.Content.ReadAsStringAsync();
+                    _logger.LogError($"Facebook GetLeads Failed: {response.StatusCode} - {errorBody}");
+                    return new List<FacebookLeadDto>();
+                }
+                
+                var rawJson = await response.Content.ReadAsStringAsync();
+                var content = JsonDocument.Parse(rawJson).RootElement;
+                
+                if (!content.TryGetProperty("data", out var data) || data.ValueKind != JsonValueKind.Array)
+                {
+                     return new List<FacebookLeadDto>();
+                }
+
+                var leads = new List<FacebookLeadDto>();
+                foreach (var item in data.EnumerateArray())
+                {
+                    try
                     {
-                        var name = field.GetProperty("name").GetString();
-                        var values = field.GetProperty("values");
-                        var val = values.GetArrayLength() > 0 ? values[0].GetString() : null;
-                        
-                        if (name == "email") lead.Email = val;
-                        if (name == "full_name") lead.FullName = val;
+                        var lead = new FacebookLeadDto
+                        {
+                            Id = item.TryGetProperty("id", out var idProp) ? idProp.GetString() ?? "" : "",
+                            CreatedTime = item.TryGetProperty("created_time", out var timeProp) ? timeProp.GetDateTime() : DateTime.MinValue,
+                        };
+
+                        // Simple field parsing for preview
+                        if (item.TryGetProperty("field_data", out var fieldData) && fieldData.ValueKind == JsonValueKind.Array)
+                        {
+                            foreach (var field in fieldData.EnumerateArray())
+                            {
+                                var name = field.TryGetProperty("name", out var n) ? n.GetString() : null;
+                                var val = "";
+                                
+                                if (field.TryGetProperty("values", out var values) && values.ValueKind == JsonValueKind.Array && values.GetArrayLength() > 0)
+                                {
+                                     val = values[0].GetString();
+                                }
+
+                                if (string.IsNullOrEmpty(name)) continue;
+                                
+                                if (name == "email") lead.Email = val;
+                                if (name == "full_name") lead.FullName = val;
+                            }
+                        }
+                        leads.Add(lead);
+                    }
+                    catch (Exception ex)
+                    {
+                        // Log singular lead error but continue
+                        _logger.LogError(ex, "Error parsing single Facebook lead");
                     }
                 }
-                leads.Add(lead);
+                return leads;
             }
-            return leads;
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Start-level Error in GetLeadsAsync");
+                // Return empty list instead of crashing
+                return new List<FacebookLeadDto>();
+            }
         }
     }
 }
