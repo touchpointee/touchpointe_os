@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using Touchpointe.Application.Common.Interfaces;
 
 namespace Touchpointe.API.Controllers
@@ -11,10 +12,12 @@ namespace Touchpointe.API.Controllers
     public class FacebookController : BaseController
     {
         private readonly IFacebookService _facebookService;
+        private readonly IConfiguration _configuration;
 
-        public FacebookController(IFacebookService facebookService)
+        public FacebookController(IFacebookService facebookService, IConfiguration configuration)
         {
             _facebookService = facebookService;
+            _configuration = configuration;
         }
 
         [HttpGet("api/workspaces/{workspaceId}/integrations/facebook/connect")]
