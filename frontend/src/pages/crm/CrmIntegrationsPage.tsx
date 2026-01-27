@@ -118,7 +118,10 @@ export function CrmIntegrationsPage() {
             // Clean URL
             navigate(location.pathname, { replace: true });
         } catch (err: any) {
-            setError(err.message || "Failed to connect page");
+            console.error("Connect Page Error:", err);
+            // Try to extract server error message if available
+            const serverMsg = err.response?.data?.error || err.message || "Failed to connect page";
+            setError(serverMsg);
         } finally {
             setIsConnecting(false);
         }

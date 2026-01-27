@@ -84,13 +84,20 @@ namespace Touchpointe.API.Controllers
         [HttpPost("api/workspaces/{workspaceId}/integrations/facebook/subscribe")]
         public async Task<ActionResult> SubscribePage(Guid workspaceId, [FromBody] ConnectPageRequest request)
         {
-            var integration = await _facebookService.ConnectPageAsync(
-                workspaceId, 
-                GetUserId(), 
-                request.PageId, 
-                request.UserAccessToken);
-                
-            return Ok(integration);
+            try
+            {
+                var integration = await _facebookService.ConnectPageAsync(
+                    workspaceId, 
+                    GetUserId(), 
+                    request.PageId, 
+                    request.UserAccessToken);
+                    
+                return Ok(integration);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = ex.Message });
+            }
         }
     }
 

@@ -137,24 +137,29 @@ namespace Touchpointe.Infrastructure.Services
                 .FirstOrDefaultAsync(f => f.WorkspaceId == workspaceId);
         }
 
-        public async Task SubscribeToWebhooksAsync(string pageId, string pageAccessToken)
-        {
-            var content = new FormUrlEncodedContent(new Dictionary<string, string>
+            try
             {
-                { "subscribed_fields", "leadgen" },
-                { "access_token", pageAccessToken }
-            });
+                var content = new FormUrlEncodedContent(new Dictionary<string, string>
+                {
+                    { "subscribed_fields", "leadgen" },
+                    { "access_token", pageAccessToken }
+                });
 
-            var response = await _httpClient.PostAsync(
-                $"{BaseUrl}/{GraphApiVersion}/{pageId}/subscribed_apps", content);
+                var response = await _httpClient.PostAsync(
+                    $"{BaseUrl}/{GraphApiVersion}/{pageId}/subscribed_apps", content);
 
-            if (!response.IsSuccessStatusCode)
-            {
-                var error = await response.Content.ReadAsStringAsync();
-                _logger.LogError($"Failed to subscribe page {pageId} to webhooks: {error}");
-                throw new Exception("Failed to subscribe to Facebook webhooks");
+                if (!response.IsSuccessStatusCode)
+                {
+                    var error = await response.Content.ReadAsStringAsync();
+                    _logger.LogError($"Failed to subscribe page {pageId} to webhooks. Status: {response.StatusCode}. Error: {error}");
+                    throw new Exception($"Facebook Webhook Subscription Failed: {error}");
+                }
             }
-        }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Exception during webhook subscription for page {pageId}");
+                throw; // Rethrow to let caller handle/expose it
+            }
 
         public async Task ProcessWebhookPayloadAsync(string payload)
         {
