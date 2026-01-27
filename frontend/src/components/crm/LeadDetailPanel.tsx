@@ -200,7 +200,7 @@ export function LeadDetailPanel() {
                     </button>
 
                     {/* Convert to Contact */}
-                    {lead.status !== 'CONVERTED' && (
+                    {!lead.convertedToContactId && (
                         <button
                             onClick={() => setShowConvertModal(true)}
                             className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-md font-medium hover:opacity-90 transition-opacity"
