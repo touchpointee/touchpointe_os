@@ -47,7 +47,12 @@ namespace Touchpointe.API.Controllers
                 // Redirect to Frontend
                 // Get Frontend URL from config or use a safe default
                 var frontendUrl = _configuration["FrontendUrl"];
-                if (string.IsNullOrEmpty(frontendUrl)) frontendUrl = "https://ostest.touchpointe.digital"; // Default to production
+                if (string.IsNullOrEmpty(frontendUrl)) 
+                {
+                    // Fallback to Origin if config is missing (for safety)
+                    frontendUrl = Request.Headers["Origin"].ToString();
+                    if (string.IsNullOrEmpty(frontendUrl)) throw new Exception("FrontendUrl not configured");
+                }
 
                 return Redirect($"{frontendUrl}/workspace/{workspaceId}/crm/integrations?facebook_token={userAccessToken}&state={state}");
             }
