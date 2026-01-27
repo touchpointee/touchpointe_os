@@ -69,7 +69,10 @@ namespace Touchpointe.Infrastructure.Services
                 $"{BaseUrl}/{GraphApiVersion}/me/accounts?access_token={userAccessToken}&limit=100");
 
             response.EnsureSuccessStatusCode();
-            var content = await response.Content.ReadFromJsonAsync<JsonElement>();
+            var rawJson = await response.Content.ReadAsStringAsync();
+            _logger.LogInformation($"Facebook GetPages Response: {rawJson}");
+
+            var content = JsonDocument.Parse(rawJson).RootElement;
             var data = content.GetProperty("data");
             
             var pages = new List<FacebookPageDto>();
