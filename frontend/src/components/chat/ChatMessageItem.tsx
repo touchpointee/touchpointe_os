@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { Message } from '@/stores/chatStore';
 import { MentionRenderer } from '../shared/MentionRenderer';
 import { Reply, Smile, User, File as FileIcon, Download, Play, Pause } from 'lucide-react';
-import { useRef, useEffect } from 'react';
+import { useRef } from 'react';
 import { format } from 'date-fns';
 
 interface ChatMessageItemProps {
