@@ -44,8 +44,10 @@ namespace Touchpointe.API.Controllers
 
                 // Redirect to Frontend
                 // Use Origin header or default to localhost
-                var frontendUrl = Request.Headers["Origin"].ToString();
-                if (string.IsNullOrEmpty(frontendUrl)) frontendUrl = "http://localhost:5173";
+                // Redirect to Frontend
+                // Get Frontend URL from config or use a safe default
+                var frontendUrl = _configuration["FrontendUrl"];
+                if (string.IsNullOrEmpty(frontendUrl)) frontendUrl = "https://ostest.touchpointe.digital"; // Default to production
 
                 return Redirect($"{frontendUrl}/workspace/{workspaceId}/crm/integrations?facebook_token={userAccessToken}&state={state}");
             }
