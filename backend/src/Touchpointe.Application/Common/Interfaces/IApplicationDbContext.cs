@@ -23,6 +23,7 @@ namespace Touchpointe.Application.Common.Interfaces
         DbSet<DirectMessageGroup> DirectMessageGroups { get; }
         DbSet<DirectMessageMember> DirectMessageMembers { get; }
         DbSet<MessageReaction> MessageReactions { get; }
+        DbSet<MessageAttachment> MessageAttachments { get; }
 
         DbSet<Company> Companies { get; }
         DbSet<Contact> Contacts { get; }

@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import type { Message } from '@/stores/chatStore';
 import { MentionRenderer } from '../shared/MentionRenderer';
-import { Reply, Smile, User } from 'lucide-react';
+import { Reply, Smile, User, File as FileIcon, Download, Play, Pause } from 'lucide-react';
+import { useRef, useEffect } from 'react';
 import { format } from 'date-fns';
 
 interface ChatMessageItemProps {
@@ -38,6 +39,89 @@ function isSingleEmoji(text: string): boolean {
     const emojiRegex = /^(\p{Emoji_Presentation}|\p{Emoji}\uFE0F)(\u200D(\p{Emoji_Presentation}|\p{Emoji}\uFE0F))*$/u;
     return emojiRegex.test(trimmed);
 }
+
+const AudioPlayer = ({ src }: { src: string }) => {
+    const [isPlaying, setIsPlaying] = useState(false);
+    const [progress, setProgress] = useState(0);
+    const [duration, setDuration] = useState(0);
+    const audioRef = useRef<HTMLAudioElement>(null);
+
+    const togglePlay = () => {
+        if (!audioRef.current) return;
+        if (isPlaying) {
+            audioRef.current.pause();
+        } else {
+            audioRef.current.play();
+        }
+        setIsPlaying(!isPlaying);
+    };
+
+    const handleTimeUpdate = () => {
+        if (audioRef.current) {
+            const current = audioRef.current.currentTime;
+            const total = audioRef.current.duration;
+            if (total) { // Avoid NaN
+                setProgress((current / total) * 100);
+            }
+        }
+    };
+
+    const handleLoadedMetadata = () => {
+        if (audioRef.current) {
+            setDuration(audioRef.current.duration);
+        }
+    };
+
+    const handleEnded = () => {
+        setIsPlaying(false);
+        setProgress(0);
+    };
+
+    const formatTime = (time: number) => {
+        const minutes = Math.floor(time / 60);
+        const seconds = Math.floor(time % 60);
+        return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    };
+
+    return (
+        <div className="flex items-center gap-2 bg-black/20 p-2 rounded-lg min-w-[200px] mt-1" onClick={(e) => e.stopPropagation()}>
+            <audio
+                ref={audioRef}
+                src={src}
+                onTimeUpdate={handleTimeUpdate}
+                onLoadedMetadata={handleLoadedMetadata}
+                onEnded={handleEnded}
+                className="hidden"
+            />
+            <button
+                onClick={togglePlay}
+                className="p-2 rounded-full bg-[#00a884] hover:bg-[#008f6f] text-white transition-colors"
+            >
+                {isPlaying ? <Pause className="w-4 h-4 fill-current" /> : <Play className="w-4 h-4 fill-current" />}
+            </button>
+            <div className="flex-1 flex flex-col justify-center gap-1">
+                <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={progress}
+                    onChange={(e) => {
+                        if (audioRef.current) {
+                            const newTime = (Number(e.target.value) / 100) * audioRef.current.duration;
+                            audioRef.current.currentTime = newTime;
+                            setProgress(Number(e.target.value));
+                        }
+                    }}
+                    className="w-full h-1 bg-white/20 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#00a884]"
+                />
+                <div className="flex justify-between text-[10px] text-[#8696a0]">
+                    <span>{formatTime(audioRef.current?.currentTime || 0)}</span>
+                    <span>{formatTime(duration || 0)}</span>
+                </div>
+            </div>
+        </div>
+    );
+};
 
 export function ChatMessageItem({
     message,
@@ -171,6 +255,36 @@ export function ChatMessageItem({
                                     {message.senderName}
                                 </div>
                             )}
+
+                            <div className="flex flex-col gap-1 mb-1">
+                                {message.attachments?.map(att => (
+                                    att.contentType.startsWith('image/') ? (
+                                        <div key={att.id} className="rounded-lg overflow-hidden mt-1 mb-1 cursor-pointer" onClick={() => window.open(att.fileUrl, '_blank')}>
+                                            <img src={att.fileUrl} alt={att.fileName} className="max-w-[100%] max-h-[300px] object-cover" />
+                                        </div>
+                                    ) : att.contentType.startsWith('audio/') ? (
+                                        <AudioPlayer key={att.id} src={att.fileUrl} />
+                                    ) : (
+                                        <div key={att.id} className="flex items-center gap-2 bg-black/20 p-2 rounded max-w-[300px] mt-1">
+                                            <div className="bg-[#202c33] p-1.5 rounded text-[#8696a0]">
+                                                <FileIcon className="w-5 h-5" />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div
+                                                    className="text-sm truncate text-[#e9edef] hover:underline cursor-pointer"
+                                                    onClick={() => window.open(att.fileUrl, '_blank')}
+                                                >
+                                                    {att.fileName}
+                                                </div>
+                                                <div className="text-xs text-[#8696a0]">{`${(att.size / 1024).toFixed(1)} KB`}</div>
+                                            </div>
+                                            <a href={att.fileUrl} download={att.fileName} target="_blank" rel="noopener noreferrer" className="p-1 hover:bg-white/10 rounded-full" onClick={e => e.stopPropagation()}>
+                                                <Download className="w-4 h-4 text-[#8696a0]" />
+                                            </a>
+                                        </div>
+                                    )
+                                ))}
+                            </div>
 
                             <div className="leading-snug whitespace-pre-wrap break-all">
                                 <MentionRenderer content={message.content} />

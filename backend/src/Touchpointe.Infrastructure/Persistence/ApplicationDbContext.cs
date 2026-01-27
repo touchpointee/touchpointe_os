@@ -57,7 +57,10 @@ namespace Touchpointe.Infrastructure.Persistence
         public DbSet<DirectMessageGroup> DirectMessageGroups { get; set; }
         public DbSet<DirectMessageMember> DirectMessageMembers { get; set; }
 
+        public DbSet<MessageAttachment> MessageAttachments => Set<MessageAttachment>();
+
         public DbSet<Company> Companies { get; set; }
+
         public DbSet<Contact> Contacts { get; set; }
         public DbSet<Deal> Deals { get; set; }
         public DbSet<DealContact> DealContacts => Set<DealContact>();
@@ -585,6 +588,23 @@ namespace Touchpointe.Infrastructure.Persistence
             modelBuilder.Entity<MessageReaction>()
                 .HasIndex(r => new { r.MessageId, r.UserId, r.Emoji })
                 .IsUnique();
+
+            // Chat: Attachments
+            modelBuilder.Entity<MessageAttachment>()
+                .HasOne(a => a.Message)
+                .WithMany(m => m.Attachments)
+                .HasForeignKey(a => a.MessageId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<MessageAttachment>()
+                .HasOne(a => a.User)
+                .WithMany()
+                .HasForeignKey(a => a.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<MessageAttachment>()
+                .HasIndex(a => a.MessageId);
+
             // AiChatMessage
             modelBuilder.Entity<AiChatMessage>()
                 .HasOne(m => m.User)

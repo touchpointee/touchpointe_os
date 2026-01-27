@@ -148,6 +148,25 @@ namespace Touchpointe.API.Controllers
             }
         }
 
+        [HttpPost("attachments")]
+        public async Task<ActionResult<MessageAttachmentDto>> UploadAttachment(Guid workspaceId, Microsoft.AspNetCore.Http.IFormFile file)
+        {
+            try
+            {
+                if (file == null || file.Length == 0) return BadRequest(new { error = "No file uploaded" });
+
+                using var stream = file.OpenReadStream();
+                var result = await _chatService.UploadAttachmentAsync(workspaceId, GetUserId(), stream, file.FileName, file.ContentType, file.Length);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                // Log the exception?
+                Console.WriteLine($"[Upload Error] {ex}");
+                return BadRequest(new { error = $"Upload failed: {ex.Message}" });
+            }
+        }
+
         [HttpGet("users")]
         public async Task<ActionResult<List<UserDto>>> GetWorkspaceUsers(Guid workspaceId)
         {

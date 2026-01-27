@@ -29,5 +29,6 @@ namespace Touchpointe.Domain.Entities
         public User Sender { get; set; } = null!;
         public ICollection<MessageReaction> Reactions { get; set; } = new List<MessageReaction>();
         public ICollection<ChatMention> Mentions { get; set; } = new List<ChatMention>();
+        public ICollection<MessageAttachment> Attachments { get; set; } = new List<MessageAttachment>();
     }
 }
