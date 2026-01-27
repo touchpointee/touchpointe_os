@@ -290,7 +290,7 @@ namespace Touchpointe.Infrastructure.Services
         public async Task<List<FacebookFormDto>> GetFormsAsync(string pageId, string pageAccessToken)
         {
             var response = await _httpClient.GetAsync(
-                $"{BaseUrl}/{GraphApiVersion}/{pageId}/leadgen_forms?access_token={pageAccessToken}&limit=100");
+                $"{BaseUrl}/{GraphApiVersion}/{pageId}/leadgen_forms?access_token={pageAccessToken}&limit=100&fields=id,name,status,leads_count");
 
             response.EnsureSuccessStatusCode();
             var content = await response.Content.ReadFromJsonAsync<JsonElement>();
@@ -359,6 +359,9 @@ namespace Touchpointe.Infrastructure.Services
                         // Simple field parsing for preview
                         if (item.TryGetProperty("field_data", out var fieldData) && fieldData.ValueKind == JsonValueKind.Array)
                         {
+                            string firstName = "";
+                            string lastName = "";
+
                             foreach (var field in fieldData.EnumerateArray())
                             {
                                 var name = field.TryGetProperty("name", out var n) ? n.GetString() : null;
@@ -373,6 +376,13 @@ namespace Touchpointe.Infrastructure.Services
                                 
                                 if (name == "email") lead.Email = val;
                                 if (name == "full_name") lead.FullName = val;
+                                if (name == "first_name") firstName = val;
+                                if (name == "last_name") lastName = val;
+                            }
+
+                            if (string.IsNullOrEmpty(lead.FullName) && (!string.IsNullOrEmpty(firstName) || !string.IsNullOrEmpty(lastName)))
+                            {
+                                lead.FullName = $"{firstName} {lastName}".Trim();
                             }
                         }
                         leads.Add(lead);
