@@ -137,6 +137,15 @@
     background-color: hsl(var(--popover));
 }
 
+/* Landing Page Dark Theme - Always dark regardless of system preference */
+.bg-background-dark {
+    background-color: #000000 !important;
+}
+
+.surface-dark {
+    background-color: #0a0a0a;
+}
+
 .text-foreground {
     color: hsl(var(--foreground));
 }

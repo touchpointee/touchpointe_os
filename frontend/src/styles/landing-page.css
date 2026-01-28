@@ -5,6 +5,80 @@ html {
     scroll-behavior: smooth;
 }
 
+/* Hide scrollbar on landing page immediately */
+.bg-background-dark {
+    overflow-y: auto;
+    -ms-overflow-style: none !important;
+    scrollbar-width: none !important;
+}
+
+.bg-background-dark::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+}
+
+/* Loading Screen Animations */
+@keyframes glow {
+
+    0%,
+    100% {
+        box-shadow: 0 0 40px rgba(59, 130, 246, 0.6);
+    }
+
+    50% {
+        box-shadow: 0 0 60px rgba(59, 130, 246, 0.9), 0 0 80px rgba(59, 130, 246, 0.6);
+    }
+}
+
+.animate-glow {
+    animation: glow 2s ease-in-out infinite;
+}
+
+/* Hero Text Entrance Animations */
+@keyframes fadeInUp {
+    0% {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInScale {
+    0% {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.hero-title {
+    animation: fadeInUp 0.8s ease-out forwards;
+    opacity: 0;
+}
+
+.hero-subtitle {
+    /* Inherits animation from parent h1, just add extra styling if needed */
+    display: inline;
+}
+
+.hero-description {
+    animation: fadeInUp 0.8s ease-out 0.3s forwards;
+    opacity: 0;
+}
+
+.hero-button {
+    animation: fadeInScale 0.6s ease-out 0.5s forwards;
+    opacity: 0;
+}
+
 /* Text and box glow effects */
 .text-glow {
     text-shadow: 0 0 20px rgba(96, 165, 250, 0.5);
@@ -251,6 +325,8 @@ details>summary::-webkit-details-marker {
     background-position: 0 0, 40px 60px, 130px 270px, 70px 100px, 150px 50px, 220px 180px, 90px 230px;
     animation: twinkle 8s ease-in-out infinite, drift 60s linear infinite;
     opacity: 0.6;
+    will-change: transform, opacity;
+    transform: translateZ(0);
 }
 
 @keyframes twinkle {
@@ -267,11 +343,11 @@ details>summary::-webkit-details-marker {
 
 @keyframes drift {
     from {
-        transform: translateY(0);
+        transform: translateY(0) translateZ(0);
     }
 
     to {
-        transform: translateY(-20px);
+        transform: translateY(-20px) translateZ(0);
     }
 }
 
@@ -283,6 +359,8 @@ details>summary::-webkit-details-marker {
     filter: blur(80px);
     opacity: 0.3;
     animation: float-nebula 20s ease-in-out infinite;
+    will-change: transform;
+    transform: translateZ(0);
 }
 
 .nebula-1 {
@@ -310,15 +388,15 @@ details>summary::-webkit-details-marker {
 
     0%,
     100% {
-        transform: translate(0, 0) scale(1);
+        transform: translate3d(0, 0, 0) scale(1);
     }
 
     33% {
-        transform: translate(30px, -30px) scale(1.1);
+        transform: translate3d(30px, -30px, 0) scale(1.1);
     }
 
     66% {
-        transform: translate(-30px, 30px) scale(0.9);
+        transform: translate3d(-30px, 30px, 0) scale(0.9);
     }
 }
 
@@ -336,24 +414,19 @@ details>summary::-webkit-details-marker {
     border-radius: 50%;
     box-shadow: 0 0 10px rgba(96, 165, 250, 0.5);
     animation: float-particle linear infinite;
+    will-change: transform, opacity;
+    transform: translateZ(0);
+    opacity: 1;
 }
 
 @keyframes float-particle {
     0% {
-        transform: translateY(0) translateX(0);
-        opacity: 0;
-    }
-
-    10% {
-        opacity: 1;
-    }
-
-    90% {
+        transform: translate3d(0, 0, 0);
         opacity: 1;
     }
 
     100% {
-        transform: translateY(-100vh) translateX(var(--drift));
+        transform: translate3d(var(--drift), -100vh, 0);
         opacity: 0;
     }
 }
@@ -375,6 +448,8 @@ details>summary::-webkit-details-marker {
     animation-delay: 3s;
     opacity: 0;
     z-index: 5;
+    will-change: transform, opacity;
+    transform: translateZ(0);
 }
 
 /* Comet tail */
@@ -452,6 +527,8 @@ details>summary::-webkit-details-marker {
     animation-delay: 5s;
     opacity: 0;
     z-index: 5;
+    will-change: transform, opacity;
+    transform: translateZ(0);
 }
 
 .comet-2::before {
@@ -525,6 +602,8 @@ details>summary::-webkit-details-marker {
     animation-delay: 7s;
     opacity: 0;
     z-index: 5;
+    will-change: transform, opacity;
+    transform: translateZ(0);
 }
 
 .comet-3::before {
@@ -600,6 +679,8 @@ details>summary::-webkit-details-marker {
     animation-delay: 4s;
     opacity: 0;
     z-index: 5;
+    will-change: transform, opacity;
+    transform: translateZ(0);
 }
 
 .comet-4::before {

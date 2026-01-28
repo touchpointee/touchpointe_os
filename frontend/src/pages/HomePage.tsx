@@ -1,8 +1,50 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 export function HomePage() {
     const particlesRef = useRef<HTMLDivElement>(null);
+    const [isReady, setIsReady] = useState(false);
+
+    // Preload and initialize galaxy animations
+    useEffect(() => {
+        // Preload particles
+        const particlesContainer = particlesRef.current;
+        if (particlesContainer) {
+            const fragment = document.createDocumentFragment();
+            const particleCount = 30;
+
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+
+                const left = Math.random() * 100;
+                const top = Math.random() * 100; // Random vertical position
+                const animationDuration = 15 + Math.random() * 20;
+                const animationDelay = -Math.random() * 15; // Negative delay for immediate start at different positions
+                const drift = (Math.random() - 0.5) * 200;
+                const size = 2 + Math.random() * 2;
+
+                particle.style.left = `${left}%`;
+                particle.style.top = `${top}%`; // Start at random height
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                particle.style.setProperty('--drift', `${drift}px`);
+                particle.style.animationDuration = `${animationDuration}s`;
+                particle.style.animationDelay = `${animationDelay}s`; // Negative delay
+
+                fragment.appendChild(particle);
+            }
+
+            particlesContainer.appendChild(fragment);
+        }
+
+        // Mark as ready after a short delay to ensure CSS is loaded
+        const timer = requestAnimationFrame(() => {
+            setIsReady(true);
+        });
+
+        return () => cancelAnimationFrame(timer);
+    }, []);
 
     // Hide scrollbar on mount
     useEffect(() => {
@@ -92,41 +134,8 @@ export function HomePage() {
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
-    // Generate particles
-    useEffect(() => {
-        const createParticles = () => {
-            const particlesContainer = particlesRef.current;
-            if (!particlesContainer) return;
-
-            const particleCount = 30;
-
-            for (let i = 0; i < particleCount; i++) {
-                const particle = document.createElement('div');
-                particle.className = 'particle';
-
-                const left = Math.random() * 100;
-                const animationDuration = 15 + Math.random() * 20;
-                const animationDelay = Math.random() * 10;
-                const drift = (Math.random() - 0.5) * 200;
-                const size = 2 + Math.random() * 2;
-
-                particle.style.left = `${left}%`;
-                particle.style.bottom = '0';
-                particle.style.width = `${size}px`;
-                particle.style.height = `${size}px`;
-                particle.style.setProperty('--drift', `${drift}px`);
-                particle.style.animationDuration = `${animationDuration}s`;
-                particle.style.animationDelay = `${animationDelay}s`;
-
-                particlesContainer.appendChild(particle);
-            }
-        };
-
-        createParticles();
-    }, []);
-
     return (
-        <div className="no-scrollbar bg-background-dark text-white font-display overflow-x-hidden antialiased selection:bg-primary/30 selection:text-white">
+        <div className="no-scrollbar bg-background-dark text-white font-display overflow-x-hidden antialiased selection:bg-primary/30 selection:text-white" style={{ minHeight: '100vh' }}>
             {/* Galaxy Background */}
             <div className="fixed inset-0 z-0 pointer-events-none">
                 <div className="stars"></div>
@@ -184,17 +193,17 @@ export function HomePage() {
                 {/* Hero Section */}
                 <section className="relative pt-20 pb-32 overflow-hidden">
                     <div className="max-w-7xl mx-auto px-6 text-center relative z-10">
-                        <h1 className="text-5xl md:text-7xl font-bold tracking-tight leading-[1.1] mb-6 text-transparent bg-clip-text bg-gradient-to-b from-white via-white to-blue-200 drop-shadow-sm max-w-4xl mx-auto scroll-reveal revealed">
+                        <h1 className="hero-title text-5xl md:text-7xl font-bold tracking-tight leading-[1.1] mb-6 text-transparent bg-clip-text bg-gradient-to-b from-white via-white to-blue-200 drop-shadow-sm max-w-4xl mx-auto">
                             Stop the chaos.<br />
-                            <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-blue-300 to-blue-400 text-glow gradient-animate">
+                            <span className="hero-subtitle bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-blue-300 to-blue-400 text-glow gradient-animate">
                                 Start the flow.
                             </span>
                         </h1>
-                        <p className="text-lg md:text-xl text-slate-400 mb-10 max-w-2xl mx-auto leading-relaxed font-light scroll-reveal stagger-1 revealed">
+                        <p className="hero-description text-lg md:text-xl text-slate-400 mb-10 max-w-2xl mx-auto leading-relaxed font-light">
                             Manage leads, automate workflows, and close deals faster with the world's most intelligent CRM platform.
                         </p>
-                        <div className="flex justify-center mb-20 scroll-reveal stagger-2 revealed">
-                            <Link to="/my-tasks" className="bg-gradient-to-r from-blue-400 to-blue-500 hover:from-blue-300 hover:to-blue-400 text-black px-8 py-4 rounded-full font-bold text-lg shadow-[0_0_30px_rgba(96,165,250,0.6)] hover:shadow-[0_0_50px_rgba(96,165,250,0.8)] transition-all transform hover:-translate-y-1 hover:scale-105 btn-shimmer">
+                        <div className="flex justify-center mb-20">
+                            <Link to="/my-tasks" className="hero-button bg-gradient-to-r from-blue-400 to-blue-500 hover:from-blue-300 hover:to-blue-400 text-black px-8 py-4 rounded-full font-bold text-lg shadow-[0_0_30px_rgba(96,165,250,0.6)] hover:shadow-[0_0_50px_rgba(96,165,250,0.8)] transition-all transform hover:-translate-y-1 hover:scale-105 btn-shimmer">
                                 Launch app
                             </Link>
                         </div>
