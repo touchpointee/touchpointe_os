@@ -17,10 +17,12 @@ import PublicFormPage from '@/pages/public/PublicFormPage';
 
 
 import { ToastProvider } from '@/contexts/ToastContext';
+import { Toaster } from 'sonner';
 
 function App() {
     return (
         <ThemeProvider>
+            <Toaster position="bottom-right" richColors theme="system" />
             <ToastProvider>
                 <BrowserRouter>
                     <Routes>

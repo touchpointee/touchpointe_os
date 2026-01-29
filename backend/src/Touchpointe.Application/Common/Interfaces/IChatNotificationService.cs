@@ -12,4 +12,5 @@ public interface IChatNotificationService
     Task NotifyReactionAddedAsync(string channelId, MessageReactionDto reaction);
     Task NotifyReactionRemovedAsync(string channelId, Guid messageId, Guid userId, string emoji);
     Task NotifyReadReceiptAsync(string channelId, Guid userId, Guid messageId);
+    Task NotifyNotificationAsync(Guid userId, string title, string message, int type, string data);
 }

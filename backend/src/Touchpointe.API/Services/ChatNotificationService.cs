@@ -55,4 +55,16 @@ public class ChatNotificationService : IChatNotificationService
     {
         await _hubContext.Clients.Group($"channel:{channelId}").SendAsync("message:read", new { userId, messageId, channelId });
     }
+
+    public async Task NotifyNotificationAsync(Guid userId, string title, string message, int type, string data)
+    {
+        await _hubContext.Clients.User(userId.ToString()).SendAsync("notification:new", new {
+            id = Guid.NewGuid(), // Or pass ID if needed, simplified for generic notification
+            title,
+            message,
+            type,
+            data,
+            createdAt = DateTime.UtcNow
+        });
+    }
 }

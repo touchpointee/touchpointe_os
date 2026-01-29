@@ -130,6 +130,31 @@ export const useRealtimeStore = create<RealtimeState>()((set, get) => ({
             useTeamStore.getState().setUserOnline(userId, false);
         });
 
+        connection.on('notification:new', (notification: any) => {
+            // Use sonner to show toast
+            import('sonner').then(({ toast }) => {
+                toast(notification.title, {
+                    description: notification.message,
+                    action: {
+                        label: 'View',
+                        onClick: () => {
+                            // Basic navigation logic if data contains URL or IDs
+                            // For now just dismiss
+                            console.log('Notification clicked', notification);
+                        }
+                    }
+                });
+            });
+
+            // Optionally verify if we need to refresh notification list in a store
+            // const { fetchNotifications } = useNotificationStore.getState();
+
+            // Add to store for header dropdown
+            import('./notificationStore').then(({ useNotificationStore }) => {
+                useNotificationStore.getState().addNotification(notification);
+            });
+        });
+
         try {
             await connection.start();
             console.log('[Realtime] Connected to SignalR');

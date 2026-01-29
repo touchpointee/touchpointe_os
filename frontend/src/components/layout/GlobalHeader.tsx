@@ -10,6 +10,7 @@ import { CreateWorkspaceModal } from '@/components/workspace/CreateWorkspaceModa
 import { NotificationsPopover } from '@/components/layout/NotificationsPopover';
 import { useSearchStore } from '@/stores/searchStore';
 import { GlobalSearchResults } from '@/components/layout/GlobalSearchModal';
+import { useNotificationStore } from '@/stores/notificationStore';
 
 interface GlobalHeaderProps {
     workspaceName?: string;
@@ -69,6 +70,10 @@ export function GlobalHeader({ workspaceName = 'My Workspace', userName = 'User'
 
         document.addEventListener('mousedown', handleClickOutside);
         document.addEventListener('keydown', handleKeyDown);
+
+        // Fetch notifications
+        useNotificationStore.getState().fetchNotifications();
+
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
             document.removeEventListener('keydown', handleKeyDown);
@@ -245,7 +250,9 @@ export function GlobalHeader({ workspaceName = 'My Workspace', userName = 'User'
                     )}
                 >
                     <Bell className="w-5 h-5 text-muted-foreground" />
-                    <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-destructive" />
+                    {useNotificationStore((state) => state.notifications.filter(n => !n.isRead).length > 0) && (
+                        <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-destructive" />
+                    )}
                 </button>
                 <NotificationsPopover
                     isOpen={isNotificationsOpen}

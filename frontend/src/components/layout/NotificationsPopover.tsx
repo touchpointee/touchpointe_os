@@ -1,13 +1,7 @@
-import { useState, useRef, useEffect } from 'react';
+import { useRef, useEffect } from 'react';
 import { X } from 'lucide-react';
-
-interface Notification {
-    id: string;
-    title: string;
-    message: string;
-    createdAt: string;
-    isRead: boolean;
-}
+import { useNotificationStore } from '@/stores/notificationStore';
+import { cn } from '@/lib/utils';
 
 interface NotificationsPopoverProps {
     isOpen: boolean;
@@ -17,10 +11,7 @@ interface NotificationsPopoverProps {
 
 export function NotificationsPopover({ isOpen, onClose, anchorRef }: NotificationsPopoverProps) {
     const popoverRef = useRef<HTMLDivElement>(null);
-    const [notifications] = useState<Notification[]>([
-        // Mock data for now
-        { id: '1', title: 'Welcome', message: 'Welcome to WorkspaceOS!', createdAt: new Date().toISOString(), isRead: false }
-    ]);
+    const { notifications, markAsRead } = useNotificationStore();
 
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
@@ -56,12 +47,22 @@ export function NotificationsPopover({ isOpen, onClose, anchorRef }: Notificatio
                 ) : (
                     <div className="divide-y divide-border">
                         {notifications.map(n => (
-                            <div key={n.id} className="p-4 hover:bg-accent/50 transition-colors">
-                                <h4 className="text-sm font-medium">{n.title}</h4>
+                            <div
+                                key={n.id}
+                                className={cn(
+                                    "p-4 hover:bg-accent/50 transition-colors cursor-pointer relative group",
+                                    !n.isRead && "bg-accent/10"
+                                )}
+                                onClick={() => !n.isRead && markAsRead(n.id)}
+                            >
+                                <h4 className={cn("text-sm font-medium", !n.isRead && "text-primary")}>{n.title}</h4>
                                 <p className="text-xs text-muted-foreground mt-1">{n.message}</p>
                                 <span className="text-[10px] text-muted-foreground mt-2 block">
-                                    {new Date(n.createdAt).toLocaleDateString()}
+                                    {new Date(n.createdAt).toLocaleDateString()} {new Date(n.createdAt).toLocaleTimeString()}
                                 </span>
+                                {!n.isRead && (
+                                    <span className="absolute top-4 right-4 w-2 h-2 rounded-full bg-primary" />
+                                )}
                             </div>
                         ))}
                     </div>

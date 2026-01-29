@@ -8,10 +8,12 @@ namespace Touchpointe.Application.Services.Notifications
     public class NotificationService : INotificationService
     {
         private readonly IApplicationDbContext _context;
+        private readonly IChatNotificationService _chatNotificationService;
 
-        public NotificationService(IApplicationDbContext context)
+        public NotificationService(IApplicationDbContext context, IChatNotificationService chatNotificationService)
         {
             _context = context;
+            _chatNotificationService = chatNotificationService;
         }
 
         public async Task<List<Domain.Entities.Notification>> GetUserNotificationsAsync(Guid userId)
@@ -53,6 +55,9 @@ namespace Touchpointe.Application.Services.Notifications
 
             _context.Notifications.Add(notification);
             await _context.SaveChangesAsync(CancellationToken.None);
+
+            // SignalR Emit via Interface
+            await _chatNotificationService.NotifyNotificationAsync(userId, notification.Title, notification.Message, notification.Type, notification.Data);
         }
 
         public async Task NotifyUserAsync(Guid userId, string title, string message, int type, string data)
@@ -70,6 +75,9 @@ namespace Touchpointe.Application.Services.Notifications
 
             _context.Notifications.Add(notification);
             await _context.SaveChangesAsync(CancellationToken.None);
+
+            // SignalR Emit via Interface
+            await _chatNotificationService.NotifyNotificationAsync(userId, title, message, type, data);
         }
     }
 }

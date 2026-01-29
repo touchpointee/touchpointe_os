@@ -17,6 +17,7 @@ interface NotificationStore {
     error: string | null;
     fetchNotifications: () => Promise<void>;
     markAsRead: (id: string) => Promise<void>;
+    addNotification: (notification: Notification) => void;
     reset: () => void;
 }
 
@@ -24,6 +25,10 @@ export const useNotificationStore = create<NotificationStore>((set) => ({
     notifications: [],
     isLoading: false,
     error: null,
+
+    addNotification: (notification) => set((state) => ({
+        notifications: [notification, ...state.notifications]
+    })),
 
     reset: () => set({
         notifications: [],
