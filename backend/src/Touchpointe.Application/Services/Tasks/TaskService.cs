@@ -639,11 +639,7 @@ namespace Touchpointe.Application.Services.Tasks
 
             var query = _context.Tasks
                 .Where(t => t.WorkspaceId == workspaceId)
-                .Where(t => 
-                    t.AssigneeId == userId ||
-                    t.Watchers.Any(w => w.UserId == userId) ||
-                    t.Mentions.Any(m => m.UserId == userId) ||
-                    t.Comments.Any(c => c.Mentions.Any(cm => cm.UserId == userId)))
+                .Where(t => t.AssigneeId == userId)
                 .Select(t => new MyTaskDto
                 {
                     TaskId = t.Id,
