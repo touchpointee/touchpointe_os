@@ -43,7 +43,12 @@ export function AppLayout({ children, hideContextSidebar = false, hidePrimarySid
                         (location.pathname.includes('/chat') ? "md:ml-[72px] lg:ml-[392px]" : "md:ml-[72px] lg:ml-[332px]")
                 )
             )}>
-                {(location.pathname.startsWith('/chat') || location.pathname.includes('/chat')) || location.pathname.startsWith('/ai') || hideContextSidebar ? (
+                {(location.pathname.startsWith('/chat') || location.pathname.includes('/chat')) ||
+                    location.pathname.startsWith('/ai') ||
+                    location.pathname.startsWith('/tasks') ||
+                    location.pathname.startsWith('/my-tasks') ||
+                    location.pathname.includes('/crm') ||
+                    hideContextSidebar ? (
                     children
                 ) : (
                     <div className="h-full pt-4 pl-4 md:pt-6 md:pl-6">

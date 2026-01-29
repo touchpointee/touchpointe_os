@@ -65,7 +65,10 @@ namespace Touchpointe.Application.DTOs
         string? SubDescription,
         string? CustomStatus,
         List<TagDto> Tags
-    );
+    )
+    {
+        public string Status { get; set; } = Status;
+    }
 
     public record TagDto(
         Guid Id,

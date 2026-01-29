@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import type { MyTask } from '@/types/myTasks';
 import {
     CheckSquare,
@@ -10,24 +9,20 @@ import {
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { useTaskStore } from '@/stores/taskStore';
-import { useChatStore } from '@/stores/chatStore';
-import { useUserStore } from '@/stores/userStore';
 import { cn } from '@/lib/utils';
 
 interface TaskCardProps {
     task: MyTask;
     onStatusChange: (taskId: string, newStatus: string) => void;
     onClick: (taskId: string) => void;
+    onShare?: (task: MyTask) => void;
 }
 
-export const MyTaskCard: React.FC<TaskCardProps> = ({ task, onClick, onStatusChange }) => {
+export const MyTaskCard: React.FC<TaskCardProps> = ({ task, onClick, onStatusChange, onShare }) => {
     const isDone = task.status === 'DONE';
-    const navigate = useNavigate();
 
     // Stores
     const { activeTimer, startTimer, stopTimer } = useTaskStore();
-    const { channels, fetchChannels, postMessage, setActiveChannel } = useChatStore();
-    const { user } = useUserStore();
 
     // Timer Logic
     const isRunning = activeTimer?.taskId === task.taskId;
@@ -66,30 +61,11 @@ export const MyTaskCard: React.FC<TaskCardProps> = ({ task, onClick, onStatusCha
     };
 
     // Message Logic
-    const handleMessageClick = async (e: React.MouseEvent) => {
+    const handleMessageClick = (e: React.MouseEvent) => {
         e.stopPropagation();
         e.preventDefault();
-
-        const listName = task.listName;
-        if (!listName) return;
-
-        // Find Channel
-        let targetChannel = channels.find(c => c.name === listName);
-        if (!targetChannel) {
-            await fetchChannels(task.workspaceId);
-            targetChannel = useChatStore.getState().channels.find(c => c.name === listName);
-        }
-
-        if (targetChannel && user) {
-            // Set Active Channel FIRST
-            setActiveChannel(targetChannel.id);
-
-            // Post Message
-            const messageContent = `Shared Task: **${task.title}**\nID: ${task.taskId.substring(0, 8)}\nStatus: ${task.status}\nAssignee: ${task.assigneeName || 'Unassigned'}`;
-            await postMessage(task.workspaceId, messageContent, user.id, user.fullName || 'User');
-
-            // Redirect
-            navigate(`/chat/channel/${targetChannel.id}`);
+        if (onShare) {
+            onShare(task);
         }
     };
 

@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import {
     DndContext,
     DragOverlay,
@@ -13,13 +13,13 @@ import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-
 import { CSS } from '@dnd-kit/utilities';
 import { useTaskStore } from '@/stores/taskStore';
 import { useHierarchyStore } from '@/stores/hierarchyStore';
-import { useChatStore } from '@/stores/chatStore';
-import { useUserStore } from '@/stores/userStore';
 import { useWorkspaces, isValidUUID } from '@/stores/workspaceStore';
 import type { TaskDto } from '@/types/task';
 import type { TaskStatusDto } from '@/types/hierarchy';
 import { cn } from '@/lib/utils';
 import { Plus, MoreHorizontal, Palette, Trash2, Edit2, User, MessageSquare, Timer, Play, Pause } from 'lucide-react';
+
+import { ShareTaskToChatModal } from './ShareTaskToChatModal';
 
 const PRESET_COLORS = [
     '#6B7280', // Gray
@@ -69,6 +69,7 @@ export function TaskBoardView() {
     const [activeId, setActiveId] = useState<string | null>(null);
     const [isAddingGroup, setIsAddingGroup] = useState(false);
     const [newGroupName, setNewGroupName] = useState('');
+    const [shareTask, setShareTask] = useState<TaskDto | null>(null);
 
     // Early return AFTER all hooks
     if (!workspaceId || !isValidUUID(workspaceId)) {
@@ -200,78 +201,98 @@ export function TaskBoardView() {
         }
     };
 
+    const handleShareTask = (task: TaskDto) => {
+        // Find list name if needed for creation, although modal does it too?
+        // Let's attach listName to the task if not present, but TaskDto has no listName field?
+        // TaskDto has listId. Modal expects listName for auto-channel.
+        // We can find it here.
+        let listName = currentList?.name || '';
+
+        setShareTask({ ...task, listName } as any); // Casting since TaskDto might not define listName but Modal expects it
+    };
+
     const activeTask = activeId ? listTasks.find(t => t.id === activeId) : null;
 
     return (
-        <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-            <div className="flex h-full p-4 items-stretch min-h-0 min-w-0 overflow-x-auto overflow-y-hidden snap-x snap-mandatory md:snap-none selection:bg-black selection:text-white dark:selection:bg-white dark:selection:text-black">
-                {statusDefs.map(status => (
-                    <BoardColumn
-                        key={status.id}
-                        statusDef={status}
-                        tasks={tasksByStatus[status.id] || []}
-                        onTaskClick={handleTaskClick}
-                        onAddTask={() => handleAddTask(status.id)}
-                        onUpdateStatus={(updates) => handleUpdateStatus(status.id, updates)}
-                        onDeleteStatus={() => handleDeleteStatus(status.id)}
-                        subtitle={currentList?.name}
-                    />
-                ))}
+        <>
+            <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+                <div className="flex h-full p-4 items-stretch min-h-0 min-w-0 overflow-x-auto overflow-y-hidden snap-x snap-mandatory md:snap-none selection:bg-black selection:text-white dark:selection:bg-white dark:selection:text-black">
+                    {statusDefs.map(status => (
+                        <BoardColumn
+                            key={status.id}
+                            statusDef={status}
+                            tasks={tasksByStatus[status.id] || []}
+                            onTaskClick={handleTaskClick}
+                            onAddTask={() => handleAddTask(status.id)}
+                            onUpdateStatus={(updates) => handleUpdateStatus(status.id, updates)}
+                            onDeleteStatus={() => handleDeleteStatus(status.id)}
+                            subtitle={currentList?.name}
+                            onShare={handleShareTask}
+                        />
+                    ))}
 
-                {/* Fallback 'Unknown' column if dirty data */}
-                {(tasksByStatus['unknown']?.length > 0) && (
-                    <BoardColumn
-                        key="unknown"
-                        statusDef={{ id: 'unknown', listId: listId || '', name: 'Unknown', color: '#999', category: 'NotStarted', order: 99 }}
-                        tasks={tasksByStatus['unknown']}
-                        onTaskClick={handleTaskClick}
-                        onAddTask={() => { }}
-                        onUpdateStatus={() => { }}
-                        onDeleteStatus={() => { }}
-                        subtitle={currentList?.name}
-                    />
-                )}
-
-                {/* Create New Group Column */}
-                <div className="min-w-[200px] pt-1">
-                    {!isAddingGroup ? (
-                        <button
-                            onClick={() => setIsAddingGroup(true)}
-                            className="flex items-center gap-2 text-muted-foreground hover:text-foreground hover:bg-muted/50 px-3 py-2 rounded-lg transition-colors text-sm w-full"
-                        >
-                            <Plus className="w-4 h-4" /> Add group
-                        </button>
-                    ) : (
-                        <div className="bg-card border border-border rounded-lg p-3 animate-in fade-in w-[280px]">
-                            <input
-                                type="text"
-                                value={newGroupName}
-                                onChange={e => setNewGroupName(e.target.value)}
-                                placeholder="Group name"
-                                className="w-full bg-background border border-input px-2 py-1.5 rounded text-sm mb-2 focus:ring-1 focus:ring-primary outline-none"
-                                autoFocus
-                                onKeyDown={e => {
-                                    if (e.key === 'Enter') handleAddStatus();
-                                    if (e.key === 'Escape') setIsAddingGroup(false);
-                                }}
-                            />
-                            <div className="flex gap-2">
-                                <button onClick={handleAddStatus} className="bg-primary text-primary-foreground px-3 py-1 rounded text-xs font-medium">Add</button>
-                                <button onClick={() => setIsAddingGroup(false)} className="hover:bg-accent px-2 py-1 rounded text-xs">Cancel</button>
-                            </div>
-                        </div>
+                    {/* Fallback 'Unknown' column if dirty data */}
+                    {(tasksByStatus['unknown']?.length > 0) && (
+                        <BoardColumn
+                            key="unknown"
+                            statusDef={{ id: 'unknown', listId: listId || '', name: 'Unknown', color: '#999', category: 'NotStarted', order: 99 }}
+                            tasks={tasksByStatus['unknown']}
+                            onTaskClick={handleTaskClick}
+                            onAddTask={() => { }}
+                            onUpdateStatus={() => { }}
+                            onDeleteStatus={() => { }}
+                            subtitle={currentList?.name}
+                            onShare={handleShareTask}
+                        />
                     )}
-                </div>
 
-            </div>
-            <DragOverlay>
-                {activeTask ? <TaskCard task={activeTask} isOverlay subtitle={currentList?.name} /> : null}
-            </DragOverlay>
-        </DndContext>
+                    {/* Create New Group Column */}
+                    <div className="min-w-[200px] pt-1">
+                        {!isAddingGroup ? (
+                            <button
+                                onClick={() => setIsAddingGroup(true)}
+                                className="flex items-center gap-2 text-muted-foreground hover:text-foreground hover:bg-muted/50 px-3 py-2 rounded-lg transition-colors text-sm w-full"
+                            >
+                                <Plus className="w-4 h-4" /> Add group
+                            </button>
+                        ) : (
+                            <div className="bg-card border border-border rounded-lg p-3 animate-in fade-in w-[280px]">
+                                <input
+                                    type="text"
+                                    value={newGroupName}
+                                    onChange={e => setNewGroupName(e.target.value)}
+                                    placeholder="Group name"
+                                    className="w-full bg-background border border-input px-2 py-1.5 rounded text-sm mb-2 focus:ring-1 focus:ring-primary outline-none"
+                                    autoFocus
+                                    onKeyDown={e => {
+                                        if (e.key === 'Enter') handleAddStatus();
+                                        if (e.key === 'Escape') setIsAddingGroup(false);
+                                    }}
+                                />
+                                <div className="flex gap-2">
+                                    <button onClick={handleAddStatus} className="bg-primary text-primary-foreground px-3 py-1 rounded text-xs font-medium">Add</button>
+                                    <button onClick={() => setIsAddingGroup(false)} className="hover:bg-accent px-2 py-1 rounded text-xs">Cancel</button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                </div>
+                <DragOverlay>
+                    {activeTask ? <TaskCard task={activeTask} isOverlay subtitle={currentList?.name} /> : null}
+                </DragOverlay>
+            </DndContext>
+
+            <ShareTaskToChatModal
+                isOpen={!!shareTask}
+                task={shareTask}
+                onClose={() => setShareTask(null)}
+            />
+        </>
     );
 }
 
-function BoardColumn({ statusDef, tasks, onTaskClick, onAddTask, onUpdateStatus, onDeleteStatus, subtitle }: {
+function BoardColumn({ statusDef, tasks, onTaskClick, onAddTask, onUpdateStatus, onDeleteStatus, subtitle, onShare }: {
     statusDef: TaskStatusDto;
     tasks: TaskDto[];
     onTaskClick: (id: string) => void;
@@ -279,16 +300,12 @@ function BoardColumn({ statusDef, tasks, onTaskClick, onAddTask, onUpdateStatus,
     onUpdateStatus: (updates: { name?: string; color?: string }) => void;
     onDeleteStatus: () => void;
     subtitle?: string;
+    onShare?: (task: TaskDto) => void;
 }) {
     const { setNodeRef, isOver } = useDroppable({ id: statusDef.id });
     const [isEditingName, setIsEditingName] = useState(false);
     const [editName, setEditName] = useState(statusDef.name);
     const [showMenu, setShowMenu] = useState(false);
-
-    // Sync state when prop changes
-    useEffect(() => {
-        setEditName(statusDef.name);
-    }, [statusDef.name]);
 
     // Sync state when prop changes
     useEffect(() => {
@@ -429,6 +446,7 @@ function BoardColumn({ statusDef, tasks, onTaskClick, onAddTask, onUpdateStatus,
                             task={task}
                             onClick={() => onTaskClick(task.id)}
                             subtitle={subtitle}
+                            onShare={onShare}
                         />
                     ))}
                 </SortableContext>
@@ -445,7 +463,7 @@ function BoardColumn({ statusDef, tasks, onTaskClick, onAddTask, onUpdateStatus,
     );
 }
 
-function SortableTaskItem({ task, onClick, subtitle }: { task: TaskDto; onClick?: () => void; subtitle?: string }) {
+function SortableTaskItem({ task, onClick, subtitle, onShare }: { task: TaskDto; onClick?: () => void; subtitle?: string; onShare?: (task: TaskDto) => void }) {
     const {
         attributes,
         listeners,
@@ -468,12 +486,12 @@ function SortableTaskItem({ task, onClick, subtitle }: { task: TaskDto; onClick?
             {...listeners}
             className={cn(isDragging && "opacity-50 z-50 transform-gpu")}
         >
-            <TaskCard task={task} subtitle={subtitle} onOpenDetail={onClick} />
+            <TaskCard task={task} subtitle={subtitle} onOpenDetail={onClick} onShare={onShare} />
         </div>
     );
 }
 
-function TaskCard({ task, isOverlay, subtitle, onOpenDetail }: { task: TaskDto; isOverlay?: boolean; subtitle?: string; onOpenDetail?: () => void }) {
+function TaskCard({ task, isOverlay, subtitle, onOpenDetail, onShare }: { task: TaskDto; isOverlay?: boolean; subtitle?: string; onOpenDetail?: () => void; onShare?: (task: TaskDto) => void }) {
     const priorityColors: Record<string, string> = {
         URGENT: 'text-[#F97316] bg-[#F97316]/10 border-[#F97316]/20',
         HIGH: 'text-[#F59E0B] bg-[#F59E0B]/10 border-[#F59E0B]/20',
@@ -520,45 +538,11 @@ function TaskCard({ task, isOverlay, subtitle, onOpenDetail }: { task: TaskDto; 
         }
     };
 
-    const navigate = useNavigate();
-    const { spaces } = useHierarchyStore();
-    const { channels, fetchChannels, postMessage, setActiveChannel } = useChatStore();
-    const { user } = useUserStore();
-
-    const handleMessageClick = async (e: React.MouseEvent) => {
+    const handleMessageClick = (e: React.MouseEvent) => {
         e.stopPropagation();
         e.preventDefault();
-
-        // 1. Find List Name (Project Name)
-        let listName = '';
-        for (const s of spaces) {
-            const list = s.lists.find(l => l.id === task.listId);
-            if (list) { listName = list.name; break; }
-            for (const f of s.folders) {
-                const fList = f.lists.find(l => l.id === task.listId);
-                if (fList) { listName = fList.name; break; }
-            }
-        }
-
-        if (!listName) return;
-
-        // 2. Find Channel
-        let targetChannel = channels.find(c => c.name === listName);
-        if (!targetChannel) {
-            await fetchChannels(task.workspaceId);
-            targetChannel = useChatStore.getState().channels.find(c => c.name === listName);
-        }
-
-        if (targetChannel && user) {
-            // 3. Set Active Channel FIRST (required for postMessage to know target)
-            setActiveChannel(targetChannel.id);
-
-            // 4. Post Message
-            const messageContent = `Shared Task: **${task.title}**\nID: ${task.id.substring(0, 8)}\nStatus: ${task.status}\nAssignee: ${task.assigneeName || 'Unassigned'}`;
-            await postMessage(task.workspaceId, messageContent, user.id, user.fullName || 'User');
-
-            // 5. Redirect
-            navigate(`/chat/channel/${targetChannel.id}`);
+        if (onShare) {
+            onShare(task);
         }
     };
 

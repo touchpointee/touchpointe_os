@@ -34,7 +34,10 @@ namespace Touchpointe.Application.Services.Tasks
                 .OrderBy(t => t.OrderIndex)
                 .Select(t => MapToDto(t));
 
-            return await PaginatedList<TaskDto>.CreateAsync(query, pageNumber, pageSize);
+            var paginatedList = await PaginatedList<TaskDto>.CreateAsync(query, pageNumber, pageSize);
+            await PopulateStatusNamesAsync(paginatedList.Items, cancellationToken);
+
+            return paginatedList;
         }
 
         public async Task<TaskDto> CreateTaskAsync(Guid workspaceId, Guid userId, CreateTaskRequest request, CancellationToken cancellationToken = default)
@@ -126,7 +129,9 @@ namespace Touchpointe.Application.Services.Tasks
                 .Include(t => t.Tags)
                 .FirstAsync(t => t.Id == task.Id, cancellationToken);
 
-            return MapToDto(createdTask);
+            var dto = MapToDto(createdTask);
+            await PopulateStatusNamesAsync(new[] { dto }, cancellationToken);
+            return dto;
         }
 
         public async Task<TaskDto> UpdateTaskAsync(Guid workspaceId, Guid userId, Guid taskId, UpdateTaskRequest request, CancellationToken cancellationToken = default)
@@ -284,7 +289,9 @@ namespace Touchpointe.Application.Services.Tasks
             task.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync(cancellationToken);
 
-            return MapToDto(task);
+            var dto = MapToDto(task);
+            await PopulateStatusNamesAsync(new[] { dto }, cancellationToken);
+            return dto;
         }
 
         public async Task<List<TaskActivityDto>> GetTaskActivitiesAsync(Guid workspaceId, Guid taskId, CancellationToken cancellationToken = default)
@@ -341,7 +348,10 @@ namespace Touchpointe.Application.Services.Tasks
             
             var attachments = await _attachmentService.GetAttachmentsAsync(workspaceId, taskId);
 
-            return new TaskDetailDto(MapToDto(task), subtasks, comments, activities, attachments);
+            var dto = MapToDto(task);
+            await PopulateStatusNamesAsync(new[] { dto }, cancellationToken);
+
+            return new TaskDetailDto(dto, subtasks, comments, activities, attachments);
         }
 
         public async Task<SubtaskDto> AddSubtaskAsync(Guid workspaceId, Guid userId, Guid taskId, CreateSubtaskRequest request, CancellationToken cancellationToken = default)
@@ -589,6 +599,31 @@ namespace Touchpointe.Application.Services.Tasks
             }
             // Save changes happens in caller
         }
+
+        private async Task PopulateStatusNamesAsync(IEnumerable<TaskDto> tasks, CancellationToken cancellationToken)
+        {
+            var customStatusIds = tasks
+                .Where(t => Guid.TryParse(t.Status, out _))
+                .Select(t => Guid.Parse(t.Status))
+                .Distinct()
+                .ToList();
+
+            if (customStatusIds.Any())
+            {
+                var statusMap = await _context.ListStatuses
+                    .Where(s => customStatusIds.Contains(s.Id))
+                    .ToDictionaryAsync(s => s.Id.ToString(), s => s.Name, StringComparer.OrdinalIgnoreCase, cancellationToken);
+                
+                foreach (var task in tasks)
+                {
+                    if (statusMap.TryGetValue(task.Status, out var name))
+                    {
+                        task.Status = name;
+                    }
+                }
+            }
+        }
+
         public async Task<PaginatedList<MyTaskDto>> GetMyTasksAsync(Guid userId, Guid workspaceId, int pageNumber, int pageSize, CancellationToken cancellationToken = default)
         {
             var today = DateTime.UtcNow.Date;
@@ -610,7 +645,7 @@ namespace Touchpointe.Application.Services.Tasks
                     WorkspaceName = t.Workspace.Name,
                     SpaceName = t.List.Space.Name,
                     ListName = t.List.Name,
-                    Status = t.CustomStatus ?? t.Status.ToString(), // Logic simplification for projection
+                    Status = t.CustomStatus ?? t.Status.ToString(), // Holds GUID if custom, Enum if standard
                     Priority = t.Priority.ToString(),
                     DueDate = t.DueDate,
                     AssigneeName = t.Assignee != null ? t.Assignee.FullName : "",
@@ -627,23 +662,40 @@ namespace Touchpointe.Application.Services.Tasks
                                   || t.Comments.Any(c => c.Mentions.Any(cm => cm.UserId == userId)),
                     
                     IsBlocked = t.Status == TaskStatus.BLOCKED,
-                    // Note: Date logic in SQL is tricky. We'll do simple projection and urgency calc in memory if needed?
-                    // But we MUST paginate at DB level. So urgency sorting needs to happen in DB or we accept simple sorting.
-                    // For now, let's sort by Default (UpdatedAt desc) to allow pagination.
-                    // Urgency Score calculation is complex to translate to SQL. 
-                    // To strictly follow "Pagination must happen at DB", we must drop in-memory sorting or implement full SQL projection.
-                    // Given constraints, I will order by UpdatedAt Descending for now to fix the blocker.
-                    
                     IsOverdue = t.DueDate.HasValue && t.DueDate.Value < now && t.Status != TaskStatus.DONE,
                     IsDueToday = t.DueDate.HasValue && t.DueDate.Value.Date == now.Date,
                     IsDueThisWeek = t.DueDate.HasValue && t.DueDate.Value <= now.AddDays(7) && t.DueDate.Value >= now,
                     
-                    LastActivityAt = t.UpdatedAt, // Approximation
-                    UrgencyScore = 0 // Placeholder, or implement SQL calc
+                    LastActivityAt = t.UpdatedAt,
+                    UrgencyScore = 0 
                 })
                 .OrderByDescending(t => t.LastActivityAt);
 
-            return await PaginatedList<MyTaskDto>.CreateAsync(query, pageNumber, pageSize);
+            var paginatedList = await PaginatedList<MyTaskDto>.CreateAsync(query, pageNumber, pageSize);
+
+            // Post-process to resolve Status GUIDs to Names
+            var customStatusIds = paginatedList.Items
+                .Where(t => Guid.TryParse(t.Status, out _))
+                .Select(t => Guid.Parse(t.Status))
+                .Distinct()
+                .ToList();
+
+            if (customStatusIds.Any())
+            {
+                var statusMap = await _context.ListStatuses
+                    .Where(s => customStatusIds.Contains(s.Id))
+                    .ToDictionaryAsync(s => s.Id.ToString(), s => s.Name, StringComparer.OrdinalIgnoreCase, cancellationToken);
+                
+                foreach (var task in paginatedList.Items)
+                {
+                    if (statusMap.TryGetValue(task.Status, out var name))
+                    {
+                        task.Status = name;
+                    }
+                }
+            }
+
+            return paginatedList;
         }
 
         public async Task DeleteTaskAsync(Guid workspaceId, Guid userId, Guid taskId, CancellationToken cancellationToken = default)

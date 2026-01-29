@@ -11,9 +11,10 @@ interface TaskListRowProps {
     task: MyTask;
     onStatusChange: (taskId: string, newStatus: string) => void;
     onClick: (taskId: string) => void;
+    onShare?: (task: MyTask) => void;
 }
 
-export const MyTaskListRow: React.FC<TaskListRowProps> = ({ task, onClick, onStatusChange }) => {
+export const MyTaskListRow: React.FC<TaskListRowProps> = ({ task, onClick, onStatusChange, onShare }) => {
     const isDone = task.status === 'DONE';
 
     const getPriorityColor = (p: string) => {
@@ -83,6 +84,10 @@ export const MyTaskListRow: React.FC<TaskListRowProps> = ({ task, onClick, onSta
                     <Timer className="w-4 h-4" />
                 </button>
                 <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        if (onShare) onShare(task);
+                    }}
                     className="p-1.5 rounded hover:bg-white/10 text-muted-foreground hover:text-foreground transition-colors"
                 >
                     <MessageSquare className="w-4 h-4" />

@@ -27,6 +27,7 @@ namespace Touchpointe.Application
             services.AddScoped<Services.Tasks.ListStatusService>();
             services.AddScoped<ITimeTrackingService, Services.TimeTrackingService>();
             services.AddScoped<ILeadService, Services.Leads.LeadService>();
+            services.AddScoped<ISearchService, Services.Search.SearchService>();
             services.AddHttpClient();
 
             services.AddValidatorsFromAssembly(System.Reflection.Assembly.GetExecutingAssembly());

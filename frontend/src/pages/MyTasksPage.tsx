@@ -11,6 +11,7 @@ import type { MyTask } from '@/types/myTasks';
 import type { UserMention } from '@/types/mention';
 import { MyTaskCard } from '@/components/tasks/MyTaskCard';
 import { TaskDetailPanel } from '@/components/tasks/TaskDetailPanel';
+import { ShareTaskToChatModal } from '@/components/tasks/ShareTaskToChatModal';
 import { Loader2, Inbox, Bell, MessageSquare, MessageCircle, CheckCircle, LayoutList, LayoutGrid, AlertCircle } from 'lucide-react';
 import { MyTaskListRow } from '@/components/tasks/MyTaskListRow';
 import { formatDistanceToNow } from 'date-fns';
@@ -23,6 +24,7 @@ export const MyTasksPage = () => {
     const [tasks, setTasks] = useState<MyTask[]>([]);
     const [loading, setLoading] = useState(true);
     const [viewMode, setViewMode] = useState<'GRID' | 'LIST'>('GRID');
+    const [shareTask, setShareTask] = useState<MyTask | null>(null);
 
     const navigate = useNavigate();
 
@@ -210,6 +212,7 @@ export const MyTasksPage = () => {
             </div>
         );
     }
+
 
     return (
         <div className="h-full flex flex-col bg-background relative overflow-hidden">
@@ -402,6 +405,7 @@ export const MyTasksPage = () => {
                                                     task={task}
                                                     onStatusChange={handleStatusChange}
                                                     onClick={() => openTaskDetail(task.taskId)}
+                                                    onShare={setShareTask}
                                                 />
                                             ) : (
                                                 <MyTaskListRow
@@ -421,6 +425,11 @@ export const MyTasksPage = () => {
             </div>
 
             {isDetailPanelOpen && <TaskDetailPanel />}
+            <ShareTaskToChatModal
+                isOpen={!!shareTask}
+                task={shareTask as any}
+                onClose={() => setShareTask(null)}
+            />
         </div>
     );
 };

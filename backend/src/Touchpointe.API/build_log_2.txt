@@ -1,0 +1,13 @@
+  Determining projects to restore...
+  Restored C:\Users\ajmal\Desktop\touchpointe\touchpointe_os\backend\src\Touchpointe.API\Touchpointe.API.csproj (in 494 ms).
+  3 of 4 projects are up-to-date for restore.
+  Touchpointe.Domain -> C:\Users\ajmal\Desktop\touchpointe\touchpointe_os\backend\src\Touchpointe.Domain\bin\Debug\net9.0\Touchpointe.Domain.dll
+  Touchpointe.Application -> C:\Users\ajmal\Desktop\touchpointe\touchpointe_os\backend\src\Touchpointe.Application\bin\Debug\net9.0\Touchpointe.Application.dll
+  Touchpointe.Infrastructure -> C:\Users\ajmal\Desktop\touchpointe\touchpointe_os\backend\src\Touchpointe.Infrastructure\bin\Debug\net9.0\Touchpointe.Infrastructure.dll
+  Touchpointe.API -> C:\Users\ajmal\Desktop\touchpointe\touchpointe_os\backend\src\touchpointe.api\bin\Debug\net9.0\Touchpointe.API.dll
+
+Build succeeded.
+    0 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:00:02.66

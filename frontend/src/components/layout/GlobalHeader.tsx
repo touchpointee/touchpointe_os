@@ -8,6 +8,8 @@ import { useUserStore } from '@/stores/userStore';
 import { cn } from '@/lib/utils';
 import { CreateWorkspaceModal } from '@/components/workspace/CreateWorkspaceModal';
 import { NotificationsPopover } from '@/components/layout/NotificationsPopover';
+import { useSearchStore } from '@/stores/searchStore';
+import { GlobalSearchResults } from '@/components/layout/GlobalSearchModal';
 
 interface GlobalHeaderProps {
     workspaceName?: string;
@@ -33,9 +35,15 @@ export function GlobalHeader({ workspaceName = 'My Workspace', userName = 'User'
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
 
+    // Search store
+    const { query, setQuery, search, setIsOpen: setIsSearchOpen } = useSearchStore();
+    const searchInputRef = useRef<HTMLInputElement>(null);
+
     const profileRef = useRef<HTMLDivElement>(null);
     const workspaceRef = useRef<HTMLDivElement>(null);
     const notificationRef = useRef<HTMLButtonElement>(null);
+
+    const searchContainerRef = useRef<HTMLDivElement>(null);
 
     // Click outside handler
     useEffect(() => {
@@ -46,10 +54,25 @@ export function GlobalHeader({ workspaceName = 'My Workspace', userName = 'User'
             if (workspaceRef.current && !workspaceRef.current.contains(event.target as Node)) {
                 setIsWorkspaceOpen(false);
             }
-            // Notifications handled by popover internal logic or similar
+            if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
+                useSearchStore.getState().setIsOpen(false);
+            }
         }
+
+        function handleKeyDown(event: KeyboardEvent) {
+            if (event.key === 'Escape') {
+                setIsProfileOpen(false);
+                setIsWorkspaceOpen(false);
+                useSearchStore.getState().setIsOpen(false);
+            }
+        }
+
         document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
+        document.addEventListener('keydown', handleKeyDown);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+            document.removeEventListener('keydown', handleKeyDown);
+        };
     }, []);
 
     const handleLogout = () => {
@@ -155,16 +178,33 @@ export function GlobalHeader({ workspaceName = 'My Workspace', userName = 'User'
                     )}
                 </div>
             </div>
-
             {/* Center: Search */}
             <div className="flex-1 max-w-md mx-8 hidden sm:block">
-                <div className="relative">
+                <div className="relative z-50" ref={searchContainerRef}>
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <input
+                        ref={searchInputRef}
                         type="text"
                         placeholder="Search... (Ctrl+K)"
                         className="w-full h-9 pl-9 pr-4 rounded-lg bg-muted/50 border border-border/50 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring transition-all"
+                        value={query}
+                        onChange={(e) => {
+                            const val = e.target.value;
+                            setQuery(val);
+                            if (val.trim() && activeWorkspace) {
+                                setIsSearchOpen(true);
+                                search(activeWorkspace.id, val);
+                            } else {
+                                setIsSearchOpen(false);
+                            }
+                        }}
+                        onFocus={() => {
+                            if (query.trim()) {
+                                setIsSearchOpen(true);
+                            }
+                        }}
                     />
+                    <GlobalSearchResults />
                 </div>
             </div>
 
@@ -266,6 +306,6 @@ export function GlobalHeader({ workspaceName = 'My Workspace', userName = 'User'
                 isOpen={isCreateModalOpen}
                 onClose={() => setIsCreateModalOpen(false)}
             />
-        </header>
+        </header >
     );
 }
