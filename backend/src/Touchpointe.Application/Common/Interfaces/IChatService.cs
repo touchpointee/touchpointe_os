@@ -10,6 +10,8 @@ namespace Touchpointe.Application.Common.Interfaces
         // Channels
         Task<List<ChannelDto>> GetChannelsAsync(Guid workspaceId, Guid userId);
         Task<ChannelDto> CreateChannelAsync(Guid workspaceId, Guid userId, CreateChannelRequest request);
+        Task<ChannelDto> UpdateChannelAsync(Guid workspaceId, Guid channelId, Guid userId, UpdateChannelRequest request);
+        Task DeleteChannelAsync(Guid workspaceId, Guid channelId, Guid userId);
         Task<bool> JoinChannelAsync(Guid workspaceId, Guid channelId, Guid userId);
         Task<bool> LeaveChannelAsync(Guid workspaceId, Guid channelId, Guid userId);
 

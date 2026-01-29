@@ -3,8 +3,9 @@ import { useChatStore } from '@/stores/chatStore';
 import { useWorkspaces } from '@/stores/workspaceStore';
 import { useTeamStore } from '@/stores/teamStore';
 import { useUserStore } from '@/stores/userStore';
-import { Plus, Lock, ChevronDown, Search, PenBox, Hash } from 'lucide-react';
+import { Plus, Lock, ChevronDown, Search, PenBox, Hash, MoreVertical, Trash2, Edit2 } from 'lucide-react';
 import { format, isToday, isYesterday } from 'date-fns';
+import * as Popover from '@radix-ui/react-popover';
 
 export function ChatSidebar() {
     const {
@@ -32,6 +33,72 @@ export function ChatSidebar() {
 
     const [isChannelsOpen, setIsChannelsOpen] = useState(true);
     const [isDmsOpen, setIsDmsOpen] = useState(true);
+
+    // Edit/Delete States
+    const [editingChannel, setEditingChannel] = useState<any | null>(null);
+    const [deletingChannelId, setDeletingChannelId] = useState<string | null>(null);
+
+    // Edit Form State
+    const [editName, setEditName] = useState('');
+    const [editDescription, setEditDescription] = useState('');
+    const [editIsPrivate, setEditIsPrivate] = useState(false);
+
+    // Actions
+    const { updateChannel, deleteChannel } = useChatStore();
+
+    const openEditModal = (channel: any) => {
+        setEditingChannel(channel);
+        setEditName(channel.name);
+        setEditDescription(channel.description || '');
+        setEditIsPrivate(channel.isPrivate);
+    };
+
+    const handleUpdateChannel = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!activeWorkspace || !editingChannel || !editName.trim()) return;
+
+        await updateChannel(activeWorkspace.id, editingChannel.id, editName, editIsPrivate, editDescription);
+        setEditingChannel(null);
+    };
+
+    const handleDeleteChannel = async (id: string) => {
+        if (!activeWorkspace) return;
+        await deleteChannel(activeWorkspace.id, id);
+        setDeletingChannelId(null);
+    };
+
+    // Helper Component for Menu
+    const EditChannelMenu = ({ channel }: { channel: any }) => {
+        const [isOpen, setIsOpen] = useState(false);
+        return (
+            <Popover.Root open={isOpen} onOpenChange={setIsOpen}>
+                <Popover.Trigger asChild>
+                    <button
+                        onClick={(e) => { e.stopPropagation(); }}
+                        className="p-1 text-[#aebac1] hover:text-[#e9edef] hover:bg-[#374045] rounded transition-all"
+                    >
+                        <MoreVertical className="w-3.5 h-3.5" />
+                    </button>
+                </Popover.Trigger>
+                <Popover.Portal>
+                    <Popover.Content className="w-32 bg-[#202c33] rounded-md shadow-lg border border-[#2f3b43] p-1 z-50 animate-in zoom-in-95 duration-200" side="right" align="start">
+                        <button
+                            onClick={(e) => { e.stopPropagation(); setIsOpen(false); openEditModal(channel); }}
+                            className="w-full text-left px-2 py-1.5 text-xs text-[#e9edef] hover:bg-[#374045] rounded flex items-center gap-2"
+                        >
+                            <Edit2 className="w-3 h-3" /> Edit
+                        </button>
+                        <button
+                            onClick={(e) => { e.stopPropagation(); setIsOpen(false); setDeletingChannelId(channel.id); }}
+                            className="w-full text-left px-2 py-1.5 text-xs text-red-400 hover:bg-[#374045] rounded flex items-center gap-2"
+                        >
+                            <Trash2 className="w-3 h-3" /> Delete
+                        </button>
+                    </Popover.Content>
+                </Popover.Portal>
+            </Popover.Root>
+        );
+    };
 
     useEffect(() => {
         if (activeWorkspace) {
@@ -221,24 +288,89 @@ export function ChatSidebar() {
                     {isChannelsOpen && (
                         <div className="px-3 space-y-[2px]">
                             {filteredChannels.map(channel => (
-                                <button
-                                    key={channel.id}
-                                    onClick={() => setActiveChannel(channel.id)}
-                                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-[6px] transition-all group relative overflow-hidden ${activeChannelId === channel.id
-                                        ? 'bg-[#202c33] text-[#e9edef] before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-4 before:w-[3px] before:bg-[#00a884] before:rounded-r-full'
-                                        : 'text-[#e9edef] hover:bg-[#202c33]'
-                                        }`}
-                                >
-                                    <div className={`shrink-0 ${activeChannelId === channel.id ? 'text-[#00a884]' : 'text-[#8696a0] group-hover:text-[#aebac1]'}`}>
-                                        {channel.isPrivate ? <Lock className="w-4 h-4" /> : <Hash className="w-4 h-4" />}
-                                    </div>
+                                <div key={channel.id} className="relative group/channel">
+                                    <button
+                                        onClick={() => setActiveChannel(channel.id)}
+                                        className={`w-full flex items-center gap-3 px-3 py-2 rounded-[6px] transition-all relative overflow-hidden ${activeChannelId === channel.id
+                                            ? 'bg-[#202c33] text-[#e9edef] before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-4 before:w-[3px] before:bg-[#00a884] before:rounded-r-full'
+                                            : 'text-[#e9edef] hover:bg-[#202c33]'
+                                            }`}
+                                    >
+                                        <div className={`shrink-0 ${activeChannelId === channel.id ? 'text-[#00a884]' : 'text-[#8696a0] group-hover/channel:text-[#aebac1]'}`}>
+                                            {channel.isPrivate ? <Lock className="w-4 h-4" /> : <Hash className="w-4 h-4" />}
+                                        </div>
 
-                                    <span className="truncate text-[15px] font-normal flex-1 text-left leading-5">{channel.name}</span>
-                                </button>
+                                        <span className="truncate text-[15px] font-normal flex-1 text-left leading-5">{channel.name}</span>
+                                    </button>
+
+                                    {/* Action Menu Trigger (Only distinct from main click if positioned carefully or using context menu. For simplicity, adding a small trigger on hover) */}
+                                    <div className="absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover/channel:opacity-100 transition-opacity flex bg-[#202c33] rounded shadow-sm">
+                                        <EditChannelMenu channel={channel} />
+                                    </div>
+                                </div>
                             ))}
                         </div>
                     )}
                 </div>
+
+                {/* Edit Channel Modal */}
+                {editingChannel && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                        <div className="bg-[#202c33] rounded-lg shadow-xl w-full max-w-sm border border-[#2f3b43] animate-in zoom-in-95 duration-200">
+                            <form onSubmit={handleUpdateChannel} className="p-4">
+                                <h3 className="text-sm font-bold uppercase text-[#00a884] mb-4 tracking-wider">Edit Channel</h3>
+                                <div className="space-y-3">
+                                    <div>
+                                        <label className="text-xs text-[#8696a0] mb-1 block">Name</label>
+                                        <input
+                                            className="w-full text-sm bg-[#111b21] text-[#e9edef] border border-[#2f3b43] p-2 rounded focus:outline-none focus:border-[#00a884]"
+                                            value={editName}
+                                            onChange={e => setEditName(e.target.value)}
+                                            autoFocus
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-xs text-[#8696a0] mb-1 block">Description</label>
+                                        <input
+                                            className="w-full text-sm bg-[#111b21] text-[#e9edef] border border-[#2f3b43] p-2 rounded focus:outline-none focus:border-[#00a884]"
+                                            value={editDescription}
+                                            onChange={e => setEditDescription(e.target.value)}
+                                        />
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            type="checkbox"
+                                            checked={editIsPrivate}
+                                            onChange={e => setEditIsPrivate(e.target.checked)}
+                                            id="editPriv"
+                                            className="accent-[#00a884]"
+                                        />
+                                        <label htmlFor="editPriv" className="text-xs text-[#8696a0] select-none cursor-pointer">Private Channel</label>
+                                    </div>
+                                </div>
+
+                                <div className="flex justify-end gap-2 mt-4">
+                                    <button type="button" onClick={() => setEditingChannel(null)} className="px-3 py-1.5 text-xs font-medium text-[#e9edef] hover:bg-[#374045] rounded transition-colors">Cancel</button>
+                                    <button type="submit" className="px-3 py-1.5 text-xs font-medium bg-[#00a884] text-[#111b21] rounded hover:bg-[#00a884]/90 transition-colors">Save</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )}
+
+                {/* Delete Channel Alert */}
+                {deletingChannelId && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                        <div className="bg-[#202c33] rounded-lg shadow-xl w-full max-w-sm border border-[#2f3b43] p-4 text-center animate-in zoom-in-95 duration-200">
+                            <h3 className="text-lg font-medium text-[#e9edef] mb-2">Delete Channel?</h3>
+                            <p className="text-sm text-[#8696a0] mb-4">Are you sure you want to delete this channel? This action cannot be undone.</p>
+                            <div className="flex justify-center gap-3">
+                                <button onClick={() => setDeletingChannelId(null)} className="px-4 py-2 text-sm font-medium text-[#e9edef] hover:bg-[#374045] rounded transition-colors">Cancel</button>
+                                <button onClick={() => handleDeleteChannel(deletingChannelId)} className="px-4 py-2 text-sm font-medium bg-red-500/10 text-red-500 hover:bg-red-500/20 border border-red-500/20 rounded transition-colors">Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 <div className="border-t border-[#2f3b43]/30 my-1 mx-4" />
 

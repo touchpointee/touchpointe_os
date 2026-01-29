@@ -6,6 +6,7 @@ namespace Touchpointe.Application.DTOs
     public record ChannelDto(Guid Id, Guid WorkspaceId, string Name, bool IsPrivate, string Description, int MemberCount);
     
     public record CreateChannelRequest(string Name, bool IsPrivate, string Description);
+    public record UpdateChannelRequest(string Name, string Description, bool IsPrivate);
 
     public record MessageDto(
         Guid Id, 

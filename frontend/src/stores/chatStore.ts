@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { apiGet, apiPost, apiDelete } from '@/lib/api';
+import { apiGet, apiPost, apiPut, apiDelete } from '@/lib/api';
 
 export interface Channel {
     id: string;
@@ -96,6 +96,8 @@ interface ChatState {
     handleReactionRemoved: (messageId: string, userId: string, emoji: string) => void;
 
     createChannel: (workspaceId: string, name: string, isPrivate: boolean, description: string) => Promise<boolean>;
+    updateChannel: (workspaceId: string, channelId: string, name: string, isPrivate: boolean, description: string) => Promise<boolean>;
+    deleteChannel: (workspaceId: string, channelId: string) => Promise<boolean>;
     createDmGroup: (workspaceId: string, userIds: string[]) => Promise<string | null>;
     reset: () => void;
 }
@@ -287,6 +289,33 @@ export const useChatStore = create<ChatState>()((set, get) => ({
                 channels: [...state.channels, newChannel],
                 activeChannelId: newChannel.id,
                 activeDmGroupId: null
+            }));
+            return true;
+        } catch (e: any) {
+            set({ error: e.message });
+            return false;
+        }
+    },
+
+    updateChannel: async (workspaceId, channelId, name, isPrivate, description) => {
+        try {
+            const updated = await apiPut<Channel>(`/workspaces/${workspaceId}/chat/channels/${channelId}`, { name, isPrivate, description });
+            set(state => ({
+                channels: state.channels.map(c => c.id === channelId ? updated : c)
+            }));
+            return true;
+        } catch (e: any) {
+            set({ error: e.message });
+            return false;
+        }
+    },
+
+    deleteChannel: async (workspaceId, channelId) => {
+        try {
+            await apiDelete(`/workspaces/${workspaceId}/chat/channels/${channelId}`);
+            set(state => ({
+                channels: state.channels.filter(c => c.id !== channelId),
+                activeChannelId: state.activeChannelId === channelId ? null : state.activeChannelId
             }));
             return true;
         } catch (e: any) {

@@ -42,6 +42,41 @@ namespace Touchpointe.API.Controllers
             }
         }
 
+        [HttpPut("channels/{channelId}")]
+        public async Task<ActionResult<ChannelDto>> UpdateChannel(Guid workspaceId, Guid channelId, UpdateChannelRequest request)
+        {
+             try
+            {
+                return Ok(await _chatService.UpdateChannelAsync(workspaceId, channelId, GetUserId(), request));
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+        [HttpDelete("channels/{channelId}")]
+        public async Task<ActionResult> DeleteChannel(Guid workspaceId, Guid channelId)
+        {
+             try
+            {
+                await _chatService.DeleteChannelAsync(workspaceId, channelId, GetUserId());
+                return Ok();
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
         [HttpPost("channels/{channelId}/join")]
         public async Task<ActionResult> JoinChannel(Guid workspaceId, Guid channelId)
         {

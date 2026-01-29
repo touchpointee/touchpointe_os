@@ -76,6 +76,57 @@ namespace Touchpointe.Application.Services.Chat
             return new ChannelDto(channel.Id, channel.WorkspaceId, channel.Name, channel.IsPrivate, channel.Description, 1);
         }
 
+        public async Task<ChannelDto> UpdateChannelAsync(Guid workspaceId, Guid channelId, Guid userId, UpdateChannelRequest request)
+        {
+            var channel = await _context.Channels
+                .Include(c => c.Members)
+                .FirstOrDefaultAsync(c => c.Id == channelId && c.WorkspaceId == workspaceId);
+
+            if (channel == null) throw new Exception("Channel not found");
+
+            // Permission: Currently allow any member to edit? or creator?
+            // For now, let's allow any member of the channel to edit it.
+            // Stricter: Only admin or creator. But we don't track creator in Channel entity yet explicitly (though we could infer from activities or add CreatorId).
+            // Let's rely on workspace membership + channel membership.
+            
+            var isMember = await _context.ChannelMembers.AnyAsync(m => m.ChannelId == channelId && m.UserId == userId);
+            if (!isMember) throw new UnauthorizedAccessException("You must be a member of the channel to edit it.");
+
+            channel.Name = request.Name;
+            channel.Description = request.Description;
+            channel.IsPrivate = request.IsPrivate;
+
+            await _context.SaveChangesAsync(CancellationToken.None);
+
+            return new ChannelDto(channel.Id, channel.WorkspaceId, channel.Name, channel.IsPrivate, channel.Description, channel.Members.Count);
+        }
+
+        public async Task DeleteChannelAsync(Guid workspaceId, Guid channelId, Guid userId)
+        {
+            var channel = await _context.Channels
+                .FirstOrDefaultAsync(c => c.Id == channelId && c.WorkspaceId == workspaceId);
+
+            if (channel == null) throw new Exception("Channel not found");
+
+            // Permission: Any member? 
+            var isMember = await _context.ChannelMembers.AnyAsync(m => m.ChannelId == channelId && m.UserId == userId);
+            if (!isMember) throw new UnauthorizedAccessException("You must be a member of the channel to delete it.");
+
+            // Cascading delete should handle members/messages if configured, else manual:
+            // EF Core with cascade delete on relationships usually handles it.
+            // Explicitly removing for safety/clarity if needed, but assuming DB cascade for now on Messages/Ref.
+            // Actually, best to remove range of members/messages to be safe if cascade isn't perfect.
+            
+            var members = await _context.ChannelMembers.Where(m => m.ChannelId == channelId).ToListAsync();
+            _context.ChannelMembers.RemoveRange(members);
+            
+            var messages = await _context.Messages.Where(m => m.ChannelId == channelId).ToListAsync();
+            _context.Messages.RemoveRange(messages);
+
+            _context.Channels.Remove(channel);
+            await _context.SaveChangesAsync(CancellationToken.None);
+        }
+
         public async Task<bool> JoinChannelAsync(Guid workspaceId, Guid channelId, Guid userId)
         {
             var channel = await _context.Channels
