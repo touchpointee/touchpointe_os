@@ -227,22 +227,36 @@ export function ChatWindow() {
         }
     }, [activeWorkspace, activeId, isConnected, joinChannel, leaveChannel]);
 
+    // Track if we just switched channels to force instant scroll
+    const [isChannelSwitch, setIsChannelSwitch] = useState(false);
+
+    useEffect(() => {
+        setIsChannelSwitch(true);
+    }, [activeId]);
+
     useEffect(() => {
         const messageId = searchParams.get('messageId');
         if (messageId && currentMessages.length > 0) {
             const el = document.getElementById(messageId);
             if (el) {
+                // Determine scroll behavior: instant if switching channel, smooth if just navigating? 
+                // Using smooth for specific message navigation is usually fine.
                 el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                // Double call often used to ensure alignment in some browsers, but one should suffice or use timeout
             } else {
-                // Fallback: Scroll to bottom if not found (or should we fetch?)
-                // For now, default behavior handles bottom scroll if we don't interfere
                 messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
             }
-        } else {
-            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        } else if (currentMessages.length > 0) {
+            // If it's a channel switch or initial load, scroll instantly.
+            // Otherwise (new message), scroll smoothly.
+            if (isChannelSwitch) {
+                messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
+                setIsChannelSwitch(false);
+            } else {
+                messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+            }
         }
-    }, [currentMessages.length, activeId, searchParams]);
+    }, [currentMessages.length, activeId, searchParams, isChannelSwitch]);
 
     const handleInput = () => {
         if (!inputRef.current) return;
