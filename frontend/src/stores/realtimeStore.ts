@@ -131,10 +131,22 @@ export const useRealtimeStore = create<RealtimeState>()((set, get) => ({
         });
 
         connection.on('notification:new', (notification: any) => {
+            // Play notification sound
+            try {
+                // Reliable short "pop" sound URL or base64
+                // Using a common UI sound if available, otherwise a simple base64 beep
+                const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+                audio.volume = 0.5;
+                audio.play().catch(e => console.warn('Audio play failed', e));
+            } catch (e) {
+                console.warn('Audio initialization failed', e);
+            }
+
             // Use sonner to show toast
             import('sonner').then(({ toast }) => {
                 toast(notification.title, {
                     description: notification.message,
+                    duration: 4000, // 4 seconds
                     action: {
                         label: 'View',
                         onClick: () => {

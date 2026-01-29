@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react';
+import { forwardRef } from 'react';
 import { X } from 'lucide-react';
 import { useNotificationStore } from '@/stores/notificationStore';
 import { cn } from '@/lib/utils';
@@ -9,28 +9,14 @@ interface NotificationsPopoverProps {
     anchorRef: React.RefObject<HTMLButtonElement | null>;
 }
 
-export function NotificationsPopover({ isOpen, onClose, anchorRef }: NotificationsPopoverProps) {
-    const popoverRef = useRef<HTMLDivElement>(null);
+export const NotificationsPopover = forwardRef<HTMLDivElement, NotificationsPopoverProps>(({ isOpen, onClose }, ref) => {
     const { notifications, markAsRead } = useNotificationStore();
-
-    useEffect(() => {
-        function handleClickOutside(event: MouseEvent) {
-            if (popoverRef.current && !popoverRef.current.contains(event.target as Node) &&
-                anchorRef.current && !anchorRef.current.contains(event.target as Node)) {
-                onClose();
-            }
-        }
-        if (isOpen) {
-            document.addEventListener('mousedown', handleClickOutside);
-        }
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, [isOpen, onClose, anchorRef]);
 
     if (!isOpen) return null;
 
     return (
         <div
-            ref={popoverRef}
+            ref={ref}
             className="absolute top-full right-0 mt-2 w-80 bg-background border border-border rounded-lg shadow-xl overflow-hidden z-50 animate-in fade-in zoom-in-95 origin-top-right"
         >
             <div className="flex items-center justify-between px-4 py-3 border-b border-border">
@@ -70,4 +56,6 @@ export function NotificationsPopover({ isOpen, onClose, anchorRef }: Notificatio
             </div>
         </div>
     );
-}
+});
+
+NotificationsPopover.displayName = 'NotificationsPopover';

@@ -43,6 +43,7 @@ export function GlobalHeader({ workspaceName = 'My Workspace', userName = 'User'
     const profileRef = useRef<HTMLDivElement>(null);
     const workspaceRef = useRef<HTMLDivElement>(null);
     const notificationRef = useRef<HTMLButtonElement>(null);
+    const notificationPopoverRef = useRef<HTMLDivElement>(null);
 
     const searchContainerRef = useRef<HTMLDivElement>(null);
 
@@ -58,12 +59,19 @@ export function GlobalHeader({ workspaceName = 'My Workspace', userName = 'User'
             if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
                 useSearchStore.getState().setIsOpen(false);
             }
+            // Fix: Clean centralized handling for notification popover
+            if (isNotificationsOpen &&
+                notificationPopoverRef.current && !notificationPopoverRef.current.contains(event.target as Node) &&
+                notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
+                setIsNotificationsOpen(false);
+            }
         }
 
         function handleKeyDown(event: KeyboardEvent) {
             if (event.key === 'Escape') {
                 setIsProfileOpen(false);
                 setIsWorkspaceOpen(false);
+                setIsNotificationsOpen(false);
                 useSearchStore.getState().setIsOpen(false);
             }
         }
@@ -78,7 +86,7 @@ export function GlobalHeader({ workspaceName = 'My Workspace', userName = 'User'
             document.removeEventListener('mousedown', handleClickOutside);
             document.removeEventListener('keydown', handleKeyDown);
         };
-    }, []);
+    }, [isNotificationsOpen]); // Added dependency on isNotificationsOpen for closure freshness
 
     const handleLogout = () => {
         logout();
@@ -255,6 +263,7 @@ export function GlobalHeader({ workspaceName = 'My Workspace', userName = 'User'
                     )}
                 </button>
                 <NotificationsPopover
+                    ref={notificationPopoverRef}
                     isOpen={isNotificationsOpen}
                     onClose={() => setIsNotificationsOpen(false)}
                     anchorRef={notificationRef}
