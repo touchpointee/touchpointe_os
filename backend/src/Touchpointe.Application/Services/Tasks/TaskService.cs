@@ -194,24 +194,31 @@ namespace Touchpointe.Application.Services.Tasks
             // Handle Assignee Change (Nullable)
             if (request.AssigneeId != task.AssigneeId)
             {
-                if (request.AssigneeId.HasValue)
-                {
-                    var isMember = await _context.WorkspaceMembers
-                        .AnyAsync(wm => wm.WorkspaceId == workspaceId && wm.UserId == request.AssigneeId.Value, cancellationToken);
-                    if (!isMember) throw new Exception("New assignee is not a member of this workspace.");
+                    _context.TaskActivities.Add(new TaskActivity
+                    {
+                        TaskId = task.Id,
+                        ActivityType = ActivityType.ASSIGNEE_CHANGED,
+                        OldValue = task.AssigneeId?.ToString() ?? "Unassigned",
+                        NewValue = request.AssigneeId?.ToString() ?? "Unassigned",
+                        ChangedById = userId,
+                        Timestamp = DateTime.UtcNow
+                    });
 
-                    _context.TaskWatchers.Add(new TaskWatcher { TaskId = task.Id, UserId = request.AssigneeId.Value });
-                }
+                    if (request.AssigneeId.HasValue)
+                    {
+                        var isMember = await _context.WorkspaceMembers
+                            .AnyAsync(wm => wm.WorkspaceId == workspaceId && wm.UserId == request.AssigneeId.Value, cancellationToken);
+                        if (!isMember) throw new Exception("New assignee is not a member of this workspace.");
 
-                _context.TaskActivities.Add(new TaskActivity
-                {
-                    TaskId = task.Id,
-                    ActivityType = ActivityType.ASSIGNEE_CHANGED,
-                    OldValue = task.AssigneeId?.ToString() ?? "Unassigned",
-                    NewValue = request.AssigneeId?.ToString() ?? "Unassigned",
-                    ChangedById = userId,
-                    Timestamp = DateTime.UtcNow
-                });
+                        // Fix: Check if already watching to avoid duplicate key error
+                        var alreadyWatching = await _context.TaskWatchers
+                            .AnyAsync(tw => tw.TaskId == task.Id && tw.UserId == request.AssigneeId.Value, cancellationToken);
+                        
+                        if (!alreadyWatching)
+                        {
+                            _context.TaskWatchers.Add(new TaskWatcher { TaskId = task.Id, UserId = request.AssigneeId.Value });
+                        }
+                    }
                 task.AssigneeId = request.AssigneeId;
             }
 

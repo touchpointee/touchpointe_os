@@ -129,7 +129,27 @@ export const useTaskStore = create<TaskState>((set, get) => ({
             if (request.subDescription !== undefined) fullRequest.subDescription = request.subDescription;
             if (request.status !== undefined) fullRequest.status = request.status;
             if (request.priority !== undefined) fullRequest.priority = request.priority;
-            if (request.assigneeId !== undefined) fullRequest.assigneeId = request.assigneeId;
+            // Special fix for assigneeId: Backend wipes it if missing/null in request because of nullable Guid logic.
+            // We must preserve it if it's undefined in the request.
+            // If request.assigneeId is explicitly null, it means unassign.
+            // If request.assigneeId is undefined, we use current value.
+            if (request.assigneeId !== undefined) {
+                fullRequest.assigneeId = request.assigneeId;
+            } else {
+                // Try to find current task to preserve assignee
+                const currentTask = get().tasks[listId]?.items.find(t => t.id === taskId);
+                if (currentTask && currentTask.assigneeId !== undefined) {
+                    fullRequest.assigneeId = currentTask.assigneeId;
+                }
+                // Fallback: If not found in list (rare), we rely on details cache or risk it.
+                // Checking details cache:
+                if (!currentTask) {
+                    const detail = get().taskDetails[taskId];
+                    if (detail?.task?.assigneeId !== undefined) {
+                        fullRequest.assigneeId = detail.task.assigneeId;
+                    }
+                }
+            }
             if (request.dueDate !== undefined) fullRequest.dueDate = request.dueDate;
             if (request.orderIndex !== undefined) fullRequest.orderIndex = request.orderIndex;
             if (request.orderIndex !== undefined) fullRequest.orderIndex = request.orderIndex;
