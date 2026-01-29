@@ -1,4 +1,4 @@
-import { X, Download, Play, Pause } from 'lucide-react';
+import { X, Download, Play } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 
 interface MediaPreviewModalProps {
