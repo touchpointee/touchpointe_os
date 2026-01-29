@@ -164,7 +164,7 @@ export const MyTasksPage = () => {
         // 1. Primary Filter
         switch (filter) {
             case 'TODAY':
-                result = result.filter(t => t.isDueToday);
+                result = result.filter(t => t.isDueToday || t.isOverdue);
                 break;
             case 'OVERDUE':
                 result = result.filter(t => t.isOverdue);
@@ -230,8 +230,45 @@ export const MyTasksPage = () => {
                             <h1 className="text-3xl font-bold tracking-tight text-foreground">
                                 {greeting}, {firstName}
                             </h1>
-                            <p className="text-muted-foreground mt-1">
-                                You have <span className="font-semibold text-foreground">{stats.dueToday} tasks</span> due today.
+                            <p className="text-muted-foreground mt-1 text-lg">
+                                {(() => {
+                                    const totalDue = stats.dueToday + stats.overdue;
+
+                                    if (totalDue === 0) {
+                                        return (
+                                            <>Today you have <span className="text-green-500 font-medium">no pending work</span>. Why not try learning something new?</>
+                                        );
+                                    }
+
+                                    // Overdue Logic
+                                    if (stats.overdue > 0) {
+                                        return (
+                                            <>
+                                                You have <span className="font-semibold text-red-500">{stats.overdue} overdue tasks</span>.
+                                                <span className="block text-sm mt-1 text-muted-foreground/80">
+                                                    It happens to the best of us! Let our <span className="text-primary font-medium">AI Assistant</span> help you re-plan and get back on track.
+                                                </span>
+                                            </>
+                                        );
+                                    }
+
+                                    // High Load Logic (Today)
+                                    if (totalDue > 3) {
+                                        return (
+                                            <>
+                                                You have <span className="font-semibold text-orange-500">{totalDue} tasks</span> due today.
+                                                <span className="block text-sm mt-1 text-muted-foreground/80">
+                                                    Don't worry! Use our <span className="text-primary font-medium">AI Assistant</span> to prioritize and plan your work efficiently.
+                                                </span>
+                                            </>
+                                        );
+                                    }
+
+                                    // Normal Load Logic
+                                    return (
+                                        <>You have <span className="font-semibold text-foreground">{totalDue} tasks</span> due today. Keep up the momentum, you're almost there!</>
+                                    );
+                                })()}
                             </p>
                         </div>
 
