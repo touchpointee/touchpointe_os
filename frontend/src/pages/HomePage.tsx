@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom';
 
 export function HomePage() {
     const particlesRef = useRef<HTMLDivElement>(null);
-    const [isReady, setIsReady] = useState(false);
+    const [, setIsReady] = useState(false);
+
 
     // Preload and initialize galaxy animations
     useEffect(() => {
