@@ -85,7 +85,10 @@ public class ChatHub : Hub
     public async Task Typing(string channelId)
     {
         var userId = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        var userName = Context.User?.FindFirst(ClaimTypes.Name)?.Value;
+        var userName = Context.User?.FindFirst(ClaimTypes.Name)?.Value 
+            ?? Context.User?.FindFirst("name")?.Value 
+            ?? Context.User?.FindFirst(ClaimTypes.GivenName)?.Value
+            ?? "Unknown User";
         
         if (userId != null)
         {

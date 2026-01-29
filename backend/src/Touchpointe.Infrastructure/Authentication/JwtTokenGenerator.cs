@@ -23,6 +23,7 @@ namespace Touchpointe.Infrastructure.Authentication
             {
                 new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
                 new Claim(JwtRegisteredClaimNames.Name, user.FullName),
+                new Claim(ClaimTypes.Name, user.FullName), // Explicitly add ClaimTypes.Name for SignalR/Identity consistency
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
 

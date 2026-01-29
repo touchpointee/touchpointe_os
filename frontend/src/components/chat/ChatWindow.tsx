@@ -13,6 +13,7 @@ import { X, Plus, Send, Mic, Smile, File as FileIcon, Trash2, CheckCircle2 } fro
 import EmojiPicker, { Theme } from 'emoji-picker-react';
 import type { EmojiClickData } from 'emoji-picker-react';
 import { ReactionDetailsModal } from './ReactionDetailsModal';
+import { MediaPreviewModal } from './MediaPreviewModal';
 
 const USER_COLORS = [
     '#a13ee7ff', '#ff9b04ff', '#fd543adb',
@@ -81,6 +82,9 @@ export function ChatWindow() {
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const audioChunksRef = useRef<Blob[]>([]);
     const timerIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+    // Media Preview State
+    const [previewMedia, setPreviewMedia] = useState<{ isOpen: boolean; src: string; type: 'image' | 'video'; fileName: string } | null>(null);
 
     const startRecording = async () => {
         try {
@@ -742,6 +746,7 @@ export function ChatWindow() {
                                         if (activeWorkspace) removeReaction(activeWorkspace.id, mid, emoji);
                                     }}
                                     onOpenReactionDetails={(m) => setSelectedMessageForReactionDetails(m)}
+                                    onPreview={(src, type, fileName) => setPreviewMedia({ isOpen: true, src, type, fileName })}
                                 />
                             </div>
                         );
@@ -749,6 +754,17 @@ export function ChatWindow() {
                 )}
                 <div ref={messagesEndRef} />
             </div>
+
+            {/* Media Preview Modal */}
+            {previewMedia && (
+                <MediaPreviewModal
+                    isOpen={previewMedia.isOpen}
+                    onClose={() => setPreviewMedia(null)}
+                    src={previewMedia.src}
+                    type={previewMedia.type}
+                    fileName={previewMedia.fileName}
+                />
+            )}
 
             {/* Input Area */}
             <div className="p-2 shrink-0 relative z-10">

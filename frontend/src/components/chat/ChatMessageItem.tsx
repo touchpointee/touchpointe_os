@@ -14,6 +14,7 @@ interface ChatMessageItemProps {
     onReact: (messageId: string, emoji: string) => void;
     onRemoveReaction: (messageId: string, emoji: string) => void;
     onOpenReactionDetails: (message: Message) => void;
+    onPreview: (src: string, type: 'image' | 'video', fileName: string) => void;
 }
 
 const COMMON_EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🔥'];
@@ -131,7 +132,8 @@ export function ChatMessageItem({
     onReply,
     onReact,
     onRemoveReaction,
-    onOpenReactionDetails
+    onOpenReactionDetails,
+    onPreview
 }: ChatMessageItemProps) {
     const [showReactions, setShowReactions] = useState(false);
 
@@ -259,8 +261,35 @@ export function ChatMessageItem({
                             <div className="flex flex-col gap-1 mb-1">
                                 {message.attachments?.map(att => (
                                     att.contentType.startsWith('image/') ? (
-                                        <div key={att.id} className="rounded-lg overflow-hidden mt-1 mb-1 cursor-pointer" onClick={() => window.open(att.fileUrl, '_blank')}>
-                                            <img src={att.fileUrl} alt={att.fileName} className="max-w-[100%] max-h-[300px] object-cover" />
+                                        <div
+                                            key={att.id}
+                                            className="rounded-lg overflow-hidden mt-1 mb-1 cursor-pointer hover:brightness-90 transition-all"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                onPreview(att.fileUrl, 'image', att.fileName);
+                                            }}
+                                        >
+                                            <img src={att.fileUrl} alt={att.fileName} className="max-w-[100%] max-h-[300px] object-cover bg-[#2a3942]" loading="lazy" />
+                                        </div>
+                                    ) : att.contentType.startsWith('video/') ? (
+                                        <div
+                                            key={att.id}
+                                            className="rounded-lg overflow-hidden mt-1 mb-1 cursor-pointer relative group"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                onPreview(att.fileUrl, 'video', att.fileName);
+                                            }}
+                                        >
+                                            <video src={att.fileUrl} className="max-w-[100%] max-h-[300px] object-cover bg-black" />
+                                            <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/40 transition-colors">
+                                                <div className="w-10 h-10 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center">
+                                                    <Play className="w-5 h-5 text-white fill-current ml-0.5" />
+                                                </div>
+                                            </div>
+                                            <div className="absolute bottom-2 left-2 text-[10px] text-white bg-black/60 px-1.5 py-0.5 rounded flex items-center gap-1">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                                                Video
+                                            </div>
                                         </div>
                                     ) : att.contentType.startsWith('audio/') ? (
                                         <AudioPlayer key={att.id} src={att.fileUrl} />
