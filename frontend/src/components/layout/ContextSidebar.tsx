@@ -130,7 +130,7 @@ export function ContextSidebar({ className }: { className?: string }) {
 
     if (currentModule === 'chat') {
         return (
-            <aside className={cn(className || "hidden lg:block fixed left-[72px] top-14 bottom-0", "z-10 bg-[#111b21]")}>
+            <aside className={cn(className || "hidden lg:block fixed left-[72px] top-14 bottom-0", "z-10 bg-[#101114]")}>
                 <ChatSidebar />
             </aside>
         );

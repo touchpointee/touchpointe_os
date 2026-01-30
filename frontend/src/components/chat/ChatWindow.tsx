@@ -613,9 +613,9 @@ export function ChatWindow() {
 
                     {/* Dropdown Menu */}
                     {showMoreMenu && (
-                        <div className="absolute right-0 top-full mt-2 w-56 bg-[#202c33] border border-[#2a3942] rounded-lg shadow-lg overflow-hidden z-50">
+                        <div className="absolute right-0 top-full mt-2 w-56 bg-[var(--chat-bg-secondary)] border border-[var(--chat-border)] rounded-lg shadow-lg overflow-hidden z-50">
                             <button
-                                className="w-full px-4 py-3 text-left text-sm text-[#e9edef] hover:bg-[#2a3942] transition-colors flex items-center gap-3"
+                                className="w-full px-4 py-3 text-left text-sm text-[var(--chat-text-primary)] hover:bg-[var(--chat-bg-hover)] transition-colors flex items-center gap-3"
                                 onClick={() => {
                                     setShowMoreMenu(false);
                                     console.log('Contact info');
@@ -630,7 +630,7 @@ export function ChatWindow() {
                                 Contact info
                             </button>
                             <button
-                                className="w-full px-4 py-3 text-left text-sm text-[#e9edef] hover:bg-[#2a3942] transition-colors flex items-center gap-3"
+                                className="w-full px-4 py-3 text-left text-sm text-[var(--chat-text-primary)] hover:bg-[var(--chat-bg-hover)] transition-colors flex items-center gap-3"
                                 onClick={() => {
                                     setShowMoreMenu(false);
                                     console.log('Select messages');
@@ -643,7 +643,7 @@ export function ChatWindow() {
                                 Select messages
                             </button>
                             <button
-                                className="w-full px-4 py-3 text-left text-sm text-[#e9edef] hover:bg-[#2a3942] transition-colors flex items-center gap-3"
+                                className="w-full px-4 py-3 text-left text-sm text-[var(--chat-text-primary)] hover:bg-[var(--chat-bg-hover)] transition-colors flex items-center gap-3"
                                 onClick={() => {
                                     setShowMoreMenu(false);
                                     console.log('Mute notifications');
@@ -657,7 +657,7 @@ export function ChatWindow() {
                                 Mute notifications
                             </button>
                             <button
-                                className="w-full px-4 py-3 text-left text-sm text-[#e9edef] hover:bg-[#2a3942] transition-colors flex items-center gap-3"
+                                className="w-full px-4 py-3 text-left text-sm text-[var(--chat-text-primary)] hover:bg-[var(--chat-bg-hover)] transition-colors flex items-center gap-3"
                                 onClick={() => {
                                     setShowMoreMenu(false);
                                     console.log('Search');
@@ -824,14 +824,14 @@ export function ChatWindow() {
                     </div>
                 )}
 
-                <div className="flex items-end gap-2 bg-[#202c33] rounded-[24px] p-1 border border-[#2a3942] relative">
+                <div className="flex items-end gap-2 bg-[var(--chat-bg-secondary)] rounded-[24px] p-1 border border-[var(--chat-border)] relative">
                     {isRecording ? (
                         <div className="flex-1 flex items-center justify-between px-3 h-[40px]">
                             <div className="flex items-center gap-3 text-red-500 animate-pulse">
                                 <Mic className="w-5 h-5 fill-current" />
                                 <span className="font-mono text-sm">{formatDuration(recordingDuration)}</span>
                             </div>
-                            <div className="text-[#8696a0] text-sm hidden sm:block">
+                            <div className="text-[var(--chat-text-secondary)] text-sm hidden sm:block">
                                 Recording... Click check to send
                             </div>
                             <div className="flex items-center gap-2">
@@ -961,25 +961,29 @@ export function ChatWindow() {
                                 contentEditable
                                 onInput={handleInput}
                                 onKeyDown={handleKeyDown}
-                                className="flex-1 max-h-[100px] overflow-y-auto py-2 px-2 text-[15px] text-[#e9edef] outline-none min-h-[24px] empty:before:content-[attr(data-placeholder)] empty:before:text-[#8696a0]"
+                                className="flex-1 max-h-[100px] overflow-y-auto py-2 px-2 text-[15px] text-[var(--chat-text-primary)] outline-none min-h-[24px] empty:before:content-[attr(data-placeholder)] empty:before:text-[var(--chat-text-secondary)]"
                                 role="textbox"
                                 aria-multiline="true"
                                 data-placeholder={`Message ${getHeaderTitle()}...`}
                             />
 
                             <button
-                                onClick={hasContent || localAttachments.length > 0 ? handleSend : startRecording}
+                                onClick={startRecording}
                                 disabled={isSending}
+                                className="p-1.5 rounded-full shrink-0 transition-all pb-1.5 text-[var(--chat-text-secondary)] hover:bg-[var(--chat-bg-hover)]"
+                            >
+                                <Mic className="w-5 h-5" />
+                            </button>
+
+                            <button
+                                onClick={handleSend}
+                                disabled={isSending || (!hasContent && localAttachments.length === 0)}
                                 className={`p-1.5 rounded-full shrink-0 transition-all pb-1.5 ${hasContent || localAttachments.length > 0
-                                    ? 'text-[#00a884] hover:bg-[#00a884]/10'
-                                    : 'text-[#8696a0] hover:bg-white/5'
+                                    ? 'text-[var(--chat-accent)] hover:bg-[var(--chat-accent)]/10'
+                                    : 'text-[var(--chat-text-muted)] opacity-50 cursor-not-allowed'
                                     }`}
                             >
-                                {hasContent || localAttachments.length > 0 ? (
-                                    <Send className="w-5 h-5 ml-0.5" />
-                                ) : (
-                                    <Mic className="w-5 h-5" />
-                                )}
+                                <Send className="w-5 h-5 ml-0.5" />
                             </button>
                         </>
                     )}

@@ -82,7 +82,7 @@ export function ReactionDetailsModal({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-transparent animate-in fade-in duration-200">
             <div
                 ref={modalRef}
-                className="w-[300px] max-w-[90vw] h-[350px] max-h-[90vh] bg-[#222e35] rounded-xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200 border border-[#2a3942]"
+                className="w-[300px] max-w-[90vw] h-[350px] max-h-[90vh] bg-[#1e202b] rounded-xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200 border border-[#2a3942]"
             >
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 border-b border-[#2a3942]">
@@ -102,13 +102,13 @@ export function ReactionDetailsModal({
                             <button
                                 onClick={() => setActiveTab('All')}
                                 className={`pb-2 text-sm font-medium transition-colors relative whitespace-nowrap ${activeTab === 'All'
-                                    ? 'text-[#00a884]'
+                                    ? 'text-[##2563eb]'
                                     : 'text-[#8696a0] hover:text-[#d1d7db]'
                                     }`}
                             >
                                 All {reactions.length}
                                 {activeTab === 'All' && (
-                                    <span className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#00a884] rounded-t-sm" />
+                                    <span className="absolute bottom-0 left-0 right-0 h-[3px] bg-[##2563eb] rounded-t-sm" />
                                 )}
                             </button>
 
@@ -123,7 +123,7 @@ export function ReactionDetailsModal({
                                 >
                                     {emoji} <span className="text-xs font-normal text-[#8696a0] ml-1 align-top">{groupedReactions[emoji].length}</span>
                                     {activeTab === emoji && (
-                                        <span className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#00a884] rounded-t-sm" />
+                                        <span className="absolute bottom-0 left-0 right-0 h-[3px] bg-[##2563eb] rounded-t-sm" />
                                     )}
                                 </button>
                             ))}
@@ -139,7 +139,7 @@ export function ReactionDetailsModal({
                                 return (
                                     <div
                                         key={reaction.id}
-                                        className={`flex items-center justify-between p-2 rounded-lg hover:bg-[#111b21] transition-colors group ${isMe ? 'cursor-pointer' : ''}`}
+                                        className={`flex items-center justify-between p-2 rounded-lg hover:bg-[#101114] transition-colors group ${isMe ? 'cursor-pointer' : ''}`}
                                         onClick={() => {
                                             if (isMe) {
                                                 onRemoveReaction(reaction.messageId, reaction.emoji);
@@ -155,7 +155,7 @@ export function ReactionDetailsModal({
                                     >
                                         <div className="flex items-center gap-3">
                                             {/* Avatar Placeholder */}
-                                            <div className="w-8 h-8 rounded-full bg-[#111b21] flex items-center justify-center text-[#cfd3d6] shrink-0 border border-[#2a3942]">
+                                            <div className="w-8 h-8 rounded-full bg-[#101114] flex items-center justify-center text-[#cfd3d6] shrink-0 border border-[#2a3942]">
                                                 <User className="w-5 h-5" />
                                             </div>
 

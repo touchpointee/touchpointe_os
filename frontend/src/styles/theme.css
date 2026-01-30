@@ -42,9 +42,22 @@
         --task-card-text: hsl(240 10% 15%);
         --task-card-text-muted: hsl(240 3% 46%);
 
+
         /* Sidebar Selected State */
         --sidebar-selected-bg: #000000;
         --sidebar-selected-fg: #ffffff;
+
+        /* Chat-specific colors - Light Mode */
+        --chat-bg-primary: #f8fafc;
+        --chat-bg-secondary: #e2e9f1;
+        --chat-bg-tertiary: #e2e8f0;
+        --chat-bg-hover: #e9f1f9;
+        --chat-text-primary: #0f172a;
+        --chat-text-secondary: #475569;
+        --chat-text-muted: #94a3b8;
+        --chat-border: #e2e8f0;
+        --chat-accent: #2563eb;
+        --chat-accent-hover: #1d4ed8;
     }
 
     .dark {
@@ -84,6 +97,18 @@
         --task-card-shadow: inset 0px 0px 25px 0px #75757540;
         --task-card-text: #ffffff;
         --task-card-text-muted: #747474;
+
+        /* Chat-specific colors - Dark Mode */
+        --chat-bg-primary: #0a0a0a;
+        --chat-bg-secondary: #1e202b;
+        --chat-bg-tertiary: #2a2929;
+        --chat-bg-hover: #1e202b;
+        --chat-text-primary: #e9edef;
+        --chat-text-secondary: #8a96a0;
+        --chat-text-muted: #71727a;
+        --chat-border: #2f3b43;
+        --chat-accent: #2563eb;
+        --chat-accent-hover: #316beb;
     }
 }
 

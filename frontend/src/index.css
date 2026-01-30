@@ -36,15 +36,29 @@
   /* Firefox */
 }
 
-/* WhatsApp Chat Background with Independent Opacity */
+/* Chat Background with Soft Gradient - Light Mode */
 .chat-background {
   position: relative;
-  background-color: #0d1418;
-  background-image:
-    linear-gradient(rgba(0, 0, 0, 0.7), rgba(20, 23, 25, 0.7)),
-    url('/whatsapp_pattern.png');
-  background-repeat: repeat;
-  background-size: auto, 250px 250px;
+  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 25%, #cbd5e1 50%, #e2e8f0 75%, #f1f5f9 100%);
+  background-size: 400% 400%;
+  animation: gradientShift 15s ease infinite;
+}
+
+/* Chat Background - Dark Mode */
+.dark .chat-background {
+  background: linear-gradient(135deg, #0a0e11 0%, #0d1418 25%, #111820 50%, #0d1418 75%, #0a0e11 100%);
+}
+
+@keyframes gradientShift {
+
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
 }
 
 .chat-background>* {

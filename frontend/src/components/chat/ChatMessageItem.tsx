@@ -96,7 +96,7 @@ const AudioPlayer = ({ src }: { src: string }) => {
             />
             <button
                 onClick={togglePlay}
-                className="p-2 rounded-full bg-[#00a884] hover:bg-[#008f6f] text-white transition-colors"
+                className="p-2 rounded-full bg-[##2563eb] hover:bg-[#008f6f] text-white transition-colors"
             >
                 {isPlaying ? <Pause className="w-4 h-4 fill-current" /> : <Play className="w-4 h-4 fill-current" />}
             </button>
@@ -113,7 +113,7 @@ const AudioPlayer = ({ src }: { src: string }) => {
                             setProgress(Number(e.target.value));
                         }
                     }}
-                    className="w-full h-1 bg-white/20 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#00a884]"
+                    className="w-full h-1 bg-white/20 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[##2563eb]"
                 />
                 <div className="flex justify-between text-[10px] text-[#8696a0]">
                     <span>{formatTime(audioRef.current?.currentTime || 0)}</span>
@@ -193,7 +193,7 @@ export function ChatMessageItem({
                 {isSingleEmoji(message.content) ? (
                     <div className="flex flex-col items-center gap-4 py-2.5">
                         <span className="text-5xl leading-none">{message.content.trim()}</span>
-                        <span className={`text-[11px] select-none whitespace-nowrap px-2 py-1 rounded-md ${isMe ? 'bg-[#005c4b] text-[#e9edef]/60' : 'bg-[#202c33] text-[#8696a0]'}`}>
+                        <span className={`text-[11px] select-none whitespace-nowrap px-2 py-1 rounded-md ${isMe ? 'bg-[#2a323d] text-[#e9edef]/60' : 'bg-[#1e202b] text-[#8696a0]'}`}>
                             {format(new Date(message.createdAt), 'h:mm a')}
                         </span>
                     </div>
@@ -203,20 +203,20 @@ export function ChatMessageItem({
                         {/* Message Content Bubble */}
                         <div className={`relative px-3 py-1 shadow-sm text-sm 
                             ${isMe
-                                ? `bg-[#005c4b] text-[#e9edef] rounded-lg ${showHeader ? 'rounded-tr-none' : ''}`
-                                : `bg-[#202c33] text-[#e9edef] rounded-lg ${showHeader ? 'rounded-tl-none' : ''}`
+                                ? `bg-[#2a323d] text-[#e9edef] rounded-lg ${showHeader ? 'rounded-tr-none' : ''}`
+                                : `bg-[#1e202b] text-[#e9edef] rounded-lg ${showHeader ? 'rounded-tl-none' : ''}`
                             }`}
                         >
                             {/* Tail SVG - Only for first message in group */}
                             {showHeader && (
                                 isMe ? (
-                                    <span className="absolute top-0 -right-[8px] text-[#005c4b]">
+                                    <span className="absolute top-0 -right-[8px] text-[#2a323d]">
                                         <svg viewBox="0 0 8 13" height="13" width="8" preserveAspectRatio="none" className="block fill-current">
                                             <path d="M5.188 0H0v11.193l6.467-8.625C7.526 2.156 6.958 0 5.188 0z"></path>
                                         </svg>
                                     </span>
                                 ) : (
-                                    <span className="absolute top-0 -left-[8px] text-[#202c33] -scale-x-100">
+                                    <span className="absolute top-0 -left-[8px] text-[#1e202b] -scale-x-100">
                                         <svg viewBox="0 0 8 13" height="13" width="8" preserveAspectRatio="none" className="block fill-current">
                                             <path d="M5.188 0H0v11.193l6.467-8.625C7.526 2.156 6.958 0 5.188 0z"></path>
                                         </svg>
@@ -231,7 +231,7 @@ export function ChatMessageItem({
                                         e.stopPropagation();
                                         document.getElementById(message.replyToMessageId!)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
                                     }}
-                                    className="mb-1 rounded bg-black/20 flex relative cursor-pointer overflow-hidden border-l-[4px] border-l-[#00a884]"
+                                    className="mb-1 rounded bg-black/20 flex relative cursor-pointer overflow-hidden border-l-[4px] border-l-[##2563eb]"
                                     style={{ borderLeftColor: getUserColor(message.replyPreviewSenderName) }}
                                 >
                                     <div className="p-1 pl-2 flex flex-col justify-center min-w-0">
@@ -295,7 +295,7 @@ export function ChatMessageItem({
                                         <AudioPlayer key={att.id} src={att.fileUrl} />
                                     ) : (
                                         <div key={att.id} className="flex items-center gap-2 bg-black/20 p-2 rounded max-w-[300px] mt-1">
-                                            <div className="bg-[#202c33] p-1.5 rounded text-[#8696a0]">
+                                            <div className="bg-[#1e202b] p-1.5 rounded text-[#8696a0]">
                                                 <FileIcon className="w-5 h-5" />
                                             </div>
                                             <div className="flex-1 min-w-0">
@@ -330,7 +330,7 @@ export function ChatMessageItem({
                                             e.stopPropagation();
                                             onOpenReactionDetails(message);
                                         }}
-                                        className="bg-[#202c33] border border-[#2a3942] rounded-full px-1.5 py-[1px] flex items-center gap-0 shadow-md cursor-pointer hover:bg-[#2a3942] transition-colors"
+                                        className="bg-[var(--chat-bg-secondary)] border border-[var(--chat-border)] rounded-full px-1.5 py-[1px] flex items-center gap-0 shadow-md cursor-pointer hover:bg-[var(--chat-bg-hover)] transition-colors"
                                     >
                                         {Object.entries(reactionCounts).map(([emoji]) => (
                                             <div
@@ -343,7 +343,7 @@ export function ChatMessageItem({
                                             </div>
                                         ))}
                                         {(message.reactions || []).length > 1 && (
-                                            <span className="text-[#8696a0] font-medium text-[11px] px-1">
+                                            <span className="text-[var(--chat-text-secondary)] font-medium text-[11px] px-1">
                                                 {(message.reactions || []).length}
                                             </span>
                                         )}
@@ -380,7 +380,7 @@ export function ChatMessageItem({
 
                 {/* Reaction Picker Popup */}
                 {showReactions && !isSingleEmoji(message.content) && (
-                    <div className={`mt-1 bg-[#202c33] border border-[#2a3942] rounded-full px-2 py-1 flex items-center gap-1 shadow-lg ${isMe ? 'self-end' : 'self-start'}`}>
+                    <div className={`mt-1 bg-[var(--chat-bg-secondary)] border border-[var(--chat-border)] rounded-full px-2 py-1 flex items-center gap-1 shadow-lg ${isMe ? 'self-end' : 'self-start'}`}>
                         {COMMON_EMOJIS.map(emoji => (
                             <button
                                 key={emoji}
