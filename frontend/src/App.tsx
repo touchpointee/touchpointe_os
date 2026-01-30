@@ -108,7 +108,7 @@ function App() {
                         } />
                         <Route path="/ai" element={
                             <AuthGuard>
-                                <AppLayout>
+                                <AppLayout hideContextSidebar={true}>
                                     <AiPage />
                                 </AppLayout>
                             </AuthGuard>

@@ -305,20 +305,54 @@ namespace Touchpointe.Application.Services.Tasks
         {
              var activities = await _context.TaskActivities
                 .Include(a => a.ChangedBy)
-                .Where(a => a.TaskId == taskId) // Workspace check implicit via Task existence, but could be safer
+                .Where(a => a.TaskId == taskId)
                 .Where(a => a.Task.WorkspaceId == workspaceId)
                 .OrderByDescending(a => a.Timestamp)
                 .ToListAsync(cancellationToken);
 
-            return activities.Select(a => new TaskActivityDto(
-                a.Id,
-                a.ActivityType.ToString(),
-                a.OldValue,
-                a.NewValue,
-                a.ChangedById,
-                a.ChangedBy.FullName, // Using FullName as per previous schema
-                a.Timestamp
-            )).ToList();
+            // 1. Identify Status Changes that might be UUIDs
+            var statusActivityTypes = new[] { ActivityType.STATUS_CHANGED };
+            var candidateIds = new HashSet<Guid>();
+
+            foreach (var a in activities)
+            {
+                if (statusActivityTypes.Contains(a.ActivityType))
+                {
+                    if (Guid.TryParse(a.OldValue, out var oldId)) candidateIds.Add(oldId);
+                    if (Guid.TryParse(a.NewValue, out var newId)) candidateIds.Add(newId);
+                }
+            }
+
+            // 2. Resolve Names
+            Dictionary<string, string> statusNameMap = new();
+            if (candidateIds.Any())
+            {
+                statusNameMap = await _context.ListStatuses
+                    .Where(s => candidateIds.Contains(s.Id))
+                    .ToDictionaryAsync(s => s.Id.ToString(), s => s.Name, StringComparer.OrdinalIgnoreCase, cancellationToken);
+            }
+
+            // 3. Map to DTO with replacement
+            return activities.Select(a => {
+                var oldVal = a.OldValue;
+                var newVal = a.NewValue;
+
+                if (a.ActivityType == ActivityType.STATUS_CHANGED)
+                {
+                    if (oldVal != null && statusNameMap.TryGetValue(oldVal, out var oldName)) oldVal = oldName;
+                    if (newVal != null && statusNameMap.TryGetValue(newVal, out var newName)) newVal = newName;
+                }
+
+                return new TaskActivityDto(
+                    a.Id,
+                    a.ActivityType.ToString(),
+                    oldVal,
+                    newVal,
+                    a.ChangedById,
+                    a.ChangedBy.FullName, 
+                    a.Timestamp
+                );
+            }).ToList();
         }
 
         public async Task<TaskDetailDto> GetTaskDetailsAsync(Guid workspaceId, Guid taskId, CancellationToken cancellationToken = default)

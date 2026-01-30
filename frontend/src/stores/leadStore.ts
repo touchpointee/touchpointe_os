@@ -126,7 +126,7 @@ interface LeadStore {
     reset: () => void;
 }
 
-export const useLeadStore = create<LeadStore>()((set) => ({
+export const useLeadStore = create<LeadStore>()((set, get) => ({
     // Initial State
     leads: [],
     forms: [],
@@ -178,11 +178,25 @@ export const useLeadStore = create<LeadStore>()((set) => ({
     },
 
     updateLead: async (workspaceId, id, leadData) => {
-        const data = await apiPut<Lead>(`/workspaces/${workspaceId}/crm/leads/${id}`, leadData);
+        const previousLeads = get().leads;
+
+        // Optimistic update
         set((state) => ({
-            leads: state.leads.map((l) => (l.id === id ? data : l)),
+            leads: state.leads.map((l) =>
+                l.id === id ? { ...l, ...leadData } as Lead : l
+            ),
         }));
-        return data;
+
+        try {
+            const data = await apiPut<Lead>(`/workspaces/${workspaceId}/crm/leads/${id}`, leadData);
+            set((state) => ({
+                leads: state.leads.map((l) => (l.id === id ? data : l)),
+            }));
+            return data;
+        } catch (error) {
+            set({ leads: previousLeads, error: (error as any).message || 'Failed to update lead' });
+            throw error;
+        }
     },
 
     deleteLead: async (workspaceId, id) => {

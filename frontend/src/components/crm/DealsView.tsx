@@ -358,7 +358,7 @@ function DealCard({ deal, isOverlay, onClick }: { deal: Deal, isOverlay?: boolea
                 <div className="opacity-0 group-hover:opacity-100 transition-opacity">
                     {/* Placeholder for left badge, or keep empty to match Leads style being empty space or source badge */}
                 </div>
-                <span>{deal.closeDate ? format(new Date(deal.closeDate), 'MMM d') : '-'}</span>
+                <span>{format(new Date(deal.createdAt), 'MMM d')}</span>
             </div>
         </div>
     );
