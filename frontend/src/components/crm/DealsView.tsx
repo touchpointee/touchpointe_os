@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { useCrmStore } from '../../stores/crmStore';
 import type { Deal } from '../../stores/crmStore';
 import { useWorkspaces } from '../../stores/workspaceStore';
-import { Plus, MoreHorizontal, IndianRupee, LayoutGrid, List, ArrowUpDown, ChevronDown, Building2 } from 'lucide-react';
+import { Plus, IndianRupee, LayoutGrid, List, ArrowUpDown, ChevronDown, Building2 } from 'lucide-react';
 import { AddDealModal } from './AddDealModal';
 import { DealDetailPanel } from './DealDetailPanel';
 import {

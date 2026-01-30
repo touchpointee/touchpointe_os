@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { X, Copy, Check, User, ListTodo, Building2, Calendar, IndianRupee, ArrowRight, MoreHorizontal, Paperclip, MessageSquare } from 'lucide-react';
+import { X, Check, User, ListTodo, Building2, MessageSquare } from 'lucide-react';
 import { useCrmStore } from '@/stores/crmStore';
 import { useWorkspaces } from '@/stores/workspaceStore';
 import { useTaskStore } from '@/stores/taskStore';
