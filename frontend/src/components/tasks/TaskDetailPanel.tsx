@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
-import { X, Copy, MoreHorizontal, Calendar as CalendarIcon, Flag, ChevronDown, Check, Trash2, Plus, Paperclip } from 'lucide-react';
+import { X, Copy, MoreHorizontal, Calendar as CalendarIcon, Flag, ChevronDown, Check, Trash2, Plus, Paperclip, User } from 'lucide-react';
 import { useTaskStore } from '@/stores/taskStore';
 import { useTagStore } from '@/stores/tagStore';
 import { useWorkspaces, isValidUUID } from '@/stores/workspaceStore';
@@ -11,7 +11,7 @@ import { SubtaskList } from './SubtaskList';
 import { TaskComments } from './TaskComments';
 import { TaskActivityTimeline } from './TaskActivityTimeline';
 import type { TaskPriority } from '@/types/task';
-import { TimeTrackingPanel } from './TimeTrackingPanel';
+
 import TaskAttachments from './TaskAttachments';
 
 interface StatusOption {
@@ -146,12 +146,7 @@ export function TaskDetailPanel() {
         }
     };
 
-    const handleSubDescriptionBlur = (e: React.FocusEvent<HTMLTextAreaElement>) => {
-        if (!canEdit) return;
-        if (e.target.value !== task.subDescription) {
-            updateTask(workspaceId, task.id, task.listId, { subDescription: e.target.value });
-        }
-    };
+
 
     const handleStatusChange = (newStatusId: string) => {
         if (!canEdit) return;
@@ -208,256 +203,299 @@ export function TaskDetailPanel() {
         }
     };
 
+
+
     return (
         <>
             {/* Backdrop */}
-            <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40" onClick={closeTaskDetail} />
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40" onClick={closeTaskDetail} />
 
             {/* Panel */}
-            <div className="fixed inset-y-0 right-0 w-full md:w-[60%] md:min-w-[600px] bg-background border-l border-border shadow-2xl z-50 flex flex-col animate-in slide-in-from-right duration-300 selection:bg-black selection:text-white dark:selection:bg-white dark:selection:text-black">
+            <div className="fixed inset-y-0 right-0 w-full md:w-[50%] md:min-w-[700px] bg-black border-l border-zinc-800 shadow-2xl z-50 flex flex-col animate-in slide-in-from-right duration-300">
 
                 {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-                    <div className="flex items-center gap-2">
-                        <div className="bg-muted px-2 py-1 rounded text-xs font-mono text-muted-foreground">
+                <div className="flex items-center justify-between px-8 py-3 bg-black/50 backdrop-blur-md z-10">
+                    <div className="flex items-center gap-3">
+                        <div className="bg-zinc-800/50 px-3 py-1.5 rounded-md text-xs font-mono font-medium text-zinc-400 border border-zinc-700/50">
                             TASK-{task.id.substring(0, 4)}
                         </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <button
-                            onClick={() => document.getElementById('task-file-input')?.click()}
-                            className="p-2 hover:bg-muted rounded-md text-muted-foreground"
-                            title="Attach File"
-                        >
-                            <Paperclip className="w-4 h-4" />
-                        </button>
-                        <button className="p-2 hover:bg-muted rounded-md text-muted-foreground"><Copy className="w-4 h-4" /></button>
-                        {canEdit && <button
-                            onClick={() => {
-                                if (window.confirm('Are you sure you want to delete this task?')) {
-                                    deleteTask(workspaceId, task.id);
-                                }
-                            }}
-                            className="p-2 hover:bg-red-500/10 rounded-md text-red-500"
-                            title="Delete Task"
-                        >
-                            <Trash2 className="w-4 h-4" />
-                        </button>}
-                        <button className="p-2 hover:bg-muted rounded-md text-muted-foreground"><MoreHorizontal className="w-4 h-4" /></button>
-                        <button onClick={closeTaskDetail} className="p-2 hover:bg-muted rounded-md text-muted-foreground"><X className="w-4 h-4" /></button>
+                    <div className="flex items-center gap-1">
+                        <button className="p-2 hover:bg-zinc-800 rounded-lg text-zinc-400 hover:text-white transition-colors"><Paperclip className="w-4 h-4" /></button>
+                        <button className="p-2 hover:bg-zinc-800 rounded-lg text-zinc-400 hover:text-white transition-colors"><Copy className="w-4 h-4" /></button>
+                        {canEdit && (
+                            <button
+                                onClick={() => {
+                                    if (window.confirm('Are you sure you want to delete this task?')) {
+                                        deleteTask(workspaceId, task.id);
+                                    }
+                                }}
+                                className="p-2 hover:bg-red-500/10 rounded-lg text-red-500 transition-colors"
+                            >
+                                <Trash2 className="w-4 h-4" />
+                            </button>
+                        )}
+                        <button className="p-2 hover:bg-zinc-800 rounded-lg text-zinc-400 hover:text-white transition-colors"><MoreHorizontal className="w-4 h-4" /></button>
+                        <button onClick={closeTaskDetail} className="p-2 hover:bg-zinc-800 rounded-lg text-zinc-400 hover:text-white transition-colors ml-1"><X className="w-5 h-5" /></button>
                     </div>
                 </div>
 
                 {/* Content */}
-                <div className="flex-1 overflow-y-auto">
-                    <div className="p-8 max-w-4xl mx-auto space-y-8">
+                <div className="flex-1 overflow-y-auto px-10 py-6 custom-scrollbar">
+                    <div className="max-w-5xl mx-auto space-y-4">
 
-                        {/* Title & Metadata */}
-                        <div className="space-y-6">
-                            <textarea
-                                defaultValue={task.title}
-                                onBlur={handleTitleBlur}
-                                rows={1}
-                                disabled={!canEdit}
-                                className={cn(
-                                    "w-full text-2xl font-bold bg-transparent outline-none resize-none overflow-hidden",
-                                    !canEdit && "opacity-80 cursor-not-allowed"
-                                )}
-                                onInput={(e) => {
-                                    e.currentTarget.style.height = 'auto';
-                                    e.currentTarget.style.height = e.currentTarget.scrollHeight + 'px';
-                                }}
-                            />
-
-                            <textarea
-                                defaultValue={task.subDescription || ''}
-                                onBlur={handleSubDescriptionBlur}
-                                rows={1}
-                                disabled={!canEdit}
-                                placeholder={canEdit ? "Add context..." : "No additional context"}
-                                className={cn(
-                                    "w-full text-zinc-500 bg-transparent outline-none resize-none overflow-hidden text-sm",
-                                    !canEdit && "opacity-80 cursor-not-allowed"
-                                )}
-                                onInput={(e) => {
-                                    e.currentTarget.style.height = 'auto';
-                                    e.currentTarget.style.height = e.currentTarget.scrollHeight + 'px';
-                                }}
-                            />
-
-                            <div className="flex flex-col md:flex-row gap-4 text-sm">
-                                {/* STATUS - Dropdown */}
-                                <div className="space-y-1 w-full md:w-1/4 relative">
-                                    <div className="text-muted-foreground text-xs uppercase font-semibold">Status</div>
-                                    <button
-                                        onClick={(e) => {
-                                            if (!canEdit) return;
-                                            e.stopPropagation(); setStatusOpen(!statusOpen); setPriorityOpen(false); setAssigneeOpen(false);
-                                        }}
-                                        className={cn(
-                                            "flex items-center gap-2 px-2 py-1.5 bg-muted rounded w-full hover:bg-muted/80 transition-colors",
-                                            !canEdit && "opacity-70 cursor-not-allowed"
-                                        )}
-                                        disabled={!canEdit}
-                                    >
-                                        <div
-                                            className="w-2 h-2 rounded-full"
-                                            style={{ backgroundColor: currentStatusOption?.color || '#999' }}
-                                        />
-                                        <span className="flex-1 text-left text-sm">{currentStatusOption?.label || task.status}</span>
-                                        {canEdit && <ChevronDown className="w-3 h-3 text-muted-foreground" />}
-                                    </button>
-                                    {statusOpen && canEdit && (
-                                        <div className="absolute top-full left-0 mt-1 w-full bg-background border border-border rounded-lg shadow-xl z-50 py-1">
-                                            {statusOptions.map(opt => (
-                                                <button
-                                                    key={opt.value}
-                                                    onClick={(e) => { e.stopPropagation(); handleStatusChange(opt.value); }}
-                                                    className="flex items-center gap-2 w-full px-3 py-2 hover:bg-muted transition-colors"
-                                                >
-                                                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: opt.color }} />
-                                                    <span className="flex-1 text-left text-sm">{opt.label}</span>
-                                                    {currentStatusOption?.value === opt.value && <Check className="w-4 h-4 text-primary" />}
-                                                </button>
-                                            ))}
-                                        </div>
+                        {/* Task Title */}
+                        <div className="space-y-2">
+                            <label className="text-white text-[16px] font-regular block pb-0.5">Task Title</label>
+                            <div className="relative group">
+                                <textarea
+                                    key={`title-${task.id}`}
+                                    defaultValue={task.title}
+                                    onBlur={handleTitleBlur}
+                                    rows={1}
+                                    disabled={!canEdit}
+                                    className={cn(
+                                        "w-full text-lg md:text-[14px] text-white bg-black border border-[#4B4B4B] rounded-[6px] px-4 py-2.5 outline-none focus:!border-indigo-500 resize-none overflow-hidden transition-all placeholder:text-zinc-600 placeholder:text-[14px]",
+                                        !canEdit && "opacity-60 cursor-not-allowed"
                                     )}
-                                </div>
+                                    placeholder="Enter task title"
+                                    onInput={(e) => {
+                                        e.currentTarget.style.height = 'auto';
+                                        e.currentTarget.style.height = e.currentTarget.scrollHeight + 'px';
+                                    }}
+                                />
+                            </div>
+                        </div>
 
-                                {/* ASSIGNEE - Dropdown */}
-                                <div className="space-y-1 w-full md:w-1/4 relative">
-                                    <div className="text-muted-foreground text-xs uppercase font-semibold">Assignee</div>
-                                    <button
-                                        onClick={(e) => {
-                                            if (!canEdit) return;
-                                            e.stopPropagation(); setAssigneeOpen(!assigneeOpen); setStatusOpen(false); setPriorityOpen(false);
-                                        }}
-                                        className={cn(
-                                            "flex items-center gap-2 px-2 py-1.5 rounded w-full hover:bg-muted transition-colors",
-                                            !canEdit && "opacity-70 cursor-not-allowed"
+                        {/* Description Field (formerly Project) */}
+                        <div className="space-y-2">
+                            <label className="text-white text-[16px] font-regular block pb-0.5">Description</label>
+                            <div className="w-full bg-black border border-[#4B4B4B] rounded-[6px] px-4 py-2.5 text-white bg-transparent outline-none transition-colors hover:border-zinc-600 focus-within:!border-indigo-500 min-h-[100px]">
+                                <textarea
+                                    key={`desc-${task.id}`}
+                                    defaultValue={task.description || ''}
+                                    onBlur={handleDescriptionBlur}
+                                    rows={1}
+                                    disabled={!canEdit}
+                                    placeholder={canEdit ? "Add a detailed description..." : "No description"}
+                                    className={cn(
+                                        "w-full h-full bg-transparent outline-none resize-none overflow-hidden text-[14px] text-zinc-300 min-h-[80px]",
+                                        !canEdit && "opacity-80"
+                                    )}
+                                    onInput={(e) => {
+                                        e.currentTarget.style.height = 'auto';
+                                        e.currentTarget.style.height = e.currentTarget.scrollHeight + 'px';
+                                    }}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Metadata Grid */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+
+                            {/* STATUS */}
+                            <div className="space-y-2 relative">
+                                <label className="text-white text-[16px] font-regular block pb-0.5">Status</label>
+                                <button
+                                    onClick={(e) => {
+                                        if (!canEdit) return;
+                                        e.stopPropagation(); setStatusOpen(!statusOpen); setPriorityOpen(false); setAssigneeOpen(false);
+                                    }}
+                                    className="w-full bg-black border border-[#4B4B4B] rounded-[6px] px-4 py-2.5 flex items-center justify-between hover:border-zinc-600 focus:!border-indigo-500 transition-colors"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-2.5 h-2.5 rounded-full ring-2 ring-white/10" style={{ backgroundColor: currentStatusOption?.color || '#999' }} />
+                                        <span className="text-[14px] text-white">{currentStatusOption?.label || task.status}</span>
+                                    </div>
+                                    <ChevronDown className="w-4 h-4 text-zinc-500" />
+                                </button>
+
+                                {statusOpen && canEdit && (
+                                    <div className="absolute top-full left-0 mt-2 w-full bg-[#121212] border border-zinc-800 rounded-[6px] shadow-2xl z-50 py-1.5 overflow-hidden ring-1 ring-white/5">
+                                        {statusOptions.map(opt => (
+                                            <button
+                                                key={opt.value}
+                                                onClick={(e) => { e.stopPropagation(); handleStatusChange(opt.value); }}
+                                                className="flex items-center gap-3 w-full px-4 py-2.5 hover:bg-zinc-800 transition-colors"
+                                            >
+                                                <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: opt.color }} />
+                                                <span className="flex-1 text-left text-[14px] text-white">{opt.label}</span>
+                                                {currentStatusOption?.value === opt.value && <Check className="w-4 h-4 text-indigo-500" />}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* ASSIGNEE */}
+                            <div className="space-y-2 relative">
+                                <label className="text-white text-[16px] font-regular block pb-0.5">Assignee</label>
+                                <button
+                                    onClick={(e) => {
+                                        if (!canEdit) return;
+                                        e.stopPropagation(); setAssigneeOpen(!assigneeOpen); setStatusOpen(false); setPriorityOpen(false);
+                                    }}
+                                    className="w-full bg-black border border-[#4B4B4B] rounded-[6px] px-4 py-2.5 flex items-center justify-between hover:border-zinc-600 focus:!border-indigo-500 transition-colors"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        {task.assigneeId ? (
+                                            (() => {
+                                                const assignee = members.find(m => m.userId === task.assigneeId);
+                                                return (
+                                                    <>
+                                                        {assignee?.avatarUrl ? (
+                                                            <img
+                                                                src={assignee.avatarUrl}
+                                                                alt={assignee.fullName}
+                                                                className="w-6 h-6 rounded-full object-cover border border-zinc-700"
+                                                            />
+                                                        ) : (
+                                                            <div className="w-6 h-6 rounded-full bg-indigo-500/20 flex items-center justify-center text-[14px] font-bold text-indigo-400 border border-indigo-500/30">
+                                                                {task.assigneeName?.charAt(0) || '?'}
+                                                            </div>
+                                                        )}
+                                                        <span className="text-[14px] text-white">{task.assigneeName}</span>
+                                                    </>
+                                                );
+                                            })()
+                                        ) : (
+                                            <>
+                                                <div className="w-6 h-6 rounded-full bg-zinc-800 flex items-center justify-center text-[14px] text-zinc-500 border border-zinc-700">
+                                                    <User size={12} />
+                                                </div>
+                                                <span className="text-[16px] text-zinc-400">Unassigned</span>
+                                            </>
                                         )}
-                                        disabled={!canEdit}
-                                    >
-                                        <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-[10px] font-bold text-primary">
-                                            {task.assigneeName?.charAt(0) || '?'}
-                                        </div>
-                                        <span className="flex-1 text-left text-sm truncate">{task.assigneeName}</span>
-                                        {canEdit && <ChevronDown className="w-3 h-3 text-muted-foreground" />}
-                                    </button>
-                                    {assigneeOpen && canEdit && (
-                                        <div className="absolute top-full left-0 mt-1 w-48 bg-background border border-border rounded-lg shadow-xl z-50 py-1 max-h-48 overflow-y-auto">
+                                    </div>
+                                    <ChevronDown className="w-4 h-4 text-zinc-500" />
+                                </button>
+
+                                {assigneeOpen && canEdit && (
+                                    <div className="absolute top-full left-0 mt-2 w-full bg-[#121212] border border-zinc-800 rounded-[6px] shadow-2xl z-50 py-1.5 overflow-hidden ring-1 ring-white/5">
+                                        <div className="max-h-60 overflow-y-auto custom-scrollbar">
                                             {members.map(member => (
                                                 <button
                                                     key={member.userId}
                                                     onClick={(e) => { e.stopPropagation(); handleAssigneeChange(member.userId); }}
-                                                    className="flex items-center gap-2 w-full px-3 py-2 hover:bg-muted transition-colors"
+                                                    className="flex items-center gap-3 w-full px-4 py-2.5 hover:bg-zinc-800 transition-colors"
                                                 >
-                                                    <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-[10px] font-bold text-primary">
-                                                        {member.fullName?.charAt(0) || '?'}
-                                                    </div>
-                                                    <span className="flex-1 text-left text-sm truncate">{member.fullName}</span>
-                                                    {task.assigneeId === member.userId && <Check className="w-4 h-4 text-primary" />}
+                                                    {member.avatarUrl ? (
+                                                        <img
+                                                            src={member.avatarUrl}
+                                                            alt={member.fullName}
+                                                            className="w-6 h-6 rounded-full object-cover border border-zinc-700"
+                                                        />
+                                                    ) : (
+                                                        <div className="w-6 h-6 rounded-full bg-indigo-500/20 flex items-center justify-center text-[14px] font-bold text-indigo-400 border border-indigo-500/30">
+                                                            {member.fullName?.charAt(0) || '?'}
+                                                        </div>
+                                                    )}
+                                                    <span className="flex-1 text-left text-[14px] text-white">{member.fullName}</span>
+                                                    {task.assigneeId === member.userId && <Check className="w-4 h-4 text-indigo-500" />}
                                                 </button>
                                             ))}
                                         </div>
-                                    )}
-                                </div>
-
-                                {/* PRIORITY - Dropdown */}
-                                <div className="space-y-1 w-full md:w-1/4 relative">
-                                    <div className="text-muted-foreground text-xs uppercase font-semibold">Priority</div>
-                                    <button
-                                        onClick={(e) => {
-                                            if (!canEdit) return;
-                                            e.stopPropagation(); setPriorityOpen(!priorityOpen); setStatusOpen(false); setAssigneeOpen(false);
-                                        }}
-                                        className={cn(
-                                            "flex items-center gap-2 px-2 py-1.5 rounded w-full hover:bg-muted transition-colors",
-                                            !canEdit && "opacity-70 cursor-not-allowed"
-                                        )}
-                                        disabled={!canEdit}
-                                    >
-                                        <Flag className={cn("w-4 h-4", priorityOptions.find(p => p.value === task.priority)?.color)} />
-                                        <span className="flex-1 text-left text-sm">{priorityOptions.find(p => p.value === task.priority)?.label}</span>
-                                        {canEdit && <ChevronDown className="w-3 h-3 text-muted-foreground" />}
-                                    </button>
-                                    {priorityOpen && canEdit && (
-                                        <div className="absolute top-full left-0 mt-1 w-full bg-background border border-border rounded-lg shadow-xl z-50 py-1">
-                                            {priorityOptions.map(opt => (
-                                                <button
-                                                    key={opt.value}
-                                                    onClick={(e) => { e.stopPropagation(); handlePriorityChange(opt.value); }}
-                                                    className="flex items-center gap-2 w-full px-3 py-2 hover:bg-muted transition-colors"
-                                                >
-                                                    <Flag className={cn("w-4 h-4", opt.color)} />
-                                                    <span className="flex-1 text-left text-sm">{opt.label}</span>
-                                                    {task.priority === opt.value && <Check className="w-4 h-4 text-primary" />}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* DUE DATE - Input */}
-                                <div className="space-y-1 w-full md:w-1/4 relative">
-                                    <div className="text-muted-foreground text-xs uppercase font-semibold">Due Date</div>
-                                    <div className={cn("flex items-center gap-2 px-2 py-1 rounded hover:bg-muted transition-colors", !canEdit && "opacity-70")}>
-                                        <CalendarIcon className="w-4 h-4 text-muted-foreground shrink-0" />
-                                        <input
-                                            type="date"
-                                            value={task.dueDate ? task.dueDate.split('T')[0] : ''}
-                                            onChange={handleDueDateChange}
-                                            onClick={(e) => canEdit && e.currentTarget.showPicker()}
-                                            disabled={!canEdit}
-                                            className={cn(
-                                                "flex-1 bg-transparent outline-none text-sm w-full [color-scheme:dark]",
-                                                canEdit ? "cursor-pointer" : "cursor-not-allowed"
-                                            )}
-                                        />
                                     </div>
-                                </div>
+                                )}
+                            </div>
 
-                                {/* TIME TRACKING */}
-                                <div className="space-y-1 w-full md:w-1/4 relative">
-                                    {/* Label moved inside component or handled by UI design (User requested specific look) */}
-                                    {/* <div className="text-muted-foreground text-xs uppercase font-semibold">Time</div> */}
-                                    <TimeTrackingPanel workspaceId={workspaceId} taskId={task.id} />
+                            {/* PRIORITY */}
+                            <div className="space-y-2 relative">
+                                <label className="text-white text-[16px] font-regular block pb-0.5">Priority</label>
+                                <button
+                                    onClick={(e) => {
+                                        if (!canEdit) return;
+                                        e.stopPropagation(); setPriorityOpen(!priorityOpen); setStatusOpen(false); setAssigneeOpen(false);
+                                    }}
+                                    className="w-full bg-black border border-[#4B4B4B] rounded-[6px] px-4 py-2.5 flex items-center justify-between hover:border-zinc-600 focus:!border-indigo-500 transition-colors"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <Flag className={cn("w-4 h-4", priorityOptions.find(p => p.value === task.priority)?.color)} />
+                                        <span className={cn("text-[14px]", priorityOptions.find(p => p.value === task.priority)?.color)}>
+                                            {priorityOptions.find(p => p.value === task.priority)?.label}
+                                        </span>
+                                    </div>
+                                    <ChevronDown className="w-4 h-4 text-zinc-500" />
+                                </button>
+
+                                {priorityOpen && canEdit && (
+                                    <div className="absolute top-full left-0 mt-2 w-full bg-[#121212] border border-zinc-800 rounded-[6px] shadow-2xl z-50 py-1.5 overflow-hidden ring-1 ring-white/5">
+                                        {priorityOptions.map(opt => (
+                                            <button
+                                                key={opt.value}
+                                                onClick={(e) => { e.stopPropagation(); handlePriorityChange(opt.value); }}
+                                                className="flex items-center gap-3 w-full px-4 py-2.5 hover:bg-zinc-800 transition-colors"
+                                            >
+                                                <Flag className={cn("w-4 h-4", opt.color)} />
+                                                <span className={cn("flex-1 text-left text-sm", opt.color)}>{opt.label}</span>
+                                                {task.priority === opt.value && <Check className="w-4 h-4 text-indigo-500" />}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* DUE DATE */}
+                            <div className="space-y-2 relative">
+                                <label className="text-white text-[16px] font-regular block pb-0.5">Due Date</label>
+                                <div className={cn(
+                                    "w-full bg-black border border-[#4B4B4B] rounded-[6px] px-4 py-2.5 flex items-center gap-3 hover:border-zinc-600 focus-within:!border-indigo-500 transition-colors",
+                                    !canEdit && "opacity-60"
+                                )}>
+                                    <CalendarIcon className="w-4 h-4 text-zinc-500" />
+                                    <input
+                                        type="date"
+                                        value={task.dueDate ? task.dueDate.split('T')[0] : ''}
+                                        onChange={handleDueDateChange}
+                                        onClick={(e) => canEdit && e.currentTarget.showPicker()}
+                                        disabled={!canEdit}
+                                        className={cn(
+                                            "flex-1 bg-transparent outline-none text-sm text-white w-full [color-scheme:dark]",
+                                            canEdit ? "cursor-pointer" : "cursor-not-allowed"
+                                        )}
+                                    />
                                 </div>
                             </div>
-                            {/* TAGS SECTION */}
-                            <div className="space-y-2">
-                                <div className="text-muted-foreground text-xs uppercase font-semibold">Tags</div>
+
+                        </div>
+
+                        {/* TAGS */}
+                        <div className="space-y-2">
+                            <label className="text-white text-[16px] font-regular block pb-0.5">Tags</label>
+                            <div className="w-full bg-black border border-[#4B4B4B] rounded-[6px] p-4 min-h-[60px] focus-within:!border-indigo-500 transition-colors">
                                 <div className="flex flex-wrap gap-2 items-center">
                                     {task.tags.map(tag => (
                                         <span
                                             key={tag.id}
-                                            className="flex items-center gap-1.5 px-2.5 py-1 rounded text-[10px] font-bold text-white uppercase shadow-sm group"
-                                            style={{ backgroundColor: tag.color }}
+                                            className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-[12px] font-bold text-white uppercase shadow-sm group border border-transparent"
+                                            style={{ backgroundColor: tag.color + '40', borderColor: tag.color + '60', color: tag.color }}
                                         >
+                                            <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: tag.color }} />
                                             {tag.name}
                                             <button
                                                 onClick={() => handleTagToggle(tag.id)}
-                                                className="hover:scale-110 opacity-0 group-hover:opacity-100 transition-all"
+                                                className="hover:scale-110 opacity-0 group-hover:opacity-100 transition-all ml-1"
                                             >
-                                                <X size={10} />
+                                                <X size={12} />
                                             </button>
                                         </span>
                                     ))}
+
                                     <div className="relative">
                                         <button
                                             onClick={(e) => { e.stopPropagation(); setTagPickerOpen(!tagPickerOpen); }}
-                                            className="p-1 px-2 border border-dashed border-border rounded text-[10px] font-bold text-muted-foreground hover:border-primary hover:text-primary transition-all flex items-center gap-1"
+                                            className="px-3 py-1.5 border border-dashed border-zinc-700 rounded-lg text-[14px] font-medium text-zinc-500 hover:border-zinc-500 hover:text-zinc-300 transition-all flex items-center gap-2"
                                         >
-                                            <Plus size={12} /> Add Tag
+                                            <Plus size={14} /> Add Tag
                                         </button>
                                         {tagPickerOpen && (
-                                            <div className="absolute top-full left-0 mt-2 w-64 bg-card border border-border shadow-2xl rounded-xl p-3 z-50">
+                                            <div className="absolute top-full left-0 mt-3 w-64 bg-[#121212] border border-zinc-800 shadow-2xl rounded-[6px] p-3 z-50 ring-1 ring-white/5">
                                                 <input
                                                     placeholder="Search or create tag..."
                                                     value={tagSearch}
                                                     onChange={e => setTagSearch(e.target.value)}
                                                     onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleCreateTag())}
-                                                    className="w-full bg-muted border-none rounded-lg px-2.5 py-1.5 text-xs mb-3 outline-none focus:ring-1 focus:ring-primary"
+                                                    className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-[14px] text-white mb-3 outline-none focus:border-indigo-500/50 transition-colors"
                                                     autoFocus
                                                 />
                                                 <div className="max-h-40 overflow-y-auto space-y-1 pr-1 custom-scrollbar">
@@ -465,17 +503,17 @@ export function TaskDetailPanel() {
                                                         <button
                                                             key={t.id}
                                                             onClick={(e) => { e.stopPropagation(); handleTagToggle(t.id); }}
-                                                            className="w-full flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted text-xs transition-colors"
+                                                            className="w-full flex items-center gap-2 px-2 py-1.5 rounded hover:bg-zinc-800 text-[14px] transition-colors"
                                                         >
                                                             <div className="w-2 h-2 rounded-full" style={{ backgroundColor: t.color }} />
-                                                            <span className="flex-1 text-left font-medium">{t.name}</span>
-                                                            {task.tags.some(xt => xt.id === t.id) && <Check size={12} className="text-primary" />}
+                                                            <span className="flex-1 text-left font-medium text-zinc-300">{t.name}</span>
+                                                            {task.tags.some(xt => xt.id === t.id) && <Check size={12} className="text-indigo-500" />}
                                                         </button>
                                                     ))}
                                                     {tagSearch && !(tags[workspaceId] || []).some(t => t.name.toLowerCase() === tagSearch.toLowerCase()) && (
                                                         <button
                                                             onClick={(e) => { e.stopPropagation(); handleCreateTag(); }}
-                                                            className="w-full flex items-center gap-2 px-2 py-1.5 rounded hover:bg-primary/5 text-primary text-xs transition-all font-bold border border-dashed border-primary/20"
+                                                            className="w-full flex items-center gap-2 px-2 py-1.5 rounded hover:bg-indigo-500/10 text-indigo-400 text-[14px] transition-all font-bold border border-dashed border-indigo-500/20"
                                                         >
                                                             <Plus size={12} /> Create "{tagSearch}"
                                                         </button>
@@ -488,44 +526,38 @@ export function TaskDetailPanel() {
                             </div>
                         </div>
 
-                        {/* Description */}
-                        <div className="space-y-2 group">
-                            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Description</h3>
-                            <textarea
-                                defaultValue={task.description || ''}
-                                onBlur={handleDescriptionBlur}
-                                placeholder="Add a description..."
-                                className="w-full min-h-[100px] p-3 rounded-md border border-transparent hover:border-border focus:border-primary bg-transparent outline-none resize-y transition-colors"
-                            />
-                        </div>
+
 
                         {/* Attachments */}
-                        <div className="space-y-2">
-                            <TaskAttachments
-                                workspaceId={workspaceId}
-                                taskId={task.id}
-                                attachments={detail.attachments || []}
+                        <TaskAttachments
+                            workspaceId={workspaceId}
+                            taskId={task.id}
+                            attachments={detail.attachments || []}
+                        />
+
+                        {/* Additional Sections */}
+                        <div className="pt-6 border-t border-zinc-800">
+                            <SubtaskList
+                                subtasks={subtasks}
+                                onAdd={(title, assigneeId) => addSubtask(workspaceId, task.id, title, assigneeId)}
+                                onToggle={(id) => toggleSubtask(workspaceId, id)}
+                                canAdd={!!canEdit}
+                                currentUserId={user?.id}
+                                parentAssigneeId={task.assigneeId ?? undefined}
                             />
                         </div>
 
-                        {/* Subtasks */}
-                        <SubtaskList
-                            subtasks={subtasks}
-                            onAdd={(title, assigneeId) => addSubtask(workspaceId, task.id, title, assigneeId)}
-                            onToggle={(id) => toggleSubtask(workspaceId, id)}
-                            canAdd={!!canEdit}
-                            currentUserId={user?.id}
-                            parentAssigneeId={task.assigneeId ?? undefined}
-                        />
-
                         {/* Split View: Activity & Comments */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8 border-t border-border">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8 border-t border-zinc-800">
                             <TaskActivityTimeline activities={activities} />
                             <TaskComments
                                 taskId={task.id}
                                 workspaceId={workspaceId}
                             />
                         </div>
+
+                        {/* Bottom Spacer/Action Buttons (if we wanted them) */}
+                        <div className="h-10"></div>
                     </div>
                 </div>
             </div >

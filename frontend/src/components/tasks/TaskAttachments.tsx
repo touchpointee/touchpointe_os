@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { useTaskStore } from '@/stores/taskStore';
 import type { TaskAttachmentDto } from '@/types/task';
-import { Paperclip, X, File } from 'lucide-react';
+import { Paperclip, X, File, Plus } from 'lucide-react';
 
 interface TaskAttachmentsProps {
     workspaceId: string;
@@ -35,65 +35,74 @@ export default function TaskAttachments({ workspaceId, taskId, attachments }: Ta
         }
     };
 
+    // Helper to get consistent icons/previews
     const isImage = (contentType: string) => contentType.startsWith('image/');
 
     return (
-        <div className="mt-6">
-            <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-                    <Paperclip className="w-4 h-4" />
-                    Attachments
-                </h3>
+        <div className="mt-8">
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4 flex items-center gap-2">
+                <Paperclip className="w-4 h-4" />
+                Attachments
+            </h3>
+
+            <input
+                id="task-file-input"
+                type="file"
+                ref={fileInputRef}
+                className="hidden"
+                onChange={handleFileChange}
+            />
+
+            <div className="flex flex-wrap gap-4">
+                {/* Existing Attachments */}
+                {attachments.map((att) => (
+                    <div key={att.id} className="group relative w-50 aspect-[16/9] bg-black border border-white/10 rounded-xl overflow-hidden flex flex-col hover:border-white/20 transition-all">
+                        <button
+                            onClick={() => handleDelete(att.id)}
+                            className="absolute top-2 right-2 p-1.5 bg-black/50 hover:bg-red-500/20 rounded-full text-red-500 opacity-0 group-hover:opacity-100 transition-all z-10"
+                            title="Delete"
+                        >
+                            <X className="w-3 h-3" />
+                        </button>
+
+                        {/* Preview Area */}
+                        <a href={att.url} target="_blank" rel="noopener noreferrer" className="flex-1 flex items-center justify-center bg-[#F4F5F7] relative overflow-hidden">
+                            {isImage(att.contentType) ? (
+                                <img src={att.url} alt={att.fileName} className="w-full h-full object-cover" />
+                            ) : (
+                                <File className="w-10 h-10 text-zinc-400" strokeWidth={1.5} />
+                            )}
+                        </a>
+
+                        {/* Footer Details */}
+                        <div className="h-14 px-3 flex flex-col justify-center bg-black border-t border-white/5">
+                            <p className="text-[13px] text-zinc-300 truncate text-center w-full" title={att.fileName}>
+                                {att.fileName}
+                            </p>
+                            <p className="text-[11px] text-zinc-600 text-center w-full mt-0.5">
+                                {(att.size / 1024).toFixed(1)} KB
+                            </p>
+                        </div>
+                    </div>
+                ))}
+
+                {/* Add Attachment Card */}
                 <button
                     onClick={() => fileInputRef.current?.click()}
                     disabled={isUploading}
-                    className="text-xs text-primary-600 hover:text-primary-700 dark:text-primary-400 font-medium"
+                    style={{ boxShadow: '0px 0px 25px 0px #80808040 inset' }}
+                    className="w-32 aspect-[3/4] flex flex-col items-center justify-center gap-3 bg-black border border-white/10 rounded-xl hover:bg-zinc-900/50 hover:border-white/20 transition-all group ml-10"
                 >
-                    {isUploading ? 'Uploading...' : 'Add Attachment'}
+                    <div className="w-8 h-8 flex items-center justify-center">
+                        {isUploading ? (
+                            <div className="w-5 h-5 border-2 border-zinc-500 border-t-white rounded-full animate-spin" />
+                        ) : (
+                            <Plus className="w-6 h-6 text-white" strokeWidth={1.5} />
+                        )}
+                    </div>
+                    <span className="text-[11px] font-medium text-white">Add Attachment</span>
                 </button>
-                <input
-                    id="task-file-input"
-                    type="file"
-                    ref={fileInputRef}
-                    className="hidden"
-                    onChange={handleFileChange}
-                />
             </div>
-
-            {attachments.length === 0 ? (
-                <div className="text-sm text-gray-500 dark:text-gray-400 italic">No attachments</div>
-            ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-3">
-                    {attachments.map((att) => (
-                        <div key={att.id} className="group relative border border-gray-200 dark:border-gray-700 rounded-lg p-2 flex flex-col items-center hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                            <button
-                                onClick={() => handleDelete(att.id)}
-                                className="absolute top-1 right-1 p-1 bg-white dark:bg-gray-800 rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition-opacity text-red-500 hover:text-red-600"
-                                title="Delete"
-                            >
-                                <X className="w-4 h-4" />
-                            </button>
-
-                            <a href={att.url} target="_blank" rel="noopener noreferrer" className="w-full h-24 mb-2 flex items-center justify-center bg-gray-100 dark:bg-gray-900 rounded overflow-hidden">
-                                {isImage(att.contentType) ? (
-                                    <img src={att.url} alt={att.fileName} className="w-full h-full object-cover" />
-                                ) : (
-                                    <File className="w-10 h-10 text-gray-400" />
-                                )}
-                            </a>
-
-                            <div className="w-full text-center">
-                                <p className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate w-full" title={att.fileName}>
-                                    {att.fileName}
-                                </p>
-                                <p className="text-[10px] text-gray-500">
-                                    {(att.size / 1024).toFixed(1)} KB
-                                </p>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            )}
         </div>
     );
 }
