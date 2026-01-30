@@ -47,8 +47,6 @@ export function DealComments({ dealId, workspaceId }: DealCommentsProps) {
 
     return (
         <div className="flex flex-col h-full">
-            <h3 className="font-semibold mb-4 px-1">Comments</h3>
-
             <div className="flex-1 overflow-y-auto space-y-4 px-1 mb-4 min-h-[100px] max-h-[400px]">
                 {isLoading ? (
                     <div className="text-sm text-muted-foreground">Loading comments...</div>
