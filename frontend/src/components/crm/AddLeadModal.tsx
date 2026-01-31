@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLeadStore } from '@/stores/leadStore';
 import { useWorkspaces } from '@/stores/workspaceStore';
 import { X } from 'lucide-react';
@@ -9,7 +9,7 @@ interface AddLeadModalProps {
     defaultStatus?: string;
 }
 
-export function AddLeadModal({ isOpen, onClose, defaultStatus: _defaultStatus = 'NEW' }: AddLeadModalProps) {
+export function AddLeadModal({ isOpen, onClose, defaultStatus = 'NEW' }: AddLeadModalProps) {
     const { createLead } = useLeadStore();
     const { activeWorkspace } = useWorkspaces();
     const [isLoading, setIsLoading] = useState(false);
@@ -22,8 +22,16 @@ export function AddLeadModal({ isOpen, onClose, defaultStatus: _defaultStatus = 
         phone: '',
         companyName: '',
         source: 'MANUAL' as const,
-        notes: ''
+        notes: '',
+        status: defaultStatus as 'NEW' | 'CONTACTED' | 'QUALIFIED' | 'UNQUALIFIED' | 'CONVERTED'
     });
+
+    // Update status when modal opens with a different defaultStatus
+    useEffect(() => {
+        if (isOpen) {
+            setFormData(prev => ({ ...prev, status: defaultStatus as 'NEW' | 'CONTACTED' | 'QUALIFIED' | 'UNQUALIFIED' | 'CONVERTED' }));
+        }
+    }, [isOpen, defaultStatus]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -41,7 +49,8 @@ export function AddLeadModal({ isOpen, onClose, defaultStatus: _defaultStatus = 
                 phone: '',
                 companyName: '',
                 source: 'MANUAL' as const,
-                notes: ''
+                notes: '',
+                status: 'NEW'
             });
             onClose();
         } catch (err: any) {
