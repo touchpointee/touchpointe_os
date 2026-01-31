@@ -620,7 +620,7 @@ export function ChatWindow() {
                 </div>
 
                 {/* Meeting Icon Button */}
-                <button
+                {/* <button
                     className="ml-auto p-2 hover:bg-muted/50 rounded-full transition-colors"
                     title="Start video meeting"
                     onClick={() => {
@@ -643,10 +643,10 @@ export function ChatWindow() {
                         <path d="m22 8-6 4 6 4V8Z" />
                         <rect width="14" height="12" x="2" y="6" rx="2" ry="2" />
                     </svg>
-                </button>
+                </button> */}
 
                 {/* More Options Icon Button */}
-                <div className="relative">
+                {/* <div className="relative">
                     <button
                         className="p-2 hover:bg-muted/50 rounded-full transition-colors"
                         title="More options"
@@ -670,7 +670,7 @@ export function ChatWindow() {
                         </svg>
                     </button>
 
-                    {/* Dropdown Menu */}
+                    
                     {showMoreMenu && (
                         <div className="absolute right-0 top-full mt-2 w-56 bg-[var(--chat-bg-secondary)] border border-[var(--chat-border)] rounded-lg shadow-lg overflow-hidden z-50">
                             <button
@@ -744,7 +744,7 @@ export function ChatWindow() {
                             </button>
                         </div>
                     )}
-                </div>
+                </div> */}
             </div>
 
             {/* Messages */}
