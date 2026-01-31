@@ -62,7 +62,7 @@ export function TeamPage() {
                         {canInvite && (
                             <button
                                 onClick={() => setIsInviteOpen(true)}
-                                className="group flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white bg-primary hover:bg-primary/90 rounded-xl shadow-lg shadow-primary/20 transition-all active:scale-95"
+                                className="group flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 rounded-xl shadow-lg shadow-primary/20 transition-all active:scale-95"
                             >
                                 <Plus className="w-4 h-4 transition-transform group-hover:rotate-90" />
                                 Invite Member

@@ -66,11 +66,11 @@ export function InviteMemberModal({ isOpen, onClose }: InviteMemberModalProps) {
                                 id="role"
                                 value={role}
                                 onChange={(e) => setRole(parseInt(e.target.value) as WorkspaceRole)}
-                                className="w-full px-3 py-2 bg-muted/50 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring transition-all"
+                                className="w-full px-3 py-2 bg-background border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring transition-all text-foreground"
                             >
-                                <option value={WorkspaceRole.ADMIN}>Admin</option>
-                                <option value={WorkspaceRole.MEMBER}>Member</option>
-                                <option value={WorkspaceRole.VIEWER}>Viewer</option>
+                                <option value={WorkspaceRole.ADMIN} className="bg-popover text-popover-foreground">Admin</option>
+                                <option value={WorkspaceRole.MEMBER} className="bg-popover text-popover-foreground">Member</option>
+                                <option value={WorkspaceRole.VIEWER} className="bg-popover text-popover-foreground">Viewer</option>
                             </select>
                             <p className="text-xs text-muted-foreground">
                                 Admins can manage members and settings. Members can edit content. Viewers can only read.
