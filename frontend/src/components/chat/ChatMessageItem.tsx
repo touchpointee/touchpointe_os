@@ -13,7 +13,7 @@ interface ChatMessageItemProps {
     onReply: (message: Message) => void;
     onReact: (messageId: string, emoji: string) => void;
     onRemoveReaction: (messageId: string, emoji: string) => void;
-    onOpenReactionDetails: (message: Message) => void;
+    onOpenReactionDetails: (message: Message, position: { top: number; left: number }) => void;
     onPreview: (src: string, type: 'image' | 'video', fileName: string) => void;
 }
 
@@ -344,7 +344,8 @@ export function ChatMessageItem({
                                     <div
                                         onClick={(e) => {
                                             e.stopPropagation();
-                                            onOpenReactionDetails(message);
+                                            const rect = e.currentTarget.getBoundingClientRect();
+                                            onOpenReactionDetails(message, { top: rect.bottom + 5, left: rect.left });
                                         }}
                                         className="bg-[var(--chat-bg-secondary)] border border-[var(--chat-border)] rounded-full px-1.5 py-[1px] flex items-center gap-0 shadow-md cursor-pointer hover:bg-[var(--chat-bg-hover)] transition-colors"
                                     >

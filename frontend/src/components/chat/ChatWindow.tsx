@@ -66,6 +66,7 @@ export function ChatWindow() {
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const [showMoreMenu, setShowMoreMenu] = useState(false);
     const [selectedMessageForReactionDetails, setSelectedMessageForReactionDetails] = useState<Message | null>(null);
+    const [reactionDetailsPosition, setReactionDetailsPosition] = useState<{ top: number; left: number } | undefined>(undefined);
     const [localAttachments, setLocalAttachments] = useState<LocalAttachment[]>([]);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -803,7 +804,10 @@ export function ChatWindow() {
                                     onRemoveReaction={(mid, emoji) => {
                                         if (activeWorkspace) removeReaction(activeWorkspace.id, mid, emoji);
                                     }}
-                                    onOpenReactionDetails={(m) => setSelectedMessageForReactionDetails(m)}
+                                    onOpenReactionDetails={(m, pos) => {
+                                        setSelectedMessageForReactionDetails(m);
+                                        setReactionDetailsPosition(pos);
+                                    }}
                                     onPreview={(src, type, fileName) => setPreviewMedia({ isOpen: true, src, type, fileName })}
                                 />
                             </div>
@@ -1081,6 +1085,7 @@ export function ChatWindow() {
                     onRemoveReaction={(mid, emoji) => {
                         if (activeWorkspace) removeReaction(activeWorkspace.id, mid, emoji);
                     }}
+                    position={reactionDetailsPosition}
                 />
             )}
         </div>
