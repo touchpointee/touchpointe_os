@@ -1,4 +1,4 @@
-import { useEffect, useState, forwardRef } from 'react';
+import { useEffect, useState, forwardRef, useRef } from 'react';
 import { User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -6,16 +6,19 @@ export interface MentionSuggestionProps {
     users: { id: string; fullName: string; email: string; avatarUrl?: string | null }[];
     onSelect: (user: { id: string; fullName: string }) => void;
     onClose: () => void;
-    position: { top?: number; bottom?: number; left: number };
+    position: { top?: number | string; bottom?: number | string; left: number | string };
+    strategy?: 'fixed' | 'absolute';
 }
 
 export const MentionSuggestion = forwardRef<HTMLDivElement, MentionSuggestionProps>(({
     users,
     onSelect,
     onClose,
-    position
+    position,
+    strategy = 'fixed'
 }, ref) => {
     const [selectedIndex, setSelectedIndex] = useState(0);
+    const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
 
     // We assume 'users' passed to this component are already filtered suggestions.
     const filteredUsers = users;
@@ -23,6 +26,15 @@ export const MentionSuggestion = forwardRef<HTMLDivElement, MentionSuggestionPro
     useEffect(() => {
         setSelectedIndex(0);
     }, [users]); // Reset selection when list changes
+
+    useEffect(() => {
+        if (itemRefs.current[selectedIndex]) {
+            itemRefs.current[selectedIndex]?.scrollIntoView({
+                block: 'nearest',
+                behavior: 'smooth'
+            });
+        }
+    }, [selectedIndex]);
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -53,10 +65,6 @@ export const MentionSuggestion = forwardRef<HTMLDivElement, MentionSuggestionPro
             }
         };
 
-        // Use capture phase to handle before React components if needed, or bubble.
-        // Since we want to override parent behavior, capture might be better OR just rely on document order.
-        // Document listener usually runs LAST in bubbling.
-        // Let's stick to bubbling but check logic.
         document.addEventListener('keydown', handleKeyDown);
         return () => document.removeEventListener('keydown', handleKeyDown);
     }, [filteredUsers, selectedIndex, onSelect, onClose]);
@@ -66,7 +74,10 @@ export const MentionSuggestion = forwardRef<HTMLDivElement, MentionSuggestionPro
     return (
         <div
             ref={ref}
-            className="fixed z-50 w-64 bg-popover text-popover-foreground rounded-md border shadow-md outline-none animate-in fade-in-0 zoom-in-95"
+            className={cn(
+                strategy === 'fixed' ? "fixed z-[100]" : "absolute z-50",
+                "w-64 bg-popover text-popover-foreground rounded-md border shadow-md outline-none animate-in fade-in-0 zoom-in-95 max-h-[300px] overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:bg-zinc-500 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:border-0 [&::-webkit-scrollbar-thumb]:rounded-full"
+            )}
             style={{
                 top: position.top,
                 bottom: position.bottom,
@@ -77,6 +88,7 @@ export const MentionSuggestion = forwardRef<HTMLDivElement, MentionSuggestionPro
                 {filteredUsers.map((user, index) => (
                     <div
                         key={user.id}
+                        ref={el => itemRefs.current[index] = el}
                         className={cn(
                             "relative flex w-full cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none",
                             index === selectedIndex ? "bg-accent text-accent-foreground" : "hover:bg-accent hover:text-accent-foreground"

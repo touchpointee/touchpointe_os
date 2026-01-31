@@ -55,7 +55,7 @@ export interface TaskCommentDto {
     id: string;
     userId: string;
     userName: string;
-    userAvatar?: string;
+    userAvatarUrl?: string;
     content: string;
     createdAt: string;
 }

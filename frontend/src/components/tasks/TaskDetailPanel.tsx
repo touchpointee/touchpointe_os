@@ -13,6 +13,7 @@ import { TaskActivityTimeline } from './TaskActivityTimeline';
 import type { TaskPriority } from '@/types/task';
 
 import TaskAttachments from './TaskAttachments';
+import { TimeTrackingPanel } from './TimeTrackingPanel';
 
 interface StatusOption {
     value: string;
@@ -457,6 +458,11 @@ export function TaskDetailPanel() {
                                 </div>
                             </div>
 
+                            {/* TIME TRACKING */}
+                            <div className="space-y-2 relative">
+                                <label className="text-white text-[16px] font-regular block pb-0.5">Time Tracking</label>
+                                <TimeTrackingPanel workspaceId={workspaceId} taskId={task.id} />
+                            </div>
                         </div>
 
                         {/* TAGS */}

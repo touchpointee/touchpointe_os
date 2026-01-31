@@ -46,8 +46,8 @@ export function ContactsView() {
     };
 
     return (
-        <div className="space-y-4 p-4">
-            <div className="flex items-center justify-between">
+        <div className="h-full flex flex-col space-y-4 p-4">
+            <div className="flex items-center justify-between shrink-0">
                 <div>
                     <h2 className="text-xl font-semibold tracking-tight">Contacts</h2>
                     <p className="text-sm text-muted-foreground">Manage your people and leads</p>
@@ -66,9 +66,9 @@ export function ContactsView() {
                 contact={selectedContact}
             />
 
-            <div className="border rounded-md overflow-hidden">
+            <div className="border rounded-md flex-1 flex flex-col overflow-hidden min-h-0 bg-background">
                 {/* Header - Hidden on Mobile */}
-                <div className="hidden md:grid grid-cols-[1.5fr_1.5fr_1fr_1fr_1fr_50px] bg-muted/50 text-left text-sm font-medium text-muted-foreground border-b">
+                <div className="hidden md:grid grid-cols-[1.5fr_1.5fr_1fr_1fr_1fr_50px] bg-muted/50 text-left text-sm font-medium text-muted-foreground border-b shrink-0">
                     <div className="p-3">Name</div>
                     <div className="p-3">Email</div>
                     <div className="p-3">Phone</div>
@@ -78,7 +78,7 @@ export function ContactsView() {
                 </div>
 
                 {/* Body */}
-                <div className="divide-y divide-border">
+                <div className="flex-1 overflow-y-auto divide-y divide-border">
                     {isLoading ? (
                         <div className="p-4 text-center text-sm">Loading...</div>
                     ) : contacts.length === 0 ? (

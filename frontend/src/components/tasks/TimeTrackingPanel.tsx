@@ -130,10 +130,10 @@ export function TimeTrackingPanel({ workspaceId, taskId }: TimeTrackingPanelProp
             <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
                 className={cn(
-                    "flex items-center gap-2 px-3 py-1.5 rounded-md w-full transition-all border text-sm font-medium group",
+                    "flex items-center gap-2 px-4 py-2.5 rounded-[6px] w-full transition-all border text-sm font-medium group",
                     isRunning
                         ? "bg-red-500/10 text-red-500 border-red-500/20 hover:bg-red-500/20"
-                        : "bg-background border-zinc-700 hover:border-zinc-500 text-zinc-300"
+                        : "bg-black border-[#4B4B4B] hover:border-zinc-600 text-zinc-300"
                 )}
             >
                 {isRunning ? (

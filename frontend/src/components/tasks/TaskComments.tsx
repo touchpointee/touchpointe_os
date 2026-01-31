@@ -6,6 +6,7 @@ import { MentionRenderer } from '../shared/MentionRenderer';
 import { useChatStore } from '@/stores/chatStore';
 import { useTaskStore } from '@/stores/taskStore';
 import { Send } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface TaskCommentsProps {
     taskId: string;
@@ -31,7 +32,7 @@ export function TaskComments({ taskId, workspaceId }: TaskCommentsProps) {
 
     const [isSending, setIsSending] = useState(false);
     const [mentionQuery, setMentionQuery] = useState<string | null>(null);
-    const [mentionPosition, setMentionPosition] = useState<{ top?: number, bottom?: number, left: number }>({ left: 0 });
+    const [mentionPosition, setMentionPosition] = useState<{ top?: number | string, bottom?: number | string, left: number | string }>({ left: 0 });
     const [hasContent, setHasContent] = useState(false);
 
     const inputRef = useRef<HTMLDivElement>(null);
@@ -39,15 +40,12 @@ export function TaskComments({ taskId, workspaceId }: TaskCommentsProps) {
     // Use taskDetails to get comments
     const comments = taskDetails[taskId]?.comments || [];
 
-    // Fetch details if not present or stale?
-    // Usually usage of this component implies details are open, but let's ensure.
     useEffect(() => {
         if (!taskDetails[taskId]) {
             fetchTaskDetails(workspaceId, taskId);
         }
-    }, [taskId, workspaceId, fetchTaskDetails, taskDetails]); // Added taskDetails dep to avoid loop? No, handled by if check potentially?
-    // Actually simpler: just rely on parent opening details or fetch once.
-    // The previous code fetched on mount.
+    }, [taskId, workspaceId, fetchTaskDetails, taskDetails]);
+
 
     const filteredMembers = useMemo(() => {
         if (mentionQuery === null) return [];
@@ -81,11 +79,9 @@ export function TaskComments({ taskId, workspaceId }: TaskCommentsProps) {
                     const query = textBefore.slice(lastAt + 1);
                     if (!query.startsWith(' ') && query.length < 50) {
                         setMentionQuery(query);
-
-                        const inputRect = inputRef.current.getBoundingClientRect();
                         setMentionPosition({
-                            bottom: window.innerHeight - inputRect.top + 8,
-                            left: inputRect.left
+                            bottom: '100%',
+                            left: 0
                         });
                         return;
                     }
@@ -189,33 +185,49 @@ export function TaskComments({ taskId, workspaceId }: TaskCommentsProps) {
     };
 
     return (
-        <div className="flex flex-col h-full">
-            <h3 className="font-semibold mb-4 px-1">Comments</h3>
+        <div className="flex flex-col h-full space-y-4">
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Comments</h3>
 
-            <div className="flex-1 overflow-y-auto space-y-4 px-1 mb-4 min-h-[100px] max-h-[400px]">
+            <div className="bg-black border border-[#4B4B4B] rounded-[6px] h-[400px] overflow-y-auto custom-scrollbar p-4 relative">
                 {loading ? (
-                    <div className="text-sm text-muted-foreground">Loading comments...</div>
+                    <div className="absolute inset-0 flex items-center justify-center text-sm text-muted-foreground/60">
+                        Loading comments...
+                    </div>
                 ) : comments.length === 0 ? (
-                    <div className="text-sm text-muted-foreground">No comments yet.</div>
+                    <div className="h-full flex flex-col items-center justify-center text-muted-foreground/50 border border-dashed border-zinc-800 rounded-lg bg-zinc-900/20 m-2">
+                        <span className="text-sm">No comments yet</span>
+                    </div>
                 ) : (
-                    comments.map((comment) => (
-                        <div key={comment.id} className="flex gap-3">
-                            <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold shrink-0">
-                                {comment.userName.charAt(0)}
-                            </div>
-                            <div className="flex-1 space-y-1">
-                                <div className="flex items-center justify-between">
-                                    <span className="text-sm font-medium">{comment.userName}</span>
-                                    <span className="text-xs text-muted-foreground">
-                                        {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
-                                    </span>
+                    <div className="space-y-4">
+                        {comments.map((comment) => {
+                            const member = members.find(m => m.id === comment.userId);
+                            const avatarUrl = comment.userAvatarUrl || member?.avatarUrl;
+
+                            return (
+                                <div key={comment.id} className="flex gap-3 group">
+                                    {/* Avatar */}
+                                    <div className="w-8 h-8 rounded-full bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-xs font-bold shrink-0 text-indigo-500 mt-0.5 overflow-hidden">
+                                        {avatarUrl ? (
+                                            <img src={avatarUrl} alt={comment.userName} className="w-full h-full object-cover" />
+                                        ) : (
+                                            comment.userName.charAt(0)
+                                        )}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <span className="text-xs font-semibold text-foreground">{comment.userName}</span>
+                                            <span className="text-[10px] text-muted-foreground/60">
+                                                {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
+                                            </span>
+                                        </div>
+                                        <div className="text-xs text-foreground/90 bg-zinc-800/50 p-3 rounded-lg border border-border/50 shadow-sm inline-block max-w-full">
+                                            <MentionRenderer content={comment.content} />
+                                        </div>
+                                    </div>
                                 </div>
-                                <div className="text-sm text-foreground/90 bg-muted/40 p-2 rounded-md">
-                                    <MentionRenderer content={comment.content} />
-                                </div>
-                            </div>
-                        </div>
-                    ))
+                            );
+                        })}
+                    </div>
                 )}
             </div>
 
@@ -226,31 +238,39 @@ export function TaskComments({ taskId, workspaceId }: TaskCommentsProps) {
                         onSelect={selectUser}
                         onClose={() => setMentionQuery(null)}
                         position={mentionPosition}
+                        strategy="absolute"
                     />
                 )}
 
                 <div className="flex gap-2">
-                    <div className="relative flex-1 bg-muted/30 rounded-lg border border-border focus-within:ring-1 focus-within:ring-primary focus-within:border-primary transition-all">
+                    <div className="relative flex-1 bg-black rounded-lg border border-[#4B4B4B] focus-within:ring-1 focus-within:ring-indigo-500/50 focus-within:border-indigo-500 transition-all shadow-sm">
+                        {!hasContent && (
+                            <div className="absolute top-3 left-3 text-zinc-500 text-sm pointer-events-none select-none">
+                                Write a comment... (Type @ to mention)
+                            </div>
+                        )}
                         <div
                             ref={inputRef}
                             contentEditable
                             onInput={handleInput}
                             onKeyDown={handleKeyDown}
-                            className="w-full max-h-[100px] overflow-y-auto p-3 text-sm outline-none min-h-[80px] empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground"
+                            className="w-full max-h-[150px] overflow-y-auto p-3 text-sm outline-none min-h-[60px] text-white custom-scrollbar relative z-10 bg-transparent"
                             role="textbox"
                             aria-multiline="true"
-                            data-placeholder="Write a comment..."
                         />
-                        <div className="flex justify-between items-center p-2 border-t border-border/50 bg-muted/10">
-                            <div className="flex gap-2 text-xs text-muted-foreground">
-                                Type @ to mention
-                            </div>
+                        <div className="flex justify-end items-center p-2 border-t border-[#4B4B4B]/50 bg-white/5">
                             <button
                                 onClick={handleSubmit}
                                 disabled={isSending || !hasContent}
-                                className="bg-primary text-primary-foreground p-1.5 rounded-md hover:bg-primary/90 disabled:opacity-50 transition-colors"
+                                className={cn(
+                                    "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all",
+                                    hasContent && !isSending
+                                        ? "bg-indigo-600 text-white hover:bg-indigo-500 shadow-sm"
+                                        : "bg-zinc-800 text-zinc-500 cursor-not-allowed"
+                                )}
                             >
-                                <Send className="w-4 h-4" />
+                                <Send className="w-3.5 h-3.5" />
+                                Send
                             </button>
                         </div>
                     </div>

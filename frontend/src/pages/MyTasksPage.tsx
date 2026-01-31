@@ -93,11 +93,12 @@ export const MyTasksPage = () => {
         if (filter === 'CHAT_MENTIONS') {
             return mentions.filter(m => m.type === 'CHAT');
         }
-        if (filter === 'COMMENT_MENTIONS' || filter === 'MENTIONS') {
+        if (filter === 'COMMENT_MENTIONS') {
             // Include TASK and COMMENT types
             return mentions.filter(m => m.type === 'TASK' || m.type === 'COMMENT');
         }
-        return [];
+        // 'MENTIONS' filter (All)
+        return mentions;
     }, [mentions, filter]);
 
     const handleMentionClick = (mention: UserMention) => {
