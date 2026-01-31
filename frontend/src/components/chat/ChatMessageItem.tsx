@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { Message } from '@/stores/chatStore';
 import { MentionRenderer } from '../shared/MentionRenderer';
 import { Reply, Smile, User, File as FileIcon, Download, Play, Pause } from 'lucide-react';
@@ -136,6 +136,23 @@ export function ChatMessageItem({
     onPreview
 }: ChatMessageItemProps) {
     const [showReactions, setShowReactions] = useState(false);
+    const reactionRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (reactionRef.current && !reactionRef.current.contains(event.target as Node)) {
+                setShowReactions(false);
+            }
+        };
+
+        if (showReactions) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [showReactions]);
 
     const handleReactionClick = (emoji: string) => {
         const existingReaction = message.reactions?.find(r => r.userId === currentUser?.id);
@@ -168,7 +185,6 @@ export function ChatMessageItem({
         <div
             id={message.id}
             className={`group flex ${isMe ? 'flex-row-reverse' : 'flex-row'} items-start gap-3 px-2 hover:bg-muted/30 rounded-lg transition-colors relative ${message.isOptimistic ? 'animate-pulse opacity-70' : ''} ${Object.keys(reactionCounts).length > 0 ? 'mb-7' : ''}`}
-            onMouseLeave={() => { setShowReactions(false); }}
         >
             {/* Avatar */}
             {showHeader ? (
@@ -353,17 +369,39 @@ export function ChatMessageItem({
                         </div>
 
                         {/* Hover Actions */}
-                        <div className={`flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity ${isMe ? 'mr-1' : 'ml-1'}`}>
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    setShowReactions(!showReactions);
-                                }}
-                                className="p-1.5 hover:bg-muted/50 rounded-full transition-colors"
-                                title="React"
-                            >
-                                <Smile className="w-4 h-4 text-muted-foreground" />
-                            </button>
+                        <div className={`flex items-center gap-0.5 transition-opacity ${showReactions ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} ${isMe ? 'mr-1' : 'ml-1'}`}>
+                            <div className="relative" ref={reactionRef}>
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setShowReactions(!showReactions);
+                                    }}
+                                    className="p-1.5 hover:bg-muted/50 rounded-full transition-colors"
+                                    title="React"
+                                >
+                                    <Smile className="w-4 h-4 text-muted-foreground" />
+                                </button>
+                                {showReactions && (
+                                    <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-[var(--chat-bg-secondary)] border border-[var(--chat-border)] rounded-full px-2 py-1 flex items-center gap-1 shadow-lg z-50 whitespace-nowrap">
+                                        {COMMON_EMOJIS.map(emoji => (
+                                            <button
+                                                key={emoji}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleReactionClick(emoji);
+                                                }}
+                                                className={`
+                                                    w-8 h-8 flex items-center justify-center rounded-full text-lg
+                                                    hover:bg-muted/30 transition-all
+                                                    ${myReactions.has(emoji) ? 'bg-muted/50 scale-110' : ''}
+                                                `}
+                                            >
+                                                {emoji}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
                             <button
                                 onClick={(e) => {
                                     e.stopPropagation();
@@ -378,24 +416,7 @@ export function ChatMessageItem({
                     </div>
                 )}
 
-                {/* Reaction Picker Popup */}
-                {showReactions && !isSingleEmoji(message.content) && (
-                    <div className={`mt-1 bg-[var(--chat-bg-secondary)] border border-[var(--chat-border)] rounded-full px-2 py-1 flex items-center gap-1 shadow-lg ${isMe ? 'self-end' : 'self-start'}`}>
-                        {COMMON_EMOJIS.map(emoji => (
-                            <button
-                                key={emoji}
-                                onClick={() => handleReactionClick(emoji)}
-                                className={`
-                                    w-8 h-8 flex items-center justify-center rounded-full text-lg
-                                    hover:bg-muted/30 transition-all
-                                    ${myReactions.has(emoji) ? 'bg-muted/50 scale-110' : ''}
-                                `}
-                            >
-                                {emoji}
-                            </button>
-                        ))}
-                    </div>
-                )}
+
             </div>
 
 

@@ -8,6 +8,7 @@ export interface Channel {
     isPrivate: boolean;
     description: string;
     memberCount: number;
+    avatarUrl?: string;
 }
 
 export interface DmGroup {
@@ -75,6 +76,9 @@ interface ChatState {
     isLoading: boolean;
     error: string | null;
 
+    // Unread counts: Key = Channel/DM ID, Value = Count
+    unreadCounts: Record<string, number>;
+
     // Actions
     fetchChannels: (workspaceId: string) => Promise<void>;
     fetchDmGroups: (workspaceId: string) => Promise<void>;
@@ -109,6 +113,7 @@ export const useChatStore = create<ChatState>()((set, get) => ({
     activeChannelId: null,
     activeDmGroupId: null,
     messages: {},
+    unreadCounts: {},
     isLoading: false,
     error: null,
 
@@ -119,6 +124,7 @@ export const useChatStore = create<ChatState>()((set, get) => ({
         activeChannelId: null,
         activeDmGroupId: null,
         messages: {},
+        unreadCounts: {},
         isLoading: false,
         error: null
     }),
@@ -152,11 +158,25 @@ export const useChatStore = create<ChatState>()((set, get) => ({
     },
 
     setActiveChannel: (channelId) => {
-        set({ activeChannelId: channelId, activeDmGroupId: null });
+        set(state => ({
+            activeChannelId: channelId,
+            activeDmGroupId: null,
+            unreadCounts: {
+                ...state.unreadCounts,
+                [channelId]: 0
+            }
+        }));
     },
 
     setActiveDmInfo: (dmId) => {
-        set({ activeDmGroupId: dmId, activeChannelId: null });
+        set(state => ({
+            activeDmGroupId: dmId,
+            activeChannelId: null,
+            unreadCounts: {
+                ...state.unreadCounts,
+                [dmId]: 0
+            }
+        }));
     },
 
     fetchMessages: async (workspaceId, id, isDm = false) => {
@@ -241,28 +261,46 @@ export const useChatStore = create<ChatState>()((set, get) => ({
     },
 
     addMessage: (message: Message) => {
-        const targetId = message.channelId || message.directMessageGroupId;
+        // Normalize message keys to handle PascalCase from SignalR
+        const m = message as any;
+        const normalizedMessage: Message = {
+            id: m.id || m.Id,
+            workspaceId: m.workspaceId || m.WorkspaceId,
+            channelId: m.channelId || m.ChannelId,
+            directMessageGroupId: m.directMessageGroupId || m.DirectMessageGroupId,
+            senderId: m.senderId || m.SenderId,
+            senderName: m.senderName || m.SenderName,
+            senderAvatarUrl: m.senderAvatarUrl || m.SenderAvatarUrl,
+            content: m.content || m.Content,
+            createdAt: m.createdAt || m.CreatedAt,
+            isOptimistic: m.isOptimistic,
+            replyToMessageId: m.replyToMessageId || m.ReplyToMessageId,
+            replyPreviewSenderName: m.replyPreviewSenderName || m.ReplyPreviewSenderName,
+            replyPreviewText: m.replyPreviewText || m.ReplyPreviewText,
+            reactions: m.reactions || m.Reactions || [],
+            attachments: m.attachments || m.Attachments || []
+        };
+
+        const targetId = normalizedMessage.channelId || normalizedMessage.directMessageGroupId;
         if (!targetId) return;
 
         set(state => {
             const currentMessages = state.messages[targetId] || [];
 
             // 1. Check if we already have this exact message ID (Dedupe)
-            if (currentMessages.some(m => m.id === message.id)) return state;
+            if (currentMessages.some(m => m.id === normalizedMessage.id)) return state;
 
-            // 2. Check if we have an OPTIMISTIC message that matches this one (Sender + Content)
-            // This handles the race condition where SignalR broadcast arrives before API POST returns.
-            // We replace the optimistic one with the real one.
+            // 2. Check if we have an OPTIMISTIC message that matches this one
             const optimisticMatchIndex = currentMessages.findIndex(m =>
                 m.isOptimistic &&
-                m.senderId === message.senderId &&
-                m.content === message.content
+                m.senderId === normalizedMessage.senderId &&
+                m.content === normalizedMessage.content
             );
 
             if (optimisticMatchIndex !== -1) {
                 // Replace optimistic with real
                 const updated = [...currentMessages];
-                updated[optimisticMatchIndex] = message;
+                updated[optimisticMatchIndex] = normalizedMessage;
                 return {
                     messages: {
                         ...state.messages,
@@ -272,11 +310,35 @@ export const useChatStore = create<ChatState>()((set, get) => ({
             }
 
             // 3. Otherwise, just append
+            const isActive = targetId === state.activeChannelId || targetId === state.activeDmGroupId;
+
+            // Check if we know this conversation
+            const knownChannel = state.channels.find(c => c.id === targetId);
+            const knownDm = state.dmGroups.find(d => d.id === targetId);
+
+            if (!knownChannel && !knownDm) {
+                // Unknown conversation - trigger refresh to show in sidebar
+                // We determine type based on message properties or just fetch both to be safe
+                const workspaceId = normalizedMessage.workspaceId;
+                if (workspaceId) {
+                    // Fetch in background
+                    if (normalizedMessage.channelId) {
+                        get().fetchChannels(workspaceId);
+                    } else if (normalizedMessage.directMessageGroupId) {
+                        get().fetchDmGroups(workspaceId);
+                    }
+                }
+            }
+
             return {
                 messages: {
                     ...state.messages,
-                    [targetId]: [...currentMessages, message]
-                }
+                    [targetId]: [...currentMessages, normalizedMessage]
+                },
+                unreadCounts: !isActive ? {
+                    ...state.unreadCounts,
+                    [targetId]: (state.unreadCounts[targetId] || 0) + 1
+                } : state.unreadCounts
             };
         });
     },
@@ -297,9 +359,25 @@ export const useChatStore = create<ChatState>()((set, get) => ({
         }
     },
 
-    updateChannel: async (workspaceId, channelId, name, isPrivate, description) => {
+    updateChannel: async (workspaceId, channelId, name, isPrivate, description, avatarFile?: File | null) => {
         try {
-            const updated = await apiPut<Channel>(`/workspaces/${workspaceId}/chat/channels/${channelId}`, { name, isPrivate, description });
+            let avatarUrl: string | undefined;
+
+            if (avatarFile) {
+                // Reuse uploadAttachment logic but maybe we need a specific endpoint for channel avatars or just use general attachment?
+                // For simplicity/speed, I'll use the existing uploadAttachment and use the fileUrl.
+                // NOTE: Ideally backend has specific upload for channel avatar or we update channel with the URL.
+                // We just need workspaceId.
+                const attachment = await get().uploadAttachment(workspaceId, avatarFile);
+                if (attachment) {
+                    avatarUrl = attachment.fileUrl;
+                }
+            }
+
+            const payload: any = { name, isPrivate, description };
+            if (avatarUrl) payload.avatarUrl = avatarUrl;
+
+            const updated = await apiPut<Channel>(`/workspaces/${workspaceId}/chat/channels/${channelId}`, payload);
             set(state => ({
                 channels: state.channels.map(c => c.id === channelId ? updated : c)
             }));

@@ -3,7 +3,8 @@ import { useChatStore } from '@/stores/chatStore';
 import { useWorkspaces } from '@/stores/workspaceStore';
 import { useTeamStore } from '@/stores/teamStore';
 import { useUserStore } from '@/stores/userStore';
-import { Plus, Lock, ChevronDown, Search, PenBox, Hash, MoreVertical, Trash2, Edit2 } from 'lucide-react';
+import { useRealtimeStore } from '@/stores/realtimeStore';
+import { Plus, Lock, ChevronDown, Search, PenBox, Hash, MoreVertical, Trash2, Edit2, Camera } from 'lucide-react';
 import { format, isToday, isYesterday } from 'date-fns';
 import * as Popover from '@radix-ui/react-popover';
 
@@ -14,12 +15,14 @@ export function ChatSidebar() {
         setActiveChannel, setActiveDmInfo,
         createChannel, createDmGroup,
         fetchChannels, fetchDmGroups, fetchWorkspaceMembers,
-        fetchMessages
+        fetchMessages,
+        unreadCounts
     } = useChatStore();
 
     const { onlineUserIds } = useTeamStore();
     const { activeWorkspace } = useWorkspaces();
     const { user: currentUser } = useUserStore();
+    const { joinChannel, isConnected } = useRealtimeStore();
 
     const [searchQuery, setSearchQuery] = useState('');
 
@@ -42,6 +45,8 @@ export function ChatSidebar() {
     const [editName, setEditName] = useState('');
     const [editDescription, setEditDescription] = useState('');
     const [editIsPrivate, setEditIsPrivate] = useState(false);
+    const [editAvatarFile, setEditAvatarFile] = useState<File | null>(null);
+    const [editAvatarPreview, setEditAvatarPreview] = useState<string | null>(null);
 
     // Actions
     const { updateChannel, deleteChannel } = useChatStore();
@@ -51,13 +56,15 @@ export function ChatSidebar() {
         setEditName(channel.name);
         setEditDescription(channel.description || '');
         setEditIsPrivate(channel.isPrivate);
+        setEditAvatarPreview(channel.avatarUrl || null);
+        setEditAvatarFile(null);
     };
 
     const handleUpdateChannel = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!activeWorkspace || !editingChannel || !editName.trim()) return;
 
-        await updateChannel(activeWorkspace.id, editingChannel.id, editName, editIsPrivate, editDescription);
+        await updateChannel(activeWorkspace.id, editingChannel.id, editName, editIsPrivate, editDescription, editAvatarFile);
         setEditingChannel(null);
     };
 
@@ -120,6 +127,26 @@ export function ChatSidebar() {
         }
     }, [activeWorkspace, dmGroups]);
 
+    // Fetch messages for Channels to show previews and enable sorting
+    useEffect(() => {
+        if (activeWorkspace && channels.length > 0) {
+            channels.forEach(channel => {
+                const existingMessages = useChatStore.getState().messages[channel.id];
+                if (!existingMessages || existingMessages.length === 0) {
+                    fetchMessages(activeWorkspace.id, channel.id, false);
+                }
+            });
+        }
+    }, [activeWorkspace, channels]);
+
+    // Join all channels/DMs for realtime updates
+    useEffect(() => {
+        if (isConnected && activeWorkspace) {
+            channels.forEach(channel => joinChannel(channel.id));
+            dmGroups.forEach(group => joinChannel(group.id));
+        }
+    }, [isConnected, activeWorkspace, channels, dmGroups]);
+
     const handleCreateChannel = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!activeWorkspace || !newChannelName.trim()) return;
@@ -147,16 +174,43 @@ export function ChatSidebar() {
 
     // Filter Logic
     const filteredChannels = useMemo(() => {
-        return channels.filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase()));
-    }, [channels, searchQuery]);
+        return channels.filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase()))
+            .sort((a, b) => {
+                const msgsA = messages[a.id] || [];
+                const msgsB = messages[b.id] || [];
+                const timeA = msgsA.length > 0 ? new Date(msgsA[msgsA.length - 1].createdAt).getTime() : 0;
+                const timeB = msgsB.length > 0 ? new Date(msgsB[msgsB.length - 1].createdAt).getTime() : 0;
+
+                if (timeA !== timeB) return timeB - timeA; // Descending time
+
+                const unreadA = unreadCounts[a.id] || 0;
+                const unreadB = unreadCounts[b.id] || 0;
+                if (unreadA !== unreadB) return unreadB - unreadA; // Descending unread count (tie-breaker)
+
+                return a.name.localeCompare(b.name); // Secondary sort by name
+            });
+    }, [channels, searchQuery, unreadCounts, messages]);
 
     const filteredDmGroups = useMemo(() => {
         return dmGroups.filter(g => {
             const otherMembers = g.members.filter(m => m.id !== currentUser?.id);
             const displayName = otherMembers.map(m => m.fullName).join(', ');
             return displayName.toLowerCase().includes(searchQuery.toLowerCase());
+        }).sort((a, b) => {
+            const msgsA = messages[a.id] || [];
+            const msgsB = messages[b.id] || [];
+            const timeA = msgsA.length > 0 ? new Date(msgsA[msgsA.length - 1].createdAt).getTime() : 0;
+            const timeB = msgsB.length > 0 ? new Date(msgsB[msgsB.length - 1].createdAt).getTime() : 0;
+
+            if (timeA !== timeB) return timeB - timeA; // Descending time
+
+            const unreadA = unreadCounts[a.id] || 0;
+            const unreadB = unreadCounts[b.id] || 0;
+            if (unreadA !== unreadB) return unreadB - unreadA; // Descending unread count
+
+            return 0; // Keep existing order otherwise
         });
-    }, [dmGroups, searchQuery, currentUser]);
+    }, [dmGroups, searchQuery, currentUser, unreadCounts, messages]);
 
 
     return (
@@ -287,28 +341,83 @@ export function ChatSidebar() {
 
                     {isChannelsOpen && (
                         <div className="px-3 space-y-[2px]">
-                            {filteredChannels.map(channel => (
-                                <div key={channel.id} className="relative group/channel">
-                                    <button
-                                        onClick={() => setActiveChannel(channel.id)}
-                                        className={`w-full flex items-center gap-3 px-3 py-2 rounded-[6px] transition-all relative overflow-hidden ${activeChannelId === channel.id
-                                            ? 'bg-[var(--chat-bg-hover)] text-[var(--chat-text-primary)] before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-4 before:w-[3px] before:bg-[var(--chat-accent)] before:rounded-r-full'
-                                            : 'text-[var(--chat-text-primary)] hover:bg-[var(--chat-bg-hover)]'
-                                            }`}
-                                    >
-                                        <div className={`shrink-0 ${activeChannelId === channel.id ? 'text-[var(--chat-accent)]' : 'text-[var(--chat-text-secondary)] group-hover/channel:text-[var(--chat-text-primary)]'}`}>
-                                            {channel.isPrivate ? <Lock className="w-4 h-4" /> : <Hash className="w-4 h-4" />}
+                            {filteredChannels.map(channel => {
+                                const channelMessages = messages[channel.id] || [];
+                                const lastMessage = channelMessages.length > 0 ? channelMessages[channelMessages.length - 1] : null;
+
+                                let timeDisplay = '';
+                                if (lastMessage) {
+                                    const date = new Date(lastMessage.createdAt);
+                                    if (isToday(date)) {
+                                        timeDisplay = format(date, 'HH:mm');
+                                    } else if (isYesterday(date)) {
+                                        timeDisplay = 'Yesterday';
+                                    } else {
+                                        timeDisplay = format(date, 'MM/dd/yy');
+                                    }
+                                }
+
+                                return (
+                                    <div key={channel.id} className="relative group/channel">
+                                        <button
+                                            onClick={() => setActiveChannel(channel.id)}
+                                            className={`w-full flex items-center gap-3 px-3 py-3 rounded-[6px] transition-all relative overflow-hidden ${activeChannelId === channel.id
+                                                ? 'bg-[var(--chat-bg-hover)] text-[var(--chat-text-primary)] before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-4 before:w-[3px] before:bg-[var(--chat-accent)] before:rounded-r-full'
+                                                : 'text-[var(--chat-text-primary)] hover:bg-[var(--chat-bg-hover)]'
+                                                }`}
+                                        >
+                                            <div className="relative shrink-0">
+                                                <div className="w-[48px] h-[48px] rounded-full bg-[var(--chat-bg-tertiary)] flex items-center justify-center border border-[var(--chat-border)]/50 text-[var(--chat-text-primary)] overflow-hidden">
+                                                    {channel.avatarUrl ? (
+                                                        <img src={channel.avatarUrl} alt={channel.name} className="w-full h-full object-cover" />
+                                                    ) : channel.isPrivate ? (
+                                                        <Lock className="w-5 h-5" />
+                                                    ) : (
+                                                        <span className="text-lg font-medium">{channel.name.charAt(0).toUpperCase()}</span>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            <div className="flex-1 min-w-0 flex flex-col justify-center h-full group-hover/channel:pr-8 transition-all">
+                                                <div className="flex items-center justify-between mb-0.5">
+                                                    <span className="truncate text-[15px] font-normal leading-5">
+                                                        {channel.name}
+                                                    </span>
+                                                    <div className="flex flex-col items-end gap-1">
+                                                        <span className={`text-[11px] whitespace-nowrap ${activeChannelId === channel.id ? 'text-[var(--chat-accent)]' : 'text-[var(--chat-text-secondary)]'}`}>
+                                                            {timeDisplay}
+                                                        </span>
+                                                        {unreadCounts[channel.id] > 0 && (
+                                                            <span className="bg-blue-600 text-white text-[11px] font-bold h-4 min-w-[16px] px-1 rounded-full flex items-center justify-center">
+                                                                {unreadCounts[channel.id]}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-1">
+                                                    {lastMessage?.senderId === currentUser?.id && (
+                                                        <span className="text-[var(--chat-accent)] shrink-0">
+                                                            <svg viewBox="0 0 16 11" height="11" width="16" className="fill-current w-[14px] h-[9px]"><path d="M11.854.146a.5.5 0 0 0-.708 0L7 4.293 5.354 2.646a.5.5 0 0 0-.708.708l2 2a.5.5 0 0 0 .708 0l4.5-4.5a.5.5 0 0 0 0-.708zm-9.5 0a.5.5 0 0 1 .708 0L5 2.293 4.646 2.646a.5.5 0 0 1-.708 0l-2-2a.5.5 0 0 1 0-.708z"></path></svg>
+                                                        </span>
+                                                    )}
+                                                    <p className="text-[14px] text-[var(--chat-text-secondary)] truncate leading-5 text-left w-full">
+                                                        {lastMessage ? (
+                                                            lastMessage.content ? lastMessage.content : <span className="italic flex items-center gap-1 text-[13px]"><Search className="w-3 h-3" /> Attachment</span>
+                                                        ) : (
+                                                            <span className="opacity-70 text-[13px]">No messages yet</span>
+                                                        )}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </button>
+
+                                        {/* Action Menu Trigger */}
+                                        <div className="absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover/channel:opacity-100 transition-opacity flex bg-[#202c33] rounded shadow-sm">
+                                            <EditChannelMenu channel={channel} />
                                         </div>
-
-                                        <span className="truncate text-[15px] font-normal flex-1 text-left leading-5">{channel.name}</span>
-                                    </button>
-
-                                    {/* Action Menu Trigger (Only distinct from main click if positioned carefully or using context menu. For simplicity, adding a small trigger on hover) */}
-                                    <div className="absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover/channel:opacity-100 transition-opacity flex bg-[#202c33] rounded shadow-sm">
-                                        <EditChannelMenu channel={channel} />
                                     </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     )}
                 </div>
@@ -319,6 +428,37 @@ export function ChatSidebar() {
                         <div className="bg-[var(--chat-bg-secondary)] rounded-lg shadow-xl w-full max-w-sm border border-[var(--chat-border)] animate-in zoom-in-95 duration-200">
                             <form onSubmit={handleUpdateChannel} className="p-4">
                                 <h3 className="text-sm font-bold uppercase text-[var(--chat-accent)] mb-4 tracking-wider">Edit Channel</h3>
+
+                                <div className="flex justify-center mb-4">
+                                    <div className="relative group cursor-pointer" onClick={() => document.getElementById('channelAvatarInput')?.click()}>
+                                        <div className="w-16 h-16 rounded-full bg-[var(--chat-bg-tertiary)] flex items-center justify-center border border-[var(--chat-border)] overflow-hidden">
+                                            {editAvatarPreview ? (
+                                                <img src={editAvatarPreview} alt="Channel Avatar" className="w-full h-full object-cover" />
+                                            ) : (
+                                                <span className="text-2xl font-medium text-[var(--chat-text-primary)]">
+                                                    {editName ? editName.charAt(0).toUpperCase() : '?'}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <Camera className="w-6 h-6 text-white" />
+                                        </div>
+                                        <input
+                                            type="file"
+                                            id="channelAvatarInput"
+                                            className="hidden"
+                                            accept="image/*"
+                                            onChange={(e) => {
+                                                const file = e.target.files?.[0];
+                                                if (file) {
+                                                    setEditAvatarFile(file);
+                                                    setEditAvatarPreview(URL.createObjectURL(file));
+                                                }
+                                            }}
+                                        />
+                                    </div>
+                                </div>
+
                                 <div className="space-y-3">
                                     <div>
                                         <label className="text-xs text-[var(--chat-text-secondary)] mb-1 block">Name</label>
@@ -446,9 +586,16 @@ export function ChatSidebar() {
                                                 <span className={`text-[16px] truncate leading-5 ${activeDmGroupId === group.id ? 'font-medium text-[var(--chat-text-primary)]' : 'text-[var(--chat-text-primary)]'}`}>
                                                     {displayName}
                                                 </span>
-                                                <span className={`text-[11px] whitespace-nowrap ${activeDmGroupId === group.id ? 'text-[var(--chat-accent)]' : 'text-[var(--chat-text-secondary)]'}`}>
-                                                    {timeDisplay}
-                                                </span>
+                                                <div className="flex flex-col items-end gap-1">
+                                                    <span className={`text-[11px] whitespace-nowrap ${activeDmGroupId === group.id ? 'text-[var(--chat-accent)]' : 'text-[var(--chat-text-secondary)]'}`}>
+                                                        {timeDisplay}
+                                                    </span>
+                                                    {unreadCounts[group.id] > 0 && (
+                                                        <span className="bg-blue-600 text-white text-[11px] font-bold h-4 min-w-[16px] px-1 rounded-full flex items-center justify-center">
+                                                            {unreadCounts[group.id]}
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </div>
                                             <div className="flex items-center gap-1">
                                                 {lastMessage?.senderId === currentUser?.id && (

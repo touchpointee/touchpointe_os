@@ -34,6 +34,7 @@ function getUserColor(name?: string) {
 interface LocalAttachment {
     id: string;
     file: File;
+    previewUrl?: string;
     uploading: boolean;
     error?: string;
     data?: MessageAttachment;
@@ -51,10 +52,7 @@ export function ChatWindow() {
     const {
         emitTyping,
         emitStopTyping,
-        typingUsers,
-        joinChannel,
-        leaveChannel,
-        isConnected
+        typingUsers
     } = useRealtimeStore();
     const { activeWorkspace } = useWorkspaces();
     const currentUser = getCurrentUser();
@@ -75,6 +73,27 @@ export function ChatWindow() {
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLDivElement>(null);
     const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const emojiPickerRef = useRef<HTMLDivElement>(null);
+    const emojiButtonRef = useRef<HTMLButtonElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (
+                showEmojiPicker &&
+                emojiPickerRef.current &&
+                !emojiPickerRef.current.contains(event.target as Node) &&
+                emojiButtonRef.current &&
+                !emojiButtonRef.current.contains(event.target as Node)
+            ) {
+                setShowEmojiPicker(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [showEmojiPicker]);
 
     // Recording State
     const [isRecording, setIsRecording] = useState(false);
@@ -218,18 +237,7 @@ export function ChatWindow() {
         }
     }, [activeWorkspace, activeId, isDm, fetchMessages, fetchWorkspaceMembers]);
 
-    // SignalR Subscription Effect - Depends on connection state
-    useEffect(() => {
-        if (activeWorkspace && activeId && isConnected) {
-            // Join SignalR Group
-            console.log(`[ChatWindow] Joining channel ${activeId} (connected: ${isConnected})`);
-            joinChannel(activeId);
 
-            return () => {
-                leaveChannel(activeId);
-            };
-        }
-    }, [activeWorkspace, activeId, isConnected, joinChannel, leaveChannel]);
 
     // Track if we just switched channels to force instant scroll
     const [isChannelSwitch, setIsChannelSwitch] = useState(false);
@@ -451,6 +459,7 @@ export function ChatWindow() {
         const newAttachments: LocalAttachment[] = files.map(file => ({
             id: Math.random().toString(36).substring(7),
             file,
+            previewUrl: file.type.startsWith('image/') ? URL.createObjectURL(file) : undefined,
             uploading: true
         }));
 
@@ -478,8 +487,57 @@ export function ChatWindow() {
         setHasContent(true); // Enable send button
     };
 
+    const handlePaste = async (e: React.ClipboardEvent) => {
+        if (!activeWorkspace) return;
+        const items = e.clipboardData.items;
+        const files: File[] = [];
+
+        for (let i = 0; i < items.length; i++) {
+            if (items[i].kind === 'file') {
+                const file = items[i].getAsFile();
+                if (file) files.push(file);
+            }
+        }
+
+        if (files.length > 0) {
+            e.preventDefault();
+            const newAttachments: LocalAttachment[] = files.map(file => ({
+                id: Math.random().toString(36).substring(7),
+                file,
+                previewUrl: file.type.startsWith('image/') ? URL.createObjectURL(file) : undefined,
+                uploading: true
+            }));
+
+            setLocalAttachments(prev => [...prev, ...newAttachments]);
+
+            for (const local of newAttachments) {
+                try {
+                    const result = await uploadAttachment(activeWorkspace.id, local.file);
+                    setLocalAttachments(prev => prev.map(p =>
+                        p.id === local.id
+                            ? { ...p, uploading: false, data: result || undefined, error: result ? undefined : 'Upload failed' }
+                            : p
+                    ));
+                } catch (err) {
+                    setLocalAttachments(prev => prev.map(p =>
+                        p.id === local.id
+                            ? { ...p, uploading: false, error: 'Upload failed' }
+                            : p
+                    ));
+                }
+            }
+            setHasContent(true); // Enable send button
+        }
+    };
+
     const removeAttachment = (id: string) => {
-        setLocalAttachments(prev => prev.filter(a => a.id !== id));
+        setLocalAttachments(prev => {
+            const attachment = prev.find(a => a.id === id);
+            if (attachment?.previewUrl) {
+                URL.revokeObjectURL(attachment.previewUrl);
+            }
+            return prev.filter(a => a.id !== id);
+        });
     };
 
     const getHeaderTitle = () => {
@@ -803,10 +861,29 @@ export function ChatWindow() {
                 {localAttachments.length > 0 && (
                     <div className="flex gap-2 p-2 overflow-x-auto mb-2">
                         {localAttachments.map(att => (
-                            <div key={att.id} className="relative group bg-[#2a3942] rounded-lg p-2 flex items-center gap-2 min-w-[200px]">
-                                <div className="bg-[#202c33] p-2 rounded">
-                                    <FileIcon className="w-5 h-5 text-[#8696a0]" />
-                                </div>
+                            <div
+                                key={att.id}
+                                className={`relative group bg-[#2a3942] rounded-lg p-2 flex items-center gap-2 min-w-[200px] ${att.previewUrl ? 'cursor-pointer hover:bg-[#2a3942]/80' : ''}`}
+                                onClick={() => {
+                                    if (att.previewUrl) {
+                                        setPreviewMedia({
+                                            isOpen: true,
+                                            src: att.previewUrl,
+                                            type: 'image',
+                                            fileName: att.file.name
+                                        });
+                                    }
+                                }}
+                            >
+                                {att.previewUrl ? (
+                                    <div className="w-12 h-12 rounded overflow-hidden flex-shrink-0 bg-black/20">
+                                        <img src={att.previewUrl} alt="Preview" className="w-full h-full object-cover" />
+                                    </div>
+                                ) : (
+                                    <div className="bg-[#202c33] p-2 rounded">
+                                        <FileIcon className="w-5 h-5 text-[#8696a0]" />
+                                    </div>
+                                )}
                                 <div className="flex-1 min-w-0">
                                     <div className="text-sm text-[#e9edef] truncate">{att.file.name}</div>
                                     <div className="text-xs text-[#8696a0]">
@@ -814,7 +891,10 @@ export function ChatWindow() {
                                     </div>
                                 </div>
                                 <button
-                                    onClick={() => removeAttachment(att.id)}
+                                    onClick={(e) => {
+                                        e.stopPropagation(); // Prevent opening preview
+                                        removeAttachment(att.id);
+                                    }}
                                     className="absolute -top-1 -right-1 bg-[#374045] rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
                                 >
                                     <X className="w-3 h-3 text-[#e9edef]" />
@@ -854,7 +934,7 @@ export function ChatWindow() {
                     ) : (
                         <>
                             {showEmojiPicker && (
-                                <div className="absolute bottom-full left-0 mb-2 z-50 bg-[#202c33] border border-[#2a3942] rounded-[16px] shadow-2xl flex flex-col overflow-hidden w-[430px]">
+                                <div ref={emojiPickerRef} className="absolute bottom-full left-0 mb-2 z-50 bg-[#202c33] border border-[#2a3942] rounded-[16px] shadow-2xl flex flex-col overflow-hidden w-[430px]">
                                     <div className="flex-1 bg-[#111b21] emoji-picker-custom">
                                         <style>{`
                                             .emoji-picker-custom aside.EmojiPickerReact {
@@ -950,6 +1030,7 @@ export function ChatWindow() {
                             </button>
 
                             <button
+                                ref={emojiButtonRef}
                                 onClick={() => setShowEmojiPicker(!showEmojiPicker)}
                                 className={`p-1.5 transition-colors shrink-0 rounded-full hover:bg-white/5 pb-1.5 -ml-1 ${showEmojiPicker ? 'text-[#00a884]' : 'text-[#8696a0] hover:text-[#e9edef]'}`}
                             >
@@ -961,6 +1042,7 @@ export function ChatWindow() {
                                 contentEditable
                                 onInput={handleInput}
                                 onKeyDown={handleKeyDown}
+                                onPaste={handlePaste}
                                 className="flex-1 max-h-[100px] overflow-y-auto py-2 px-2 text-[15px] text-[var(--chat-text-primary)] outline-none min-h-[24px] empty:before:content-[attr(data-placeholder)] empty:before:text-[var(--chat-text-secondary)]"
                                 role="textbox"
                                 aria-multiline="true"
