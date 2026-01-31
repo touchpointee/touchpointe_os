@@ -20,6 +20,9 @@ import { cn } from '@/lib/utils';
 import { Plus, MoreHorizontal, Palette, Trash2, Edit2, User, MessageSquare, Timer, Play, Pause } from 'lucide-react';
 
 import { ShareTaskToChatModal } from './ShareTaskToChatModal';
+import { CreateTaskModal } from './CreateTaskModal';
+import { toast } from '@/contexts/ToastContext';
+import type { CreateTaskRequest } from '@/types/task';
 
 const PRESET_COLORS = [
     '#6B7280', // Gray
@@ -70,6 +73,8 @@ export function TaskBoardView() {
     const [isAddingGroup, setIsAddingGroup] = useState(false);
     const [newGroupName, setNewGroupName] = useState('');
     const [shareTask, setShareTask] = useState<TaskDto | null>(null);
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [pendingStatusId, setPendingStatusId] = useState<string | null>(null);
 
     // Early return AFTER all hooks
     if (!workspaceId || !isValidUUID(workspaceId)) {
@@ -185,19 +190,26 @@ export function TaskBoardView() {
         openTaskDetail(taskId);
     };
 
-    const handleAddTask = async (statusId: string) => {
+    const handleAddTask = (statusId: string) => {
+        setPendingStatusId(statusId);
+        setIsCreateModalOpen(true);
+    };
+
+    const handleCreateTask = async (data: Partial<CreateTaskRequest>) => {
         if (!workspaceId || !listId) return;
         try {
             const newTask = await createTask(workspaceId, {
+                ...data,
                 listId,
-                title: 'New Task',
-                customStatus: statusId
-            });
+                customStatus: pendingStatusId || undefined
+            } as CreateTaskRequest);
             if (newTask) {
                 openTaskDetail(newTask.id);
+                toast.success('Task Created', `Task '${data.title}' created successfully.`);
             }
         } catch (error) {
             console.error("Failed to create task", error);
+            toast.error('Error', 'Failed to create task.');
         }
     };
 
@@ -287,6 +299,14 @@ export function TaskBoardView() {
                 isOpen={!!shareTask}
                 task={shareTask}
                 onClose={() => setShareTask(null)}
+            />
+
+            <CreateTaskModal
+                isOpen={isCreateModalOpen}
+                onClose={() => { setIsCreateModalOpen(false); setPendingStatusId(null); }}
+                onSubmit={handleCreateTask}
+                workspaceId={workspaceId}
+                defaultStatus={pendingStatusId || undefined}
             />
         </>
     );

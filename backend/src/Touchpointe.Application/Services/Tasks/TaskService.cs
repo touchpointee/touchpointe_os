@@ -54,6 +54,15 @@ namespace Touchpointe.Application.Services.Tasks
                 }
             }
 
+            // 1b. Validate unique task title within the list
+            var duplicateExists = await _context.Tasks
+                .AnyAsync(t => t.ListId == request.ListId && t.Title.ToLower() == request.Title.ToLower(), cancellationToken);
+            
+            if (duplicateExists)
+            {
+                throw new Exception($"A task with the name '{request.Title}' already exists in this list.");
+            }
+
             // 2. Get Max Order
             var maxOrder = await _context.Tasks
                 .Where(t => t.ListId == request.ListId)
