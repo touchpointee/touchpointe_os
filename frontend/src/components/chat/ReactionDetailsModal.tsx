@@ -16,7 +16,8 @@ interface ReactionDetailsModalProps {
     reactions: Reaction[];
     currentUser: { id: string; name?: string; email?: string } | null;
     onRemoveReaction: (messageId: string, emoji: string) => void;
-    position?: { top: number; left: number };
+    triggerRect?: { top: number; left: number; bottom: number; right: number };
+    getUserAvatar?: (userId: string) => string | undefined;
 }
 
 export function ReactionDetailsModal({
@@ -25,7 +26,8 @@ export function ReactionDetailsModal({
     reactions,
     currentUser,
     onRemoveReaction,
-    position
+    triggerRect,
+    getUserAvatar
 }: ReactionDetailsModalProps) {
     const [activeTab, setActiveTab] = useState<string>('All');
     const modalRef = useRef<HTMLDivElement>(null);
@@ -47,8 +49,15 @@ export function ReactionDetailsModal({
     // Close on click outside
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
-            if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
-                onClose();
+            if (modalRef.current) {
+                // Check if click is inside the modal
+                if (modalRef.current.contains(event.target as Node)) {
+                    return;
+                }
+                // Check if click is inside the trigger element (to prevent immediate re-open/close conflict)
+                // We don't have direct access to trigger element ref, but we rely on the backdrop or existing logic.
+                // If we use a transparent backdrop (div below), that handles "click outside".
+                // But let's keep this safe.
             }
         };
 
@@ -71,7 +80,6 @@ export function ReactionDetailsModal({
 
     const uniqueEmojis = Object.keys(groupedReactions);
 
-    // Determine filtered list
     // Determine filtered list and sort "You" to the top
     const displayedReactions = (activeTab === 'All'
         ? reactions
@@ -85,38 +93,72 @@ export function ReactionDetailsModal({
     });
 
     // Calculate position style
-    const style: React.CSSProperties = position
-        ? {
-            position: 'fixed',
-            top: Math.min(position.top, window.innerHeight - 270), // Prevent overflow bottom (max height ~260px)
-            left: Math.min(position.left, window.innerWidth - 220), // Prevent overflow right
-            transform: 'none'
-        }
-        : {};
+    let style: React.CSSProperties = {};
+    let animateClass = "zoom-in-95 origin-top-left";
 
-    const containerClass = position
-        ? "fixed z-50 animate-in fade-in zoom-in-95 duration-200"
-        : "fixed inset-0 z-50 flex items-center justify-center bg-black/50 animate-in fade-in duration-200";
+    if (triggerRect) {
+        const MODAL_WIDTH = 200;
+        const MAX_HEIGHT = 260; // Approximate max height
+        const GAP = 8;
+
+        const windowWidth = window.innerWidth;
+        const windowHeight = window.innerHeight;
+
+        // Vertical Positioning
+        const spaceBelow = windowHeight - triggerRect.bottom;
+        const spaceAbove = triggerRect.top;
+
+        let top: number | string = triggerRect.bottom + GAP;
+        let bottom: number | string = 'auto';
+
+        // Flip up if not enough space below and more space above
+        if (spaceBelow < MAX_HEIGHT && spaceAbove > spaceBelow) {
+            top = 'auto';
+            bottom = windowHeight - triggerRect.top + GAP;
+            animateClass = "zoom-in-95 origin-bottom-left";
+        }
+
+        // Horizontal Positioning
+        let left = triggerRect.left;
+
+        // Flip left if goes off screen right
+        if (left + MODAL_WIDTH > windowWidth - 20) {
+            // Try aligning right edge to trigger right edge
+            const alignRightLeft = triggerRect.right - MODAL_WIDTH;
+            // If that is too far left (off screen left), just clamp to window right
+            left = Math.max(20, Math.min(alignRightLeft, windowWidth - MODAL_WIDTH - 20));
+            // Update origin for animation
+            animateClass = animateClass.replace('left', 'right');
+        }
+
+        style = {
+            position: 'fixed',
+            top,
+            bottom,
+            left,
+            transform: 'none',
+            maxHeight: MAX_HEIGHT
+        };
+    }
 
     return (
-        <div className={position ? 'fixed inset-0 z-50' : ''}>
-            {/* Invisible backdrop for clicking outside if positioned, or visible dimming if centered */}
-            {/* Use a separate div for the backdrop so we don't mess up the positioned element */}
+        <div className={triggerRect ? 'fixed inset-0 z-50' : ''}>
+            {/* Invisible backdrop for clicking outside */}
             <div className="fixed inset-0 z-40 bg-transparent" onClick={onClose} />
 
             <div
                 ref={modalRef}
                 style={style}
-                className={`${position ? 'fixed z-50 shadow-xl' : 'fixed z-50 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 shadow-2xl'} 
-                    w-[200px] h-auto max-h-[260px] bg-[#1e202b] rounded-xl flex flex-col overflow-hidden 
-                    border border-[#2a3942] animate-in zoom-in-95 duration-100 ease-out`}
+                className={`${triggerRect ? 'fixed z-50 shadow-2xl ring-1 ring-black/5 dark:ring-white/10' : 'fixed z-50 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 shadow-2xl ring-1 ring-black/5 dark:ring-white/10'} 
+                    w-[200px] h-auto bg-[var(--chat-bg-secondary)] rounded-xl flex flex-col overflow-hidden 
+                    border border-[var(--chat-border)] animate-in duration-100 ease-out ${animateClass}`}
             >
                 {/* Header */}
-                <div className="flex items-center justify-between px-3 py-1.5 border-b border-[#2a3942] shrink-0">
-                    <h2 className="text-[#e9edef] font-medium text-xs">Message info</h2>
+                <div className="flex items-center justify-between px-3 py-1.5 border-b border-[var(--chat-border)] shrink-0">
+                    <h2 className="text-[var(--chat-text-primary)] font-medium text-xs">Message info</h2>
                     <button
                         onClick={onClose}
-                        className="p-0.5 hover:bg-[#374248] rounded-full transition-colors text-[#8696a0]"
+                        className="p-0.5 hover:bg-[var(--chat-bg-hover)] rounded-full transition-colors text-[var(--chat-text-secondary)]"
                     >
                         <X className="w-3.5 h-3.5" />
                     </button>
@@ -125,17 +167,17 @@ export function ReactionDetailsModal({
                 {/* Filter Tabs */}
                 {reactions.length > 0 ? (
                     <>
-                        <div className="flex items-center px-3 pt-0.5 gap-2 overflow-x-auto no-scrollbar border-b border-[#2a3942] shrink-0">
+                        <div className="flex items-center px-3 pt-0.5 gap-2 overflow-x-auto no-scrollbar border-b border-[var(--chat-border)] shrink-0">
                             <button
                                 onClick={() => setActiveTab('All')}
                                 className={`pb-1 text-[11px] font-medium transition-colors relative whitespace-nowrap ${activeTab === 'All'
-                                    ? 'text-[#3b82f6]'
-                                    : 'text-[#8696a0] hover:text-[#d1d7db]'
+                                    ? 'text-[var(--chat-accent)]'
+                                    : 'text-[var(--chat-text-secondary)] hover:text-[var(--chat-text-primary)]'
                                     }`}
                             >
                                 All {reactions.length}
                                 {activeTab === 'All' && (
-                                    <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#3b82f6] rounded-t-sm" />
+                                    <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-[var(--chat-accent)] rounded-t-sm" />
                                 )}
                             </button>
 
@@ -144,13 +186,13 @@ export function ReactionDetailsModal({
                                     key={emoji}
                                     onClick={() => setActiveTab(emoji)}
                                     className={`pb-1 text-base font-medium transition-colors relative px-1 ${activeTab === emoji
-                                        ? 'text-[#e9edef]'
+                                        ? 'text-[var(--chat-text-primary)]'
                                         : 'opacity-60 hover:opacity-100'
                                         }`}
                                 >
-                                    {emoji} <span className="text-[10px] font-normal text-[#8696a0] ml-0.5 align-top">{groupedReactions[emoji].length}</span>
+                                    {emoji} <span className="text-[10px] font-normal text-[var(--chat-text-secondary)] ml-0.5 align-top">{groupedReactions[emoji].length}</span>
                                     {activeTab === emoji && (
-                                        <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#3b82f6] rounded-t-sm" />
+                                        <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-[var(--chat-accent)] rounded-t-sm" />
                                     )}
                                 </button>
                             ))}
@@ -162,11 +204,12 @@ export function ReactionDetailsModal({
                                 const isMe = reaction.userId === currentUser?.id;
                                 const displayName = isMe ? "You" : reaction.userName;
                                 const clickToRemove = isMe ? "Click to remove" : "";
+                                const avatarUrl = getUserAvatar ? getUserAvatar(reaction.userId) : undefined;
 
                                 return (
                                     <div
                                         key={reaction.id}
-                                        className={`flex items-center justify-between p-1.5 rounded-lg hover:bg-[#101114] transition-colors group ${isMe ? 'cursor-pointer' : ''}`}
+                                        className={`flex items-center justify-between p-1.5 rounded-lg hover:bg-[var(--chat-bg-hover)] transition-colors group ${isMe ? 'cursor-pointer' : ''}`}
                                         onClick={() => {
                                             if (isMe) {
                                                 onRemoveReaction(reaction.messageId, reaction.emoji);
@@ -178,19 +221,27 @@ export function ReactionDetailsModal({
                                         title={clickToRemove}
                                     >
                                         <div className="flex items-center gap-2">
-                                            {/* Avatar Placeholder */}
-                                            <div className="w-6 h-6 rounded-full bg-[#101114] flex items-center justify-center text-[#cfd3d6] shrink-0 border border-[#2a3942]">
-                                                <User className="w-3.5 h-3.5" />
-                                            </div>
+                                            {/* Avatar or Placeholder */}
+                                            {avatarUrl ? (
+                                                <img
+                                                    src={avatarUrl}
+                                                    alt={reaction.userName}
+                                                    className="w-6 h-6 rounded-full object-cover shrink-0 border border-[var(--chat-border)]"
+                                                />
+                                            ) : (
+                                                <div className="w-6 h-6 rounded-full bg-[var(--chat-bg-tertiary)] flex items-center justify-center text-[var(--chat-text-muted)] shrink-0 border border-[var(--chat-border)]">
+                                                    <User className="w-3.5 h-3.5" />
+                                                </div>
+                                            )}
 
                                             <div className="flex flex-col">
                                                 <span
-                                                    className={`text-xs font-medium ${isMe ? 'text-[#cfd3d6]' : 'text-[#e9edef]'}`}
+                                                    className={`text-xs font-medium text-[var(--chat-text-primary)]`}
                                                 >
                                                     {displayName}
                                                 </span>
                                                 {isMe && (
-                                                    <span className="text-[10px] text-[#8696a0]">Click to remove</span>
+                                                    <span className="text-[10px] text-[var(--chat-text-secondary)]">Click to remove</span>
                                                 )}
                                             </div>
                                         </div>
@@ -204,7 +255,7 @@ export function ReactionDetailsModal({
                         </div>
                     </>
                 ) : (
-                    <div className="flex-1 flex items-center justify-center text-[#8696a0] text-xs">
+                    <div className="flex-1 flex items-center justify-center text-[var(--chat-text-secondary)] text-xs">
                         No reactions yet
                     </div>
                 )}

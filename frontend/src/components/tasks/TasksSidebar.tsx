@@ -494,7 +494,7 @@ function ListItem({ list, workspaceId, canManageStructure }: { list: ListDto, wo
 
     const handleRename = async () => {
         if (editName.trim() && editName !== list.name) {
-            await updateList(workspaceId, list.id, { name: editName });
+            await updateList(workspaceId, list.id, { name: editName, folderId: list.folderId });
         }
         setIsEditing(false);
     };
@@ -602,7 +602,7 @@ function ContextMenu({ onRename, onDelete, onAddFolder, onAddList }: ContextMenu
     return (
         <div className="relative">
             <button
-                onClick={(e) => { e.stopPropagation(); setIsOpen(!isOpen); }}
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); setIsOpen(!isOpen); }}
                 className="p-1 hover:bg-background rounded text-muted-foreground hover:text-foreground"
             >
                 <MoreVertical className="w-3.5 h-3.5" />
@@ -612,7 +612,7 @@ function ContextMenu({ onRename, onDelete, onAddFolder, onAddList }: ContextMenu
                 <div
                     ref={menuRef}
                     className="absolute right-0 top-full mt-1 w-32 bg-popover text-popover-foreground border border-border rounded-md shadow-md z-50 overflow-hidden text-xs py-1"
-                    onClick={(e) => e.stopPropagation()}
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
                 >
                     {onAddList && (
                         <button

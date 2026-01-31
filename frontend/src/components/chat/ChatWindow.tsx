@@ -64,9 +64,9 @@ export function ChatWindow() {
     const [hasContent, setHasContent] = useState(false);
     const [replyingTo, setReplyingTo] = useState<any | null>(null); // Type Message
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-    const [showMoreMenu, setShowMoreMenu] = useState(false);
+    // const [showMoreMenu, setShowMoreMenu] = useState(false);
     const [selectedMessageForReactionDetails, setSelectedMessageForReactionDetails] = useState<Message | null>(null);
-    const [reactionDetailsPosition, setReactionDetailsPosition] = useState<{ top: number; left: number } | undefined>(undefined);
+    const [reactionDetailsRect, setReactionDetailsRect] = useState<{ top: number; left: number; bottom: number; right: number } | undefined>(undefined);
     const [localAttachments, setLocalAttachments] = useState<LocalAttachment[]>([]);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -804,9 +804,9 @@ export function ChatWindow() {
                                     onRemoveReaction={(mid, emoji) => {
                                         if (activeWorkspace) removeReaction(activeWorkspace.id, mid, emoji);
                                     }}
-                                    onOpenReactionDetails={(m, pos) => {
+                                    onOpenReactionDetails={(m, rect) => {
                                         setSelectedMessageForReactionDetails(m);
-                                        setReactionDetailsPosition(pos);
+                                        setReactionDetailsRect(rect);
                                     }}
                                     onPreview={(src, type, fileName) => setPreviewMedia({ isOpen: true, src, type, fileName })}
                                 />
@@ -1085,7 +1085,11 @@ export function ChatWindow() {
                     onRemoveReaction={(mid, emoji) => {
                         if (activeWorkspace) removeReaction(activeWorkspace.id, mid, emoji);
                     }}
-                    position={reactionDetailsPosition}
+                    triggerRect={reactionDetailsRect}
+                    getUserAvatar={(userId) => {
+                        if (currentUser && userId === currentUser.id) return currentUser.avatarUrl;
+                        return members.find(m => m.id === userId)?.avatarUrl;
+                    }}
                 />
             )}
         </div>

@@ -406,19 +406,19 @@ function LeadsTable({ leads, onLeadClick, getScoreIcon, sortBy, sortOrder, onSor
                             </td>
                             <td className="px-4 py-3">
                                 <span className={cn(
-                                    "px-2 py-1 rounded text-xs font-medium",
-                                    lead.status === 'NEW' && "bg-blue-200 text-blue-900 dark:bg-blue-900/30 dark:text-blue-400",
-                                    lead.status === 'CONTACTED' && "bg-indigo-200 text-indigo-900 dark:bg-indigo-900/30 dark:text-indigo-400",
-                                    lead.status === 'QUALIFIED' && "bg-green-200 text-green-900 dark:bg-green-900/30 dark:text-green-400",
-                                    lead.status === 'UNQUALIFIED' && "bg-gray-200 text-gray-900 dark:bg-gray-900/30 dark:text-gray-400",
-                                    lead.status === 'CONVERTED' && "bg-emerald-200 text-emerald-900 dark:bg-emerald-900/30 dark:text-emerald-400"
+                                    "px-2 py-1 rounded text-xs font-medium w-24 inline-flex justify-center",
+                                    lead.status === 'NEW' && "bg-blue-500/15 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+                                    lead.status === 'CONTACTED' && "bg-indigo-500/15 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400",
+                                    lead.status === 'QUALIFIED' && "bg-green-500/15 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+                                    lead.status === 'UNQUALIFIED' && "bg-gray-500/15 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400",
+                                    lead.status === 'CONVERTED' && "bg-emerald-500/15 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
                                 )}>
                                     {lead.status}
                                 </span>
                             </td>
                             <td className="px-4 py-3">
                                 <span className={cn(
-                                    "px-2 py-0.5 rounded text-xs font-medium",
+                                    "px-2 py-0.5 rounded text-xs font-medium w-20 inline-flex justify-center",
                                     lead.source === 'FACEBOOK' && "bg-blue-100 text-blue-700",
                                     lead.source === 'GOOGLE' && "bg-red-100 text-red-700",
                                     lead.source === 'FORM' && "bg-green-100 text-green-700",
