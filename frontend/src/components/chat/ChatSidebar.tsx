@@ -4,7 +4,7 @@ import { useWorkspaces } from '@/stores/workspaceStore';
 import { useTeamStore } from '@/stores/teamStore';
 import { useUserStore } from '@/stores/userStore';
 import { useRealtimeStore } from '@/stores/realtimeStore';
-import { Plus, Lock, ChevronDown, Search, PenBox, Hash, MoreVertical, Trash2, Edit2, Camera } from 'lucide-react';
+import { Plus, Lock, ChevronDown, Search, PenBox, MoreVertical, Trash2, Edit2, Camera } from 'lucide-react';
 import { format, isToday, isYesterday } from 'date-fns';
 import * as Popover from '@radix-ui/react-popover';
 
@@ -45,7 +45,6 @@ export function ChatSidebar() {
     const [editName, setEditName] = useState('');
     const [editDescription, setEditDescription] = useState('');
     const [editIsPrivate, setEditIsPrivate] = useState(false);
-    const [editAvatarFile, setEditAvatarFile] = useState<File | null>(null);
     const [editAvatarPreview, setEditAvatarPreview] = useState<string | null>(null);
 
     // Actions
@@ -57,14 +56,13 @@ export function ChatSidebar() {
         setEditDescription(channel.description || '');
         setEditIsPrivate(channel.isPrivate);
         setEditAvatarPreview(channel.avatarUrl || null);
-        setEditAvatarFile(null);
     };
 
     const handleUpdateChannel = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!activeWorkspace || !editingChannel || !editName.trim()) return;
 
-        await updateChannel(activeWorkspace.id, editingChannel.id, editName, editIsPrivate, editDescription, editAvatarFile);
+        await updateChannel(activeWorkspace.id, editingChannel.id, editName, editIsPrivate, editDescription);
         setEditingChannel(null);
     };
 
@@ -451,7 +449,6 @@ export function ChatSidebar() {
                                             onChange={(e) => {
                                                 const file = e.target.files?.[0];
                                                 if (file) {
-                                                    setEditAvatarFile(file);
                                                     setEditAvatarPreview(URL.createObjectURL(file));
                                                 }
                                             }}

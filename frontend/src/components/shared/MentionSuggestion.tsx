@@ -88,7 +88,7 @@ export const MentionSuggestion = forwardRef<HTMLDivElement, MentionSuggestionPro
                 {filteredUsers.map((user, index) => (
                     <div
                         key={user.id}
-                        ref={el => itemRefs.current[index] = el}
+                        ref={el => { itemRefs.current[index] = el; }}
                         className={cn(
                             "relative flex w-full cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none",
                             index === selectedIndex ? "bg-accent text-accent-foreground" : "hover:bg-accent hover:text-accent-foreground"
