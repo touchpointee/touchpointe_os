@@ -133,7 +133,7 @@ export function TimeTrackingPanel({ workspaceId, taskId }: TimeTrackingPanelProp
                     "flex items-center gap-2 px-4 py-2.5 rounded-[6px] w-full transition-all border text-sm font-medium group",
                     isRunning
                         ? "bg-red-500/10 text-red-500 border-red-500/20 hover:bg-red-500/20"
-                        : "bg-black border-[#4B4B4B] hover:border-zinc-600 text-zinc-300"
+                        : "bg-background border-input hover:border-zinc-400 text-muted-foreground hover:text-foreground"
                 )}
             >
                 {isRunning ? (
@@ -144,7 +144,7 @@ export function TimeTrackingPanel({ workspaceId, taskId }: TimeTrackingPanelProp
                     </>
                 ) : (
                     <>
-                        <Play size={14} fill="currentColor" className="text-zinc-400 group-hover:text-white transition-colors mr-1" />
+                        <Play size={14} fill="currentColor" className="text-muted-foreground group-hover:text-foreground transition-colors mr-1" />
                         <span className="font-medium flex-1 text-left">Start Timer</span>
                     </>
                 )}
@@ -154,29 +154,29 @@ export function TimeTrackingPanel({ workspaceId, taskId }: TimeTrackingPanelProp
             {isMenuOpen && (
                 <>
                     <div className="fixed inset-0 z-40" onClick={() => setIsMenuOpen(false)} />
-                    <div className="absolute top-full left-0 mt-2 w-80 bg-card border border-border rounded-xl shadow-2xl z-50 overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-200">
+                    <div className="absolute top-full left-0 mt-2 w-80 bg-popover border border-border rounded-xl shadow-2xl z-50 overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-200">
                         {/* Header */}
                         <div className="bg-muted/50 p-3 border-b border-border flex justify-between items-center">
                             <span className="text-xs font-semibold uppercase text-muted-foreground">Time Tracking</span>
-                            <span className="text-sm font-mono font-bold">{formatDuration(totalSeconds)}</span>
+                            <span className="text-sm font-mono font-bold text-foreground">{formatDuration(totalSeconds)}</span>
                         </div>
 
                         {/* Input Area */}
-                        <div className="p-3 border-b border-zinc-800 space-y-3 bg-zinc-900/50">
+                        <div className="p-3 border-b border-border space-y-3 bg-muted/20">
                             <div className="flex gap-2">
                                 <div className="flex-1 grid grid-cols-2 gap-2">
                                     <input
                                         placeholder="Time (e.g. 1h 30m)"
                                         value={durationInput}
                                         onChange={e => setDurationInput(e.target.value)}
-                                        className="bg-zinc-800 border border-zinc-700 rounded-md px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-primary text-zinc-200 placeholder:text-zinc-500"
+                                        className="bg-background border border-input rounded-md px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-primary text-foreground placeholder:text-muted-foreground"
                                         onKeyDown={e => e.key === 'Enter' && handleManualLog()}
                                     />
                                     <input
                                         placeholder="Description (Optional)"
                                         value={descriptionInput}
                                         onChange={e => setDescriptionInput(e.target.value)}
-                                        className="bg-zinc-800 border border-zinc-700 rounded-md px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-primary text-zinc-200 placeholder:text-zinc-500"
+                                        className="bg-background border border-input rounded-md px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-primary text-foreground placeholder:text-muted-foreground"
                                         onKeyDown={e => e.key === 'Enter' && (!durationInput ? handleStartStop() : handleManualLog())}
                                     />
                                 </div>
@@ -184,7 +184,7 @@ export function TimeTrackingPanel({ workspaceId, taskId }: TimeTrackingPanelProp
                                 {durationInput ? (
                                     <button
                                         onClick={handleManualLog}
-                                        className="px-3 rounded-md bg-zinc-800 border border-zinc-700 hover:bg-zinc-700 text-zinc-300 text-xs font-bold transition-colors"
+                                        className="px-3 rounded-md bg-secondary border border-border hover:bg-secondary/80 text-secondary-foreground text-xs font-bold transition-colors"
                                     >
                                         Log
                                     </button>
@@ -239,7 +239,7 @@ export function TimeTrackingPanel({ workspaceId, taskId }: TimeTrackingPanelProp
                                                                 userInfo.userName?.charAt(0) || '?'
                                                             )}
                                                         </div>
-                                                        <span className="text-xs font-semibold">{userInfo.userName || 'Unknown User'}</span>
+                                                        <span className="text-xs font-semibold text-foreground">{userInfo.userName || 'Unknown User'}</span>
                                                     </div>
                                                     <span className="text-xs font-mono font-medium text-muted-foreground">
                                                         {formatDuration(totalUserSeconds)}
@@ -256,14 +256,14 @@ export function TimeTrackingPanel({ workspaceId, taskId }: TimeTrackingPanelProp
                                                                         {format(new Date(entry.startTime || entry.createdAt), 'MMM d, h:mm a')}
                                                                         {entry.endTime && ` - ${format(new Date(entry.endTime), 'h:mm a')}`}
                                                                     </div>
-                                                                    <span className="text-xs font-mono font-medium">
+                                                                    <span className="text-xs font-mono font-medium text-foreground">
                                                                         {entry.endTime
                                                                             ? formatDuration(entry.durationSeconds)
                                                                             : <span className="text-green-500 animate-pulse">Running...</span>}
                                                                     </span>
                                                                 </div>
                                                                 {entry.description && (
-                                                                    <div className="text-xs text-zinc-400 mt-1 truncate">{entry.description}</div>
+                                                                    <div className="text-xs text-muted-foreground mt-1 truncate">{entry.description}</div>
                                                                 )}
                                                             </div>
                                                             {/* Actions */}

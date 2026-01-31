@@ -209,21 +209,21 @@ export function TaskDetailPanel() {
     return (
         <>
             {/* Backdrop */}
-            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40" onClick={closeTaskDetail} />
+            <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40" onClick={closeTaskDetail} />
 
             {/* Panel */}
-            <div className="fixed inset-y-0 right-0 w-full md:w-[50%] md:min-w-[700px] bg-black border-l border-zinc-800 shadow-2xl z-50 flex flex-col animate-in slide-in-from-right duration-300">
+            <div className="fixed inset-y-0 right-0 w-full md:w-[50%] md:min-w-[700px] bg-background border-l border-border shadow-2xl z-50 flex flex-col animate-in slide-in-from-right duration-300">
 
                 {/* Header */}
-                <div className="flex items-center justify-between px-8 py-3 bg-black/50 backdrop-blur-md z-10">
+                <div className="flex items-center justify-between px-8 py-3 bg-background/95 backdrop-blur z-10 border-b border-border">
                     <div className="flex items-center gap-3">
-                        <div className="bg-zinc-800/50 px-3 py-1.5 rounded-md text-xs font-mono font-medium text-zinc-400 border border-zinc-700/50">
+                        <div className="bg-muted px-3 py-1.5 rounded-md text-xs font-mono font-medium text-muted-foreground border border-border">
                             TASK-{task.id.substring(0, 4)}
                         </div>
                     </div>
                     <div className="flex items-center gap-1">
-                        <button className="p-2 hover:bg-zinc-800 rounded-lg text-zinc-400 hover:text-white transition-colors"><Paperclip className="w-4 h-4" /></button>
-                        <button className="p-2 hover:bg-zinc-800 rounded-lg text-zinc-400 hover:text-white transition-colors"><Copy className="w-4 h-4" /></button>
+                        <button className="p-2 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground transition-colors"><Paperclip className="w-4 h-4" /></button>
+                        <button className="p-2 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground transition-colors"><Copy className="w-4 h-4" /></button>
                         {canEdit && (
                             <button
                                 onClick={() => {
@@ -236,8 +236,8 @@ export function TaskDetailPanel() {
                                 <Trash2 className="w-4 h-4" />
                             </button>
                         )}
-                        <button className="p-2 hover:bg-zinc-800 rounded-lg text-zinc-400 hover:text-white transition-colors"><MoreHorizontal className="w-4 h-4" /></button>
-                        <button onClick={closeTaskDetail} className="p-2 hover:bg-zinc-800 rounded-lg text-zinc-400 hover:text-white transition-colors ml-1"><X className="w-5 h-5" /></button>
+                        <button className="p-2 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground transition-colors"><MoreHorizontal className="w-4 h-4" /></button>
+                        <button onClick={closeTaskDetail} className="p-2 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground transition-colors ml-1"><X className="w-5 h-5" /></button>
                     </div>
                 </div>
 
@@ -247,7 +247,7 @@ export function TaskDetailPanel() {
 
                         {/* Task Title */}
                         <div className="space-y-2">
-                            <label className="text-white text-[16px] font-regular block pb-0.5">Task Title</label>
+                            <label className="text-foreground text-[16px] font-regular block pb-0.5">Task Title</label>
                             <div className="relative group">
                                 <textarea
                                     key={`title-${task.id}`}
@@ -256,7 +256,7 @@ export function TaskDetailPanel() {
                                     rows={1}
                                     disabled={!canEdit}
                                     className={cn(
-                                        "w-full text-lg md:text-[14px] text-white bg-black border border-[#4B4B4B] rounded-[6px] px-4 py-2.5 outline-none focus:!border-indigo-500 resize-none overflow-hidden transition-all placeholder:text-zinc-600 placeholder:text-[14px]",
+                                        "w-full text-lg md:text-[14px] text-foreground bg-background border border-input rounded-[6px] px-4 py-2.5 outline-none focus:!border-indigo-500 resize-none overflow-hidden transition-all placeholder:text-muted-foreground placeholder:text-[14px]",
                                         !canEdit && "opacity-60 cursor-not-allowed"
                                     )}
                                     placeholder="Enter task title"
@@ -270,8 +270,8 @@ export function TaskDetailPanel() {
 
                         {/* Description Field (formerly Project) */}
                         <div className="space-y-2">
-                            <label className="text-white text-[16px] font-regular block pb-0.5">Description</label>
-                            <div className="w-full bg-black border border-[#4B4B4B] rounded-[6px] px-4 py-2.5 text-white bg-transparent outline-none transition-colors hover:border-zinc-600 focus-within:!border-indigo-500 min-h-[100px]">
+                            <label className="text-foreground text-[16px] font-regular block pb-0.5">Description</label>
+                            <div className="w-full bg-background border border-input rounded-[6px] px-4 py-2.5 text-foreground bg-transparent outline-none transition-colors hover:border-zinc-500 focus-within:!border-indigo-500 min-h-[100px]">
                                 <textarea
                                     key={`desc-${task.id}`}
                                     defaultValue={task.description || ''}
@@ -280,7 +280,7 @@ export function TaskDetailPanel() {
                                     disabled={!canEdit}
                                     placeholder={canEdit ? "Add a detailed description..." : "No description"}
                                     className={cn(
-                                        "w-full h-full bg-transparent outline-none resize-none overflow-hidden text-[14px] text-zinc-300 min-h-[80px]",
+                                        "w-full h-full bg-transparent outline-none resize-none overflow-hidden text-[14px] text-foreground min-h-[80px] placeholder:text-muted-foreground",
                                         !canEdit && "opacity-80"
                                     )}
                                     onInput={(e) => {
@@ -296,31 +296,31 @@ export function TaskDetailPanel() {
 
                             {/* STATUS */}
                             <div className="space-y-2 relative">
-                                <label className="text-white text-[16px] font-regular block pb-0.5">Status</label>
+                                <label className="text-foreground text-[16px] font-regular block pb-0.5">Status</label>
                                 <button
                                     onClick={(e) => {
                                         if (!canEdit) return;
                                         e.stopPropagation(); setStatusOpen(!statusOpen); setPriorityOpen(false); setAssigneeOpen(false);
                                     }}
-                                    className="w-full bg-black border border-[#4B4B4B] rounded-[6px] px-4 py-2.5 flex items-center justify-between hover:border-zinc-600 focus:!border-indigo-500 transition-colors"
+                                    className="w-full bg-background border border-input rounded-[6px] px-4 py-2.5 flex items-center justify-between hover:border-zinc-500 focus:!border-indigo-500 transition-colors"
                                 >
                                     <div className="flex items-center gap-3">
-                                        <div className="w-2.5 h-2.5 rounded-full ring-2 ring-white/10" style={{ backgroundColor: currentStatusOption?.color || '#999' }} />
-                                        <span className="text-[14px] text-white">{currentStatusOption?.label || task.status}</span>
+                                        <div className="w-2.5 h-2.5 rounded-full ring-2 ring-foreground/10" style={{ backgroundColor: currentStatusOption?.color || '#999' }} />
+                                        <span className="text-[14px] text-foreground">{currentStatusOption?.label || task.status}</span>
                                     </div>
-                                    <ChevronDown className="w-4 h-4 text-zinc-500" />
+                                    <ChevronDown className="w-4 h-4 text-muted-foreground" />
                                 </button>
 
                                 {statusOpen && canEdit && (
-                                    <div className="absolute top-full left-0 mt-2 w-full bg-[#121212] border border-zinc-800 rounded-[6px] shadow-2xl z-50 py-1.5 overflow-hidden ring-1 ring-white/5">
+                                    <div className="absolute top-full left-0 mt-2 w-full bg-popover border border-border rounded-[6px] shadow-xl z-50 py-1.5 overflow-hidden">
                                         {statusOptions.map(opt => (
                                             <button
                                                 key={opt.value}
                                                 onClick={(e) => { e.stopPropagation(); handleStatusChange(opt.value); }}
-                                                className="flex items-center gap-3 w-full px-4 py-2.5 hover:bg-zinc-800 transition-colors"
+                                                className="flex items-center gap-3 w-full px-4 py-2.5 hover:bg-accent hover:text-accent-foreground transition-colors"
                                             >
                                                 <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: opt.color }} />
-                                                <span className="flex-1 text-left text-[14px] text-white">{opt.label}</span>
+                                                <span className="flex-1 text-left text-[14px] text-foreground">{opt.label}</span>
                                                 {currentStatusOption?.value === opt.value && <Check className="w-4 h-4 text-indigo-500" />}
                                             </button>
                                         ))}
@@ -330,13 +330,13 @@ export function TaskDetailPanel() {
 
                             {/* ASSIGNEE */}
                             <div className="space-y-2 relative">
-                                <label className="text-white text-[16px] font-regular block pb-0.5">Assignee</label>
+                                <label className="text-foreground text-[16px] font-regular block pb-0.5">Assignee</label>
                                 <button
                                     onClick={(e) => {
                                         if (!canEdit) return;
                                         e.stopPropagation(); setAssigneeOpen(!assigneeOpen); setStatusOpen(false); setPriorityOpen(false);
                                     }}
-                                    className="w-full bg-black border border-[#4B4B4B] rounded-[6px] px-4 py-2.5 flex items-center justify-between hover:border-zinc-600 focus:!border-indigo-500 transition-colors"
+                                    className="w-full bg-background border border-input rounded-[6px] px-4 py-2.5 flex items-center justify-between hover:border-zinc-500 focus:!border-indigo-500 transition-colors"
                                 >
                                     <div className="flex items-center gap-3">
                                         {task.assigneeId ? (
@@ -348,50 +348,50 @@ export function TaskDetailPanel() {
                                                             <img
                                                                 src={assignee.avatarUrl}
                                                                 alt={assignee.fullName}
-                                                                className="w-6 h-6 rounded-full object-cover border border-zinc-700"
+                                                                className="w-6 h-6 rounded-full object-cover border border-border"
                                                             />
                                                         ) : (
                                                             <div className="w-6 h-6 rounded-full bg-indigo-500/20 flex items-center justify-center text-[14px] font-bold text-indigo-400 border border-indigo-500/30">
                                                                 {task.assigneeName?.charAt(0) || '?'}
                                                             </div>
                                                         )}
-                                                        <span className="text-[14px] text-white">{task.assigneeName}</span>
+                                                        <span className="text-[14px] text-foreground">{task.assigneeName}</span>
                                                     </>
                                                 );
                                             })()
                                         ) : (
                                             <>
-                                                <div className="w-6 h-6 rounded-full bg-zinc-800 flex items-center justify-center text-[14px] text-zinc-500 border border-zinc-700">
+                                                <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-[14px] text-muted-foreground border border-border">
                                                     <User size={12} />
                                                 </div>
-                                                <span className="text-[16px] text-zinc-400">Unassigned</span>
+                                                <span className="text-[16px] text-muted-foreground">Unassigned</span>
                                             </>
                                         )}
                                     </div>
-                                    <ChevronDown className="w-4 h-4 text-zinc-500" />
+                                    <ChevronDown className="w-4 h-4 text-muted-foreground" />
                                 </button>
 
                                 {assigneeOpen && canEdit && (
-                                    <div className="absolute top-full left-0 mt-2 w-full bg-[#121212] border border-zinc-800 rounded-[6px] shadow-2xl z-50 py-1.5 overflow-hidden ring-1 ring-white/5">
+                                    <div className="absolute top-full left-0 mt-2 w-full bg-popover border border-border rounded-[6px] shadow-xl z-50 py-1.5 overflow-hidden">
                                         <div className="max-h-60 overflow-y-auto custom-scrollbar">
                                             {members.map(member => (
                                                 <button
                                                     key={member.userId}
                                                     onClick={(e) => { e.stopPropagation(); handleAssigneeChange(member.userId); }}
-                                                    className="flex items-center gap-3 w-full px-4 py-2.5 hover:bg-zinc-800 transition-colors"
+                                                    className="flex items-center gap-3 w-full px-4 py-2.5 hover:bg-accent hover:text-accent-foreground transition-colors"
                                                 >
                                                     {member.avatarUrl ? (
                                                         <img
                                                             src={member.avatarUrl}
                                                             alt={member.fullName}
-                                                            className="w-6 h-6 rounded-full object-cover border border-zinc-700"
+                                                            className="w-6 h-6 rounded-full object-cover border border-border"
                                                         />
                                                     ) : (
                                                         <div className="w-6 h-6 rounded-full bg-indigo-500/20 flex items-center justify-center text-[14px] font-bold text-indigo-400 border border-indigo-500/30">
                                                             {member.fullName?.charAt(0) || '?'}
                                                         </div>
                                                     )}
-                                                    <span className="flex-1 text-left text-[14px] text-white">{member.fullName}</span>
+                                                    <span className="flex-1 text-left text-[14px] text-foreground">{member.fullName}</span>
                                                     {task.assigneeId === member.userId && <Check className="w-4 h-4 text-indigo-500" />}
                                                 </button>
                                             ))}
@@ -402,13 +402,13 @@ export function TaskDetailPanel() {
 
                             {/* PRIORITY */}
                             <div className="space-y-2 relative">
-                                <label className="text-white text-[16px] font-regular block pb-0.5">Priority</label>
+                                <label className="text-foreground text-[16px] font-regular block pb-0.5">Priority</label>
                                 <button
                                     onClick={(e) => {
                                         if (!canEdit) return;
                                         e.stopPropagation(); setPriorityOpen(!priorityOpen); setStatusOpen(false); setAssigneeOpen(false);
                                     }}
-                                    className="w-full bg-black border border-[#4B4B4B] rounded-[6px] px-4 py-2.5 flex items-center justify-between hover:border-zinc-600 focus:!border-indigo-500 transition-colors"
+                                    className="w-full bg-background border border-input rounded-[6px] px-4 py-2.5 flex items-center justify-between hover:border-zinc-500 focus:!border-indigo-500 transition-colors"
                                 >
                                     <div className="flex items-center gap-3">
                                         <Flag className={cn("w-4 h-4", priorityOptions.find(p => p.value === task.priority)?.color)} />
@@ -416,16 +416,16 @@ export function TaskDetailPanel() {
                                             {priorityOptions.find(p => p.value === task.priority)?.label}
                                         </span>
                                     </div>
-                                    <ChevronDown className="w-4 h-4 text-zinc-500" />
+                                    <ChevronDown className="w-4 h-4 text-muted-foreground" />
                                 </button>
 
                                 {priorityOpen && canEdit && (
-                                    <div className="absolute top-full left-0 mt-2 w-full bg-[#121212] border border-zinc-800 rounded-[6px] shadow-2xl z-50 py-1.5 overflow-hidden ring-1 ring-white/5">
+                                    <div className="absolute top-full left-0 mt-2 w-full bg-popover border border-border rounded-[6px] shadow-xl z-50 py-1.5 overflow-hidden">
                                         {priorityOptions.map(opt => (
                                             <button
                                                 key={opt.value}
                                                 onClick={(e) => { e.stopPropagation(); handlePriorityChange(opt.value); }}
-                                                className="flex items-center gap-3 w-full px-4 py-2.5 hover:bg-zinc-800 transition-colors"
+                                                className="flex items-center gap-3 w-full px-4 py-2.5 hover:bg-accent hover:text-accent-foreground transition-colors"
                                             >
                                                 <Flag className={cn("w-4 h-4", opt.color)} />
                                                 <span className={cn("flex-1 text-left text-sm", opt.color)}>{opt.label}</span>
@@ -438,12 +438,12 @@ export function TaskDetailPanel() {
 
                             {/* DUE DATE */}
                             <div className="space-y-2 relative">
-                                <label className="text-white text-[16px] font-regular block pb-0.5">Due Date</label>
+                                <label className="text-foreground text-[16px] font-regular block pb-0.5">Due Date</label>
                                 <div className={cn(
-                                    "w-full bg-black border border-[#4B4B4B] rounded-[6px] px-4 py-2.5 flex items-center gap-3 hover:border-zinc-600 focus-within:!border-indigo-500 transition-colors",
+                                    "w-full bg-background border border-input rounded-[6px] px-4 py-2.5 flex items-center gap-3 hover:border-zinc-500 focus-within:!border-indigo-500 transition-colors",
                                     !canEdit && "opacity-60"
                                 )}>
-                                    <CalendarIcon className="w-4 h-4 text-zinc-500" />
+                                    <CalendarIcon className="w-4 h-4 text-muted-foreground" />
                                     <input
                                         type="date"
                                         value={task.dueDate ? task.dueDate.split('T')[0] : ''}
@@ -451,7 +451,7 @@ export function TaskDetailPanel() {
                                         onClick={(e) => canEdit && e.currentTarget.showPicker()}
                                         disabled={!canEdit}
                                         className={cn(
-                                            "flex-1 bg-transparent outline-none text-sm text-white w-full [color-scheme:dark]",
+                                            "flex-1 bg-transparent outline-none text-sm text-foreground w-full",
                                             canEdit ? "cursor-pointer" : "cursor-not-allowed"
                                         )}
                                     />
@@ -460,15 +460,15 @@ export function TaskDetailPanel() {
 
                             {/* TIME TRACKING */}
                             <div className="space-y-2 relative">
-                                <label className="text-white text-[16px] font-regular block pb-0.5">Time Tracking</label>
+                                <label className="text-foreground text-[16px] font-regular block pb-0.5">Time Tracking</label>
                                 <TimeTrackingPanel workspaceId={workspaceId} taskId={task.id} />
                             </div>
                         </div>
 
                         {/* TAGS */}
                         <div className="space-y-2">
-                            <label className="text-white text-[16px] font-regular block pb-0.5">Tags</label>
-                            <div className="w-full bg-black border border-[#4B4B4B] rounded-[6px] p-4 min-h-[60px] focus-within:!border-indigo-500 transition-colors">
+                            <label className="text-foreground text-[16px] font-regular block pb-0.5">Tags</label>
+                            <div className="w-full bg-background border border-input rounded-[6px] p-4 min-h-[60px] focus-within:!border-indigo-500 transition-colors">
                                 <div className="flex flex-wrap gap-2 items-center">
                                     {task.tags.map(tag => (
                                         <span
@@ -490,18 +490,18 @@ export function TaskDetailPanel() {
                                     <div className="relative">
                                         <button
                                             onClick={(e) => { e.stopPropagation(); setTagPickerOpen(!tagPickerOpen); }}
-                                            className="px-3 py-1.5 border border-dashed border-zinc-700 rounded-lg text-[14px] font-medium text-zinc-500 hover:border-zinc-500 hover:text-zinc-300 transition-all flex items-center gap-2"
+                                            className="px-3 py-1.5 border border-dashed border-zinc-500/50 rounded-lg text-[14px] font-medium text-muted-foreground hover:border-zinc-500 hover:text-foreground transition-all flex items-center gap-2"
                                         >
                                             <Plus size={14} /> Add Tag
                                         </button>
                                         {tagPickerOpen && (
-                                            <div className="absolute top-full left-0 mt-3 w-64 bg-[#121212] border border-zinc-800 shadow-2xl rounded-[6px] p-3 z-50 ring-1 ring-white/5">
+                                            <div className="absolute top-full left-0 mt-3 w-64 bg-popover border border-border shadow-xl rounded-[6px] p-3 z-50">
                                                 <input
                                                     placeholder="Search or create tag..."
                                                     value={tagSearch}
                                                     onChange={e => setTagSearch(e.target.value)}
                                                     onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleCreateTag())}
-                                                    className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-[14px] text-white mb-3 outline-none focus:border-indigo-500/50 transition-colors"
+                                                    className="w-full bg-muted border border-transparent rounded-lg px-3 py-2 text-[14px] text-foreground mb-3 outline-none focus:border-indigo-500/50 transition-colors"
                                                     autoFocus
                                                 />
                                                 <div className="max-h-40 overflow-y-auto space-y-1 pr-1 custom-scrollbar">
@@ -509,10 +509,10 @@ export function TaskDetailPanel() {
                                                         <button
                                                             key={t.id}
                                                             onClick={(e) => { e.stopPropagation(); handleTagToggle(t.id); }}
-                                                            className="w-full flex items-center gap-2 px-2 py-1.5 rounded hover:bg-zinc-800 text-[14px] transition-colors"
+                                                            className="w-full flex items-center gap-2 px-2 py-1.5 rounded hover:bg-accent hover:text-accent-foreground text-[14px] transition-colors"
                                                         >
                                                             <div className="w-2 h-2 rounded-full" style={{ backgroundColor: t.color }} />
-                                                            <span className="flex-1 text-left font-medium text-zinc-300">{t.name}</span>
+                                                            <span className="flex-1 text-left font-medium text-foreground">{t.name}</span>
                                                             {task.tags.some(xt => xt.id === t.id) && <Check size={12} className="text-indigo-500" />}
                                                         </button>
                                                     ))}
@@ -542,7 +542,7 @@ export function TaskDetailPanel() {
                         />
 
                         {/* Additional Sections */}
-                        <div className="pt-6 border-t border-zinc-800">
+                        <div className="pt-6 border-t border-border">
                             <SubtaskList
                                 subtasks={subtasks}
                                 onAdd={(title, assigneeId) => addSubtask(workspaceId, task.id, title, assigneeId)}
@@ -554,7 +554,7 @@ export function TaskDetailPanel() {
                         </div>
 
                         {/* Split View: Activity & Comments */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8 border-t border-zinc-800">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8 border-t border-border">
                             <TaskActivityTimeline activities={activities} />
                             <TaskComments
                                 taskId={task.id}

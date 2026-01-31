@@ -188,13 +188,13 @@ export function TaskComments({ taskId, workspaceId }: TaskCommentsProps) {
         <div className="flex flex-col h-full space-y-4">
             <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Comments</h3>
 
-            <div className="bg-black border border-[#4B4B4B] rounded-[6px] h-[400px] overflow-y-auto custom-scrollbar p-4 relative">
+            <div className="bg-background border border-border rounded-[6px] h-[400px] overflow-y-auto custom-scrollbar p-4 relative">
                 {loading ? (
                     <div className="absolute inset-0 flex items-center justify-center text-sm text-muted-foreground/60">
                         Loading comments...
                     </div>
                 ) : comments.length === 0 ? (
-                    <div className="h-full flex flex-col items-center justify-center text-muted-foreground/50 border border-dashed border-zinc-800 rounded-lg bg-zinc-900/20 m-2">
+                    <div className="h-full flex flex-col items-center justify-center text-muted-foreground/50 border border-dashed border-border rounded-lg bg-muted/20 m-2">
                         <span className="text-sm">No comments yet</span>
                     </div>
                 ) : (
@@ -220,7 +220,7 @@ export function TaskComments({ taskId, workspaceId }: TaskCommentsProps) {
                                                 {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
                                             </span>
                                         </div>
-                                        <div className="text-xs text-foreground/90 bg-zinc-800/50 p-3 rounded-lg border border-border/50 shadow-sm inline-block max-w-full">
+                                        <div className="text-xs text-foreground/90 bg-muted/50 p-3 rounded-lg border border-border/50 shadow-sm inline-block max-w-full">
                                             <MentionRenderer content={comment.content} />
                                         </div>
                                     </div>
@@ -243,9 +243,9 @@ export function TaskComments({ taskId, workspaceId }: TaskCommentsProps) {
                 )}
 
                 <div className="flex gap-2">
-                    <div className="relative flex-1 bg-black rounded-lg border border-[#4B4B4B] focus-within:ring-1 focus-within:ring-indigo-500/50 focus-within:border-indigo-500 transition-all shadow-sm">
+                    <div className="relative flex-1 bg-background rounded-lg border border-border focus-within:ring-1 focus-within:ring-indigo-500/50 focus-within:border-indigo-500 transition-all shadow-sm">
                         {!hasContent && (
-                            <div className="absolute top-3 left-3 text-zinc-500 text-sm pointer-events-none select-none">
+                            <div className="absolute top-3 left-3 text-muted-foreground text-sm pointer-events-none select-none">
                                 Write a comment... (Type @ to mention)
                             </div>
                         )}
@@ -254,11 +254,11 @@ export function TaskComments({ taskId, workspaceId }: TaskCommentsProps) {
                             contentEditable
                             onInput={handleInput}
                             onKeyDown={handleKeyDown}
-                            className="w-full max-h-[150px] overflow-y-auto p-3 text-sm outline-none min-h-[60px] text-white custom-scrollbar relative z-10 bg-transparent"
+                            className="w-full max-h-[150px] overflow-y-auto p-3 text-sm outline-none min-h-[60px] text-foreground custom-scrollbar relative z-10 bg-transparent"
                             role="textbox"
                             aria-multiline="true"
                         />
-                        <div className="flex justify-end items-center p-2 border-t border-[#4B4B4B]/50 bg-white/5">
+                        <div className="flex justify-end items-center p-2 border-t border-border/50 bg-muted/20">
                             <button
                                 onClick={handleSubmit}
                                 disabled={isSending || !hasContent}
@@ -266,7 +266,7 @@ export function TaskComments({ taskId, workspaceId }: TaskCommentsProps) {
                                     "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all",
                                     hasContent && !isSending
                                         ? "bg-indigo-600 text-white hover:bg-indigo-500 shadow-sm"
-                                        : "bg-zinc-800 text-zinc-500 cursor-not-allowed"
+                                        : "bg-muted text-muted-foreground cursor-not-allowed"
                                 )}
                             >
                                 <Send className="w-3.5 h-3.5" />

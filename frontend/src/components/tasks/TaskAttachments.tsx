@@ -56,30 +56,30 @@ export default function TaskAttachments({ workspaceId, taskId, attachments }: Ta
             <div className="flex flex-wrap gap-4">
                 {/* Existing Attachments */}
                 {attachments.map((att) => (
-                    <div key={att.id} className="group relative w-50 aspect-[16/9] bg-black border border-white/10 rounded-xl overflow-hidden flex flex-col hover:border-white/20 transition-all">
+                    <div key={att.id} className="group relative w-50 aspect-[16/9] bg-background border border-border rounded-xl overflow-hidden flex flex-col hover:border-foreground/20 transition-all shadow-sm">
                         <button
                             onClick={() => handleDelete(att.id)}
-                            className="absolute top-2 right-2 p-1.5 bg-black/50 hover:bg-red-500/20 rounded-full text-red-500 opacity-0 group-hover:opacity-100 transition-all z-10"
+                            className="absolute top-2 right-2 p-1.5 bg-background/80 hover:bg-destructive/10 rounded-full text-destructive opacity-0 group-hover:opacity-100 transition-all z-10 backdrop-blur-sm"
                             title="Delete"
                         >
                             <X className="w-3 h-3" />
                         </button>
 
                         {/* Preview Area */}
-                        <a href={att.url} target="_blank" rel="noopener noreferrer" className="flex-1 flex items-center justify-center bg-[#F4F5F7] relative overflow-hidden">
+                        <a href={att.url} target="_blank" rel="noopener noreferrer" className="flex-1 flex items-center justify-center bg-muted relative overflow-hidden">
                             {isImage(att.contentType) ? (
                                 <img src={att.url} alt={att.fileName} className="w-full h-full object-cover" />
                             ) : (
-                                <File className="w-10 h-10 text-zinc-400" strokeWidth={1.5} />
+                                <File className="w-10 h-10 text-muted-foreground" strokeWidth={1.5} />
                             )}
                         </a>
 
                         {/* Footer Details */}
-                        <div className="h-14 px-3 flex flex-col justify-center bg-black border-t border-white/5">
-                            <p className="text-[13px] text-zinc-300 truncate text-center w-full" title={att.fileName}>
+                        <div className="h-14 px-3 flex flex-col justify-center bg-card border-t border-border">
+                            <p className="text-[13px] text-foreground truncate text-center w-full" title={att.fileName}>
                                 {att.fileName}
                             </p>
-                            <p className="text-[11px] text-zinc-600 text-center w-full mt-0.5">
+                            <p className="text-[11px] text-muted-foreground text-center w-full mt-0.5">
                                 {(att.size / 1024).toFixed(1)} KB
                             </p>
                         </div>
@@ -90,17 +90,17 @@ export default function TaskAttachments({ workspaceId, taskId, attachments }: Ta
                 <button
                     onClick={() => fileInputRef.current?.click()}
                     disabled={isUploading}
-                    style={{ boxShadow: '0px 0px 25px 0px #80808040 inset' }}
-                    className="w-32 aspect-[3/4] flex flex-col items-center justify-center gap-3 bg-black border border-white/10 rounded-xl hover:bg-zinc-900/50 hover:border-white/20 transition-all group ml-10"
+                    style={{ boxShadow: '0px 0px 25px 0px rgba(128, 128, 128, 0.1) inset' }}
+                    className="w-32 aspect-[3/4] flex flex-col items-center justify-center gap-3 bg-background border border-border rounded-xl hover:bg-accent hover:text-accent-foreground transition-all group ml-10"
                 >
                     <div className="w-8 h-8 flex items-center justify-center">
                         {isUploading ? (
-                            <div className="w-5 h-5 border-2 border-zinc-500 border-t-white rounded-full animate-spin" />
+                            <div className="w-5 h-5 border-2 border-muted-foreground border-t-transparent rounded-full animate-spin" />
                         ) : (
-                            <Plus className="w-6 h-6 text-white" strokeWidth={1.5} />
+                            <Plus className="w-6 h-6 text-muted-foreground group-hover:text-foreground" strokeWidth={1.5} />
                         )}
                     </div>
-                    <span className="text-[11px] font-medium text-white">Add Attachment</span>
+                    <span className="text-[11px] font-medium text-muted-foreground group-hover:text-foreground">Add Attachment</span>
                 </button>
             </div>
         </div>
