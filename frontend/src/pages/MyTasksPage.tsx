@@ -172,7 +172,11 @@ export const MyTasksPage = () => {
                 break;
             case 'ALL':
             default:
-                result = result.filter(t => t.status !== 'DONE');
+                // Only hide DONE tasks if we haven't explicitly selected a status filter
+                // If the user selects "Done" or "In Review" explicitly, show them regardless of default "Active" view
+                if (statusFilter === 'ALL') {
+                    result = result.filter(t => t.status !== 'DONE');
+                }
                 break;
         }
 
@@ -204,7 +208,7 @@ export const MyTasksPage = () => {
         }
 
         return result;
-    }, [tasks, filter, urgencyMode, spaces, spaceFilterId]);
+    }, [tasks, filter, urgencyMode, spaces, spaceFilterId, statusFilter]);
 
     if (loading && !['MENTIONS', 'COMMENT_MENTIONS', 'CHAT_MENTIONS'].includes(filter)) {
         return (

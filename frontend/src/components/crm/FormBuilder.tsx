@@ -40,8 +40,18 @@ export function FormBuilder({ form, onClose, onSave }: FormBuilderProps) {
     const [fields, setFields] = useState<FormField[]>(() => {
         if (form?.fieldsConfig) {
             try {
-                return form.fieldsConfig as unknown as FormField[];
-            } catch {
+                let parsed = form.fieldsConfig;
+                // If it's a JSON string, parse it
+                if (typeof parsed === 'string') {
+                    parsed = JSON.parse(parsed);
+                }
+                // Ensure it's an array
+                if (Array.isArray(parsed)) {
+                    return parsed as FormField[];
+                }
+                return DEFAULT_FIELDS;
+            } catch (e) {
+                console.error("Failed to parse form fields:", e);
                 return DEFAULT_FIELDS;
             }
         }

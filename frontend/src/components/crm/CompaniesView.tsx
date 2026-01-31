@@ -45,8 +45,8 @@ export function CompaniesView() {
     };
 
     return (
-        <div className="space-y-4 p-4">
-            <div className="flex items-center justify-between">
+        <div className="h-full flex flex-col p-4 gap-4">
+            <div className="flex items-center justify-between shrink-0">
                 <div>
                     <h2 className="text-xl font-semibold tracking-tight">Companies</h2>
                     <p className="text-sm text-muted-foreground">Manage your business accounts</p>
@@ -65,9 +65,9 @@ export function CompaniesView() {
                 company={selectedCompany}
             />
 
-            <div className="border rounded-md overflow-hidden">
+            <div className="flex-1 border rounded-md overflow-hidden flex flex-col">
                 {/* Header - Hidden on Mobile */}
-                <div className="hidden md:grid grid-cols-[1.5fr_1.5fr_1fr_1fr_50px] bg-muted/50 text-left text-sm font-medium text-muted-foreground border-b">
+                <div className="hidden md:grid grid-cols-[1.5fr_1.5fr_1fr_1fr_50px] bg-muted/50 text-left text-sm font-medium text-muted-foreground border-b shrink-0">
                     <div className="p-3">Name</div>
                     <div className="p-3">Domain</div>
                     <div className="p-3">Industry</div>
@@ -76,7 +76,7 @@ export function CompaniesView() {
                 </div>
 
                 {/* Body */}
-                <div className="divide-y divide-border">
+                <div className="flex-1 overflow-y-auto divide-y divide-border">
                     {isLoading ? (
                         <div className="p-4 text-center text-sm">Loading...</div>
                     ) : companies.length === 0 ? (

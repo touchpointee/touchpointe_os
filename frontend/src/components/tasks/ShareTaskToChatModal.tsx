@@ -154,13 +154,13 @@ export function ShareTaskToChatModal({ isOpen, onClose, task }: ShareTaskToChatM
                         {!isCreating ? (
                             <div className="flex gap-2">
                                 <select
-                                    className="flex-1 h-10 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
+                                    className="flex-1 h-10 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary text-foreground"
                                     value={selectedChannelId}
                                     onChange={(e) => setSelectedChannelId(e.target.value)}
                                 >
-                                    <option value="" disabled>Select a channel...</option>
+                                    <option value="" disabled className="bg-popover text-popover-foreground">Select a channel...</option>
                                     {channels.map(c => (
-                                        <option key={c.id} value={c.id}># {c.name}</option>
+                                        <option key={c.id} value={c.id} className="bg-popover text-popover-foreground"># {c.name}</option>
                                     ))}
                                 </select>
                                 <button

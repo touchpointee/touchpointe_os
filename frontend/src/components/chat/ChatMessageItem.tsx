@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { Message } from '@/stores/chatStore';
 import { MentionRenderer } from '../shared/MentionRenderer';
-import { Reply, Smile, User, File as FileIcon, Download, Play, Pause } from 'lucide-react';
+import { Reply, Smile, User, File as FileIcon, Download, Play, Pause, CheckCheck, Clock } from 'lucide-react';
 import { useRef } from 'react';
 import { format } from 'date-fns';
 
@@ -209,8 +209,15 @@ export function ChatMessageItem({
                 {isSingleEmoji(message.content) ? (
                     <div className="flex flex-col items-center gap-4 py-2.5">
                         <span className="text-5xl leading-none">{message.content.trim()}</span>
-                        <span className={`text-[11px] select-none whitespace-nowrap px-2 py-1 rounded-md ${isMe ? 'bg-[#2a323d] text-[#e9edef]/60' : 'bg-[#1e202b] text-[#8696a0]'}`}>
+                        <span className={`text-[11px] select-none whitespace-nowrap px-2 py-1 rounded-md flex items-center gap-1.5 ${isMe ? 'bg-[#2a323d] text-[#e9edef]/60' : 'bg-[#1e202b] text-[#8696a0]'}`}>
                             {format(new Date(message.createdAt), 'h:mm a')}
+                            {isMe && (
+                                message.isOptimistic ? (
+                                    <Clock className="w-3 h-3 text-white/60" />
+                                ) : (
+                                    <CheckCheck className="w-3 h-3 text-[#53bdeb]" />
+                                )
+                            )}
                         </span>
                     </div>
                 ) : (
@@ -333,8 +340,15 @@ export function ChatMessageItem({
 
                             <div className="leading-snug whitespace-pre-wrap break-all">
                                 <MentionRenderer content={message.content} />
-                                <span className={`text-[10px] select-none whitespace-nowrap ml-2 float-right mt-3 ${isMe ? 'text-[#e9edef]/60' : 'text-[#8696a0]'}`}>
+                                <span className={`text-[10px] select-none whitespace-nowrap ml-2 float-right mt-3 flex items-center gap-1 ${isMe ? 'text-[#e9edef]/60' : 'text-[#8696a0]'}`}>
                                     {format(new Date(message.createdAt), 'h:mm a')}
+                                    {isMe && (
+                                        message.isOptimistic ? (
+                                            <Clock className="w-3 h-3 text-white/60" />
+                                        ) : (
+                                            <CheckCheck className="w-3 h-3 text-[#53bdeb]" />
+                                        )
+                                    )}
                                 </span>
                             </div>
 

@@ -84,6 +84,23 @@ export const MyTaskCard: React.FC<TaskCardProps> = ({ task, onClick, onStatusCha
         }
     };
 
+    const getStatusColor = (status: string) => {
+        const s = status.toUpperCase();
+        // Matching PRESET_COLORS from TaskBoardView
+        // '#6B7280', // Gray (TODO)
+        // '#2563EB', // Blue (IN_PROGRESS)
+        // '#3EA751', // Green (DONE)
+        // '#D5A300', // Yellow (IN_REVIEW)
+        // '#7C3AED', // Violet (TESTING)
+
+        if (s === 'DONE' || s === 'COMPLETED') return 'bg-[#3EA751] shadow-[0_0_8px_rgba(62,167,81,0.4)]';
+        if (s === 'IN_PROGRESS') return 'bg-[#2563EB] shadow-[0_0_8px_rgba(37,99,235,0.4)]';
+        if (s === 'IN_REVIEW') return 'bg-[#D5A300] shadow-[0_0_8px_rgba(213,163,0,0.4)]';
+        if (s === 'TESTING' || s === 'QA') return 'bg-[#7C3AED] shadow-[0_0_8px_rgba(124,58,237,0.4)]';
+        if (s === 'TODO') return 'bg-[#6B7280]';
+        return 'bg-[#6B7280]';
+    };
+
     return (
         <div
             onClick={() => onClick(task.taskId)}
@@ -125,8 +142,7 @@ export const MyTaskCard: React.FC<TaskCardProps> = ({ task, onClick, onStatusCha
             <div className="flex items-center justify-between px-6">
                 <div className="flex items-center gap-2 text-sm">
                     <span
-                        className={`h-2 w-2 rounded-full ${isDone ? 'bg-green-500' : 'bg-blue-500'
-                            }`}
+                        className={`h-2 w-2 rounded-full ${getStatusColor(task.status)}`}
                     />
                     <span className="text-xs text-task-card-foreground/80 capitalize">
                         {task.status.toLowerCase().replace(/_/g, ' ')}
