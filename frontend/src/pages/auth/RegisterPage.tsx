@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { toast } from '@/contexts/ToastContext';
 import { useUserStore } from '@/stores/userStore';
 import { useWorkspaces } from '@/stores/workspaceStore';
-import { apiPost } from '@/lib/api';
+import { apiPost, ApiError } from '@/lib/api';
 import { AuthLayout } from '@/components/layout/AuthLayout';
 import { Loader2, Eye, EyeOff, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -15,7 +15,14 @@ export function RegisterPage() {
 
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+    // Global error message
     const [error, setError] = useState<string | null>(null);
+
+    // Field-specific errors
+    const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
     const [formData, setFormData] = useState({
         fullName: '',
         username: '',
@@ -28,9 +35,26 @@ export function RegisterPage() {
         e.preventDefault();
         setIsLoading(true);
         setError(null);
+        setFieldErrors({});
 
         if (formData.password !== formData.confirmPassword) {
             setError("Passwords do not match");
+            setFieldErrors({ confirmPassword: "Passwords do not match" });
+            setIsLoading(false);
+            return;
+        }
+
+        // Email validation
+        // Stricter regex: 
+        // 1. Local part: alphanumeric + special chars
+        // 2. Domain: alphanumeric (allows starting with digit per RFC 1123)
+        // 3. TLD: at least 2 alpha chars
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}$/;
+
+        if (!emailRegex.test(formData.email)) {
+            const errorMsg = "Please enter a valid email address";
+            setError(errorMsg);
+            setFieldErrors({ email: errorMsg });
             setIsLoading(false);
             return;
         }
@@ -58,6 +82,25 @@ export function RegisterPage() {
             }
 
         } catch (err: any) {
+            // Check if it's an API Error with validation details
+            if (err instanceof ApiError && err.validationErrors) {
+                // Map backend keys (TitleCase) to frontend keys (camelCase)
+                const newFieldErrors: Record<string, string> = {};
+
+                Object.entries(err.validationErrors).forEach(([key, messages]) => {
+                    // Simple mapping or could be more robust
+                    const camelKey = key.charAt(0).toLowerCase() + key.slice(1);
+                    // Handle "Password" -> "password"
+                    if (key === 'Password') newFieldErrors.password = messages[0];
+                    else if (key === 'Email') newFieldErrors.email = messages[0];
+                    else if (key === 'Username') newFieldErrors.username = messages[0];
+                    else if (key === 'FullName') newFieldErrors.fullName = messages[0];
+                    else newFieldErrors[camelKey] = messages[0];
+                });
+
+                setFieldErrors(newFieldErrors);
+            }
+
             setError(err.message || 'Failed to create account');
             setIsLoading(false);
         }
@@ -94,11 +137,12 @@ export function RegisterPage() {
                                     required
                                     className={cn(
                                         "w-full h-11 rounded-lg border-2 bg-transparent px-4 text-white placeholder:text-slate-500 focus:outline-none focus:border-blue-500 transition-colors",
-                                        error ? "border-red-500" : "border-blue-500/30"
+                                        fieldErrors.fullName ? "border-red-500" : "border-blue-500/30"
                                     )}
                                     placeholder="John Doe"
                                     value={formData.fullName}
                                     onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                                    autoComplete="name"
                                 />
                             </div>
 
@@ -113,11 +157,12 @@ export function RegisterPage() {
                                     required
                                     className={cn(
                                         "w-full h-11 rounded-lg border-2 bg-transparent px-4 text-white placeholder:text-slate-500 focus:outline-none focus:border-blue-500 transition-colors",
-                                        error ? "border-red-500" : "border-blue-500/30"
+                                        fieldErrors.username ? "border-red-500" : "border-blue-500/30"
                                     )}
                                     placeholder="johndoe"
                                     value={formData.username}
                                     onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                                    autoComplete="username"
                                 />
                             </div>
                         </div>
@@ -133,11 +178,12 @@ export function RegisterPage() {
                                 required
                                 className={cn(
                                     "w-full h-11 rounded-lg border-2 bg-transparent px-4 text-white placeholder:text-slate-500 focus:outline-none focus:border-blue-500 transition-colors",
-                                    error ? "border-red-500" : "border-blue-500/30"
+                                    fieldErrors.email ? "border-red-500" : "border-blue-500/30"
                                 )}
                                 placeholder="name@company.com"
                                 value={formData.email}
                                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                autoComplete="email"
                             />
                         </div>
 
@@ -155,11 +201,12 @@ export function RegisterPage() {
                                         required
                                         className={cn(
                                             "w-full h-11 rounded-lg border-2 bg-transparent px-4 pr-12 text-white placeholder:text-slate-500 focus:outline-none focus:border-blue-500 transition-colors",
-                                            error ? "border-red-500" : "border-blue-500/30"
+                                            fieldErrors.password ? "border-red-500" : "border-blue-500/30"
                                         )}
                                         placeholder="••••••••"
                                         value={formData.password}
                                         onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                        autoComplete="new-password"
                                     />
                                     <button
                                         type="button"
@@ -176,18 +223,28 @@ export function RegisterPage() {
                                 <label className="text-sm font-medium text-slate-300 block" htmlFor="confirmPassword">
                                     Confirm Password
                                 </label>
-                                <input
-                                    id="confirmPassword"
-                                    type="password"
-                                    required
-                                    className={cn(
-                                        "w-full h-11 rounded-lg border-2 bg-transparent px-4 text-white placeholder:text-slate-500 focus:outline-none focus:border-blue-500 transition-colors",
-                                        error ? "border-red-500" : "border-blue-500/30"
-                                    )}
-                                    placeholder="••••••••"
-                                    value={formData.confirmPassword}
-                                    onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                                />
+                                <div className="relative">
+                                    <input
+                                        id="confirmPassword"
+                                        type={showConfirmPassword ? "text" : "password"}
+                                        required
+                                        className={cn(
+                                            "w-full h-11 rounded-lg border-2 bg-transparent px-4 pr-12 text-white placeholder:text-slate-500 focus:outline-none focus:border-blue-500 transition-colors",
+                                            fieldErrors.confirmPassword ? "border-red-500" : "border-blue-500/30"
+                                        )}
+                                        placeholder="••••••••"
+                                        value={formData.confirmPassword}
+                                        onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                                        autoComplete="new-password"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-300 transition-colors"
+                                    >
+                                        {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
@@ -254,7 +311,7 @@ export function RegisterPage() {
                 </div>
 
                 {/* Footer */}
-             
+
             </div>
         </AuthLayout>
     );

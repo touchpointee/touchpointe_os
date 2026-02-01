@@ -12,6 +12,18 @@ function getHeaders(): Record<string, string> {
     return headers;
 }
 
+export class ApiError extends Error {
+    public status: number;
+    public validationErrors?: Record<string, string[]>;
+
+    constructor(message: string, status: number, validationErrors?: Record<string, string[]>) {
+        super(message);
+        this.name = 'ApiError';
+        this.status = status;
+        this.validationErrors = validationErrors;
+    }
+}
+
 async function handleResponse(res: Response) {
     if (res.status === 401) {
         // Global 401 handler
@@ -19,24 +31,37 @@ async function handleResponse(res: Response) {
         localStorage.removeItem('user-storage');
         localStorage.removeItem('workspace-storage');
         window.location.href = '/login';
-        throw new Error('Session expired');
+        throw new ApiError('Session expired', 401);
     }
     if (!res.ok) {
         const errorText = await res.text();
         let errorMessage = errorText || res.statusText;
+        let validationErrors: Record<string, string[]> | undefined;
 
         try {
             // Try to parse error as JSON if possible to get "error" field
             const errorJson = JSON.parse(errorText);
-            // Support { Error: "msg" } (backend) or { error: "msg" } or { message: "msg" }
-            errorMessage = errorJson.Error || errorJson.error || errorJson.Message || errorJson.message || errorText;
+
+            // Handle structured validation errors (ASP.NET Core ProblemDetails)
+            if (errorJson.errors && typeof errorJson.errors === 'object') {
+                validationErrors = errorJson.errors;
+                const messages = Object.values(errorJson.errors).flat();
+                if (messages.length > 0) {
+                    errorMessage = messages.join('\n');
+                }
+            }
+
+            // Fallback to standard error fields if no validation errors found
+            if (!errorMessage || errorMessage === errorText || errorMessage === res.statusText) {
+                errorMessage = errorJson.Error || errorJson.error || errorJson.Message || errorJson.message || errorJson.title || errorText;
+            }
         } catch {
             // Keep errorMessage as raw text if JSON parsing fails
         }
 
         // Trigger Global Error Toast
-        toast.error('Action Failed', errorMessage);
-        throw new Error(errorMessage);
+        toast.error('Action Failed', errorMessage as string);
+        throw new ApiError(errorMessage as string, res.status, validationErrors);
     }
 
     // Check for empty content
