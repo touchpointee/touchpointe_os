@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Touchpointe.Application.Auth.Commands.Login;
 using Touchpointe.Application.Auth.Commands.Register;
+using Touchpointe.Application.Auth.Commands.GoogleLogin;
 using Touchpointe.Application.Common.Authentication;
 using Touchpointe.Application.Common.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -64,6 +65,27 @@ namespace Touchpointe.API.Controllers
             catch (Exception ex)
             {
                  return BadRequest(new { error = ex.Message });
+            }
+        }
+
+        [HttpPost("google")]
+        public async Task<ActionResult<AuthenticationResult>> GoogleLogin([FromBody] GoogleLoginCommand request)
+        {
+            try
+            {
+                var result = await _authenticationService.GoogleLogin(request);
+                SetTokenCookie(result.Token);
+                return Ok(new
+                {
+                    result.Id,
+                    result.FullName,
+                    result.Email,
+                    result.LastActiveWorkspaceId
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
             }
         }
 

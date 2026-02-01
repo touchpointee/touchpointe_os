@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useGoogleLogin } from '@react-oauth/google';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from '@/contexts/ToastContext';
 import { useUserStore } from '@/stores/userStore';
@@ -22,6 +23,48 @@ export function LoginPage() {
         rememberMe: false
     });
 
+    const handleGoogleSuccess = async (tokenResponse: any) => {
+        try {
+            setIsLoading(true);
+            const response = await apiPost<{ token: string; lastActiveWorkspaceId?: string }>('/auth/google', {
+                token: tokenResponse.access_token
+            });
+            handleLoginSuccess(response);
+        } catch (err: any) {
+            console.error(err);
+            setError(err.message || 'Google sign in failed');
+            setIsLoading(false);
+        }
+    };
+
+    const loginWithGoogle = useGoogleLogin({
+        onSuccess: handleGoogleSuccess,
+        onError: () => {
+            setError('Google sign in failed');
+            setIsLoading(false);
+        }
+    });
+
+    const handleLoginSuccess = async (response: { token: string; lastActiveWorkspaceId?: string }) => {
+        const { lastActiveWorkspaceId } = response;
+        toast.success('Welcome back', 'Successfully signed in to your account.');
+        await fetchUser();
+        const workspaces = await fetchWorkspaces();
+
+        if (lastActiveWorkspaceId) {
+            const targetWorkspace = workspaces.find(w => w.id.toLowerCase() === lastActiveWorkspaceId.toLowerCase());
+            if (targetWorkspace) {
+                setActiveWorkspace(targetWorkspace.id);
+            }
+        }
+
+        if (workspaces.length > 0) {
+            navigate('/my-tasks');
+        } else {
+            navigate('/create-workspace');
+        }
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
@@ -34,28 +77,7 @@ export function LoginPage() {
                 password: formData.password
             });
 
-            const { lastActiveWorkspaceId } = response;
-
-            // Token is now HttpOnly cookie
-            toast.success('Welcome back', 'Successfully signed in to your account.');
-
-            // Fetch Data
-            await fetchUser();
-            const workspaces = await fetchWorkspaces();
-
-            // Navigation Logic
-            if (lastActiveWorkspaceId) {
-                const targetWorkspace = workspaces.find(w => w.id.toLowerCase() === lastActiveWorkspaceId.toLowerCase());
-                if (targetWorkspace) {
-                    setActiveWorkspace(targetWorkspace.id);
-                }
-            }
-
-            if (workspaces.length > 0) {
-                navigate('/my-tasks');
-            } else {
-                navigate('/create-workspace');
-            }
+            await handleLoginSuccess(response);
         } catch (err: any) {
             setError(err.message || 'Invalid email or password');
             setIsLoading(false);
@@ -171,6 +193,7 @@ export function LoginPage() {
                         <div className="grid grid-cols-2 gap-3">
                             <button
                                 type="button"
+                                onClick={() => loginWithGoogle()}
                                 className="h-12 bg-transparent border border-slate-600 hover:border-slate-500 text-slate-300 rounded-lg transition-all flex items-center justify-center gap-2"
                             >
                                 <svg className="w-5 h-5" viewBox="0 0 24 24">
