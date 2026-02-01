@@ -259,7 +259,7 @@ export const MyTasksPage = () => {
             <div className="absolute top-[-100px] right-[-100px] w-[400px] h-[400px] bg-blue-500/10 rounded-full blur-[100px] -z-10" />
 
             <div className="flex-1 overflow-y-auto no-scrollbar">
-                <div className="p-8 max-w-[1600px] mx-auto space-y-8">
+                <div className="p-8 pl-10 md:pl-8 max-w-[1600px] mx-auto space-y-8">
 
                     {/* DASHBOARD HEADER */}
                     <div className="space-y-6">
