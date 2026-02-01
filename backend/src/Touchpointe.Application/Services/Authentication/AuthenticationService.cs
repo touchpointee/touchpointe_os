@@ -136,7 +136,7 @@ namespace Touchpointe.Application.Services.Authentication
             // Verify Google Token via HTTP to avoid package dependencies
             // This is robust and works without Google.Apis.Auth
             var client = _httpClientFactory.CreateClient();
-            var response = await client.GetAsync($"https://oauth2.googleapis.com/tokeninfo?id_token={command.Token}");
+            var response = await client.GetAsync($"https://www.googleapis.com/oauth2/v3/userinfo?access_token={command.Token}");
             
             if (!response.IsSuccessStatusCode)
             {

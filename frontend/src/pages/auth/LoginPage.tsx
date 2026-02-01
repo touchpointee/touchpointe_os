@@ -6,7 +6,7 @@ import { useUserStore } from '@/stores/userStore';
 import { useWorkspaces } from '@/stores/workspaceStore';
 import { apiPost } from '@/lib/api';
 import { AuthLayout } from '@/components/layout/AuthLayout';
-import { Loader2, Eye, EyeOff, Sparkles } from 'lucide-react';
+import { Loader2, Eye, EyeOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export function LoginPage() {
@@ -87,14 +87,13 @@ export function LoginPage() {
     return (
         <AuthLayout>
             <div className="w-full max-w-md mx-auto">
-                {/* Logo */}
-                <div className="flex items-center justify-center gap-2 mb-8">
-                    <Sparkles className="w-6 h-6 text-blue-400" />
-                    <span className="text-xl font-bold text-white">Touchpointe</span>
-                </div>
+                <Link to="/" className="flex items-center gap-3 mb-8 group transition-transform hover:scale-105">
+                    <img src="/logo.jpeg" alt="Touchpointe Logo" className="w-10 h-10 rounded-lg shadow-lg object-cover" />
+                    <span className="text-2xl font-bold text-white tracking-tight">Touchpointe OS</span>
+                </Link>
 
                 {/* Login Card */}
-                <div className="bg-[#1a1a1a] border border-slate-700/50 rounded-2xl p-8 shadow-xl">
+                <div className="bg-[#0a0a0a] border border-white/5 rounded-2xl p-8 shadow-2xl backdrop-blur-sm">
                     {/* Header */}
                     <div className="text-center mb-8">
                         <h2 className="text-3xl font-bold text-white mb-2">Welcome back</h2>
@@ -112,8 +111,8 @@ export function LoginPage() {
                                 type="email"
                                 required
                                 className={cn(
-                                    "w-full h-12 rounded-lg border-2 bg-transparent px-4 text-white placeholder:text-slate-500 focus:outline-none focus:border-blue-500 transition-colors",
-                                    error ? "border-red-500" : "border-blue-500/30"
+                                    "w-full h-12 rounded-lg border bg-[#050505] px-4 text-white placeholder:text-slate-500 focus:outline-none focus:border-blue-500/50 transition-all",
+                                    error ? "border-red-500/50" : "border-white/10"
                                 )}
                                 placeholder=""
                                 value={formData.email}
@@ -132,8 +131,8 @@ export function LoginPage() {
                                     type={showPassword ? "text" : "password"}
                                     required
                                     className={cn(
-                                        "w-full h-12 rounded-lg border-2 bg-transparent px-4 pr-12 text-white placeholder:text-slate-500 focus:outline-none focus:border-blue-500 transition-colors",
-                                        error ? "border-red-500" : "border-blue-500/30"
+                                        "w-full h-12 rounded-lg border bg-[#050505] px-4 pr-12 text-white placeholder:text-slate-500 focus:outline-none focus:border-blue-500/50 transition-all",
+                                        error ? "border-red-500/50" : "border-white/10"
                                     )}
                                     placeholder=""
                                     value={formData.password}
@@ -190,32 +189,19 @@ export function LoginPage() {
                         </button>
 
                         {/* OAuth Buttons */}
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-3">
                             <button
                                 type="button"
                                 onClick={() => loginWithGoogle()}
-                                className="h-12 bg-transparent border border-slate-600 hover:border-slate-500 text-slate-300 rounded-lg transition-all flex items-center justify-center gap-2"
+                                className="w-full h-12 bg-transparent border border-white/10 hover:border-white/20 hover:bg-white/5 text-slate-300 rounded-lg transition-all flex items-center justify-center gap-3 group"
                             >
-                                <svg className="w-5 h-5" viewBox="0 0 24 24">
+                                <svg className="w-5 h-5 transition-transform group-hover:scale-110" viewBox="0 0 24 24">
                                     <path fill="#EA4335" d="M5.266 9.765A7.077 7.077 0 0 1 12 4.909c1.69 0 3.218.6 4.418 1.582L19.91 3C17.782 1.145 15.055 0 12 0 7.27 0 3.198 2.698 1.24 6.65l4.026 3.115Z" />
                                     <path fill="#34A853" d="M16.04 18.013c-1.09.703-2.474 1.078-4.04 1.078a7.077 7.077 0 0 1-6.723-4.823l-4.04 3.067A11.965 11.965 0 0 0 12 24c2.933 0 5.735-1.043 7.834-3l-3.793-2.987Z" />
                                     <path fill="#4A90E2" d="M19.834 21c2.195-2.048 3.62-5.096 3.62-9 0-.71-.109-1.473-.272-2.182H12v4.637h6.436c-.317 1.559-1.17 2.766-2.395 3.558L19.834 21Z" />
-                                    <path fill="#FBBC05" d="M5.277 14.268A7.12 7.12 0 0 1 4.909 12c0-.782.125-1.533.357-2.235L1.24 6.65A11.934 11.934 0 0 0 0 12c0 1.92.445 3.73 1.237 5.335l4.04-3.067Z" />
+                                    <path fill="#FBBC05" d="M5.277 14.268A7.12 7.12 0 0 1 4.909 12c0-.782.125-1.533.357-2.235L1.24 6.65A11.934 11.934 0 0 0 12 24c0 1.92.445 3.73 1.237 5.335l4.04-3.067Z" />
                                 </svg>
-                                <span className="text-sm font-medium">Sign in with Google</span>
-                            </button>
-                            <button
-                                type="button"
-                                className="h-12 bg-transparent border border-slate-600 hover:border-slate-500 text-slate-300 rounded-lg transition-all flex items-center justify-center gap-2"
-                            >
-                                <svg className="w-5 h-5" viewBox="0 0 23 23">
-                                    <path fill="#f3f3f3" d="M0 0h23v23H0z" />
-                                    <path fill="#f35325" d="M1 1h10v10H1z" />
-                                    <path fill="#81bc06" d="M12 1h10v10H12z" />
-                                    <path fill="#05a6f0" d="M1 12h10v10H1z" />
-                                    <path fill="#ffba08" d="M12 12h10v10H12z" />
-                                </svg>
-                                <span className="text-sm font-medium">Sign in with Microsoft</span>
+                                <span className="text-sm font-medium">Continue with Google</span>
                             </button>
                         </div>
 

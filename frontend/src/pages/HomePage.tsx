@@ -159,9 +159,7 @@ export function HomePage() {
                 <header id="header" className="sticky top-0 z-50 w-full backdrop-blur-xl bg-background-dark/80 border-b border-white/5 transition-all duration-300">
                     <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
                         <div className="flex items-center gap-3 scroll-reveal-left revealed">
-                            <div className="size-8 flex items-center justify-center bg-gradient-to-br from-blue-400 to-blue-700 rounded-lg shadow-[0_0_15px_rgba(59,130,246,0.4)] animate-glow">
-                                <span className="material-symbols-outlined text-white text-[20px]">hub</span>
-                            </div>
+                            <img src="/logo.jpeg" alt="Touchpointe Logo" className="size-10 rounded-lg shadow-[0_0_15px_rgba(59,130,246,0.3)] object-cover" />
                             <span className="text-xl font-bold tracking-tight text-white">Touchpointe OS</span>
                         </div>
                         {/* <nav className="hidden md:flex items-center gap-8 scroll-reveal revealed">
@@ -681,10 +679,8 @@ export function HomePage() {
                     <div className="max-w-7xl mx-auto px-6">
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
                             <div className="col-span-2 md:col-span-1">
-                                <div className="flex items-center gap-2 mb-4 hover:scale-105 transition-transform">
-                                    <div className="size-6 bg-blue-500 rounded flex items-center justify-center animate-glow">
-                                        <span className="material-symbols-outlined text-white text-[16px]">hub</span>
-                                    </div>
+                                <div className="flex items-center gap-3 mb-4 hover:scale-105 transition-transform">
+                                    <img src="/logo.jpeg" alt="Touchpointe Logo" className="size-8 rounded shadow-[0_0_10px_rgba(59,130,246,0.3)] object-cover" />
                                     <span className="text-lg font-bold text-white">Touchpointe OS</span>
                                 </div>
                             </div>
