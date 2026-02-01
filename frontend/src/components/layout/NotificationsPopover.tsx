@@ -1,4 +1,5 @@
 import { forwardRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { X } from 'lucide-react';
 import { useNotificationStore } from '@/stores/notificationStore';
 import { cn } from '@/lib/utils';
@@ -10,9 +11,43 @@ interface NotificationsPopoverProps {
 }
 
 export const NotificationsPopover = forwardRef<HTMLDivElement, NotificationsPopoverProps>(({ isOpen, onClose }, ref) => {
+    const navigate = useNavigate();
     const { notifications, markAsRead } = useNotificationStore();
 
     if (!isOpen) return null;
+
+    const handleNotificationClick = (n: typeof notifications[0]) => {
+        // Mark as read if not already
+        if (!n.isRead) {
+            markAsRead(n.id);
+        }
+
+        // Parse the data field if it exists
+        let notificationData: any = null;
+        if (n.data) {
+            try {
+                notificationData = JSON.parse(n.data);
+            } catch {
+                // If not JSON, treat as simple string
+                notificationData = n.data;
+            }
+        }
+
+        // Navigate based on notification type
+        // Type 1 = Chat Mention, Type 2 = Task Comment, Type 3 = Task Assignment
+        if (n.type === 1 && notificationData?.channelId) {
+            // Chat mention - navigate to chat channel
+            onClose();
+            navigate(`/chat/${notificationData.channelId}`);
+        } else if ((n.type === 2 || n.type === 3) && notificationData?.taskId) {
+            // Task-related notification - navigate to my tasks
+            onClose();
+            navigate(`/my-tasks?taskId=${notificationData.taskId}`);
+        } else {
+            // Default - just close the popover
+            onClose();
+        }
+    };
 
     return (
         <div
@@ -39,7 +74,7 @@ export const NotificationsPopover = forwardRef<HTMLDivElement, NotificationsPopo
                                     "p-4 hover:bg-accent/50 transition-colors cursor-pointer relative group",
                                     !n.isRead && "bg-accent/10"
                                 )}
-                                onClick={() => !n.isRead && markAsRead(n.id)}
+                                onClick={() => handleNotificationClick(n)}
                             >
                                 <h4 className={cn("text-sm font-medium", !n.isRead && "text-primary")}>{n.title}</h4>
                                 <p className="text-xs text-muted-foreground mt-1">{n.message}</p>
@@ -59,3 +94,4 @@ export const NotificationsPopover = forwardRef<HTMLDivElement, NotificationsPopo
 });
 
 NotificationsPopover.displayName = 'NotificationsPopover';
+
