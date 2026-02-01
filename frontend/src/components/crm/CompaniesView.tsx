@@ -65,7 +65,7 @@ export function CompaniesView() {
                 company={selectedCompany}
             />
 
-            <div className="flex-1 border rounded-md overflow-hidden flex flex-col">
+            <div className="flex-1 border rounded-md overflow-visible flex flex-col">
                 {/* Header - Hidden on Mobile */}
                 <div className="hidden md:grid grid-cols-[1.5fr_1.5fr_1fr_1fr_50px] bg-muted/50 text-left text-sm font-medium text-muted-foreground border-b shrink-0">
                     <div className="p-3">Name</div>
@@ -76,7 +76,7 @@ export function CompaniesView() {
                 </div>
 
                 {/* Body */}
-                <div className="flex-1 overflow-y-auto divide-y divide-border">
+                <div className="flex-1 overflow-y-auto overflow-x-visible divide-y divide-border">
                     {isLoading ? (
                         <div className="p-4 text-center text-sm">Loading...</div>
                     ) : companies.length === 0 ? (
@@ -123,7 +123,7 @@ export function CompaniesView() {
                                     </button>
 
                                     {menuOpenId === company.id && (
-                                        <div className="absolute right-0 bottom-full mb-1 w-32 bg-background border border-border rounded-lg shadow-xl z-50 py-1">
+                                        <div className="absolute right-0 top-full mt-1 w-32 bg-background border border-border rounded-lg shadow-xl z-50 py-1">
                                             <button
                                                 onClick={(e) => { e.stopPropagation(); handleEdit(company); }}
                                                 className="flex items-center gap-2 w-full px-3 py-2 hover:bg-muted transition-colors text-sm"
