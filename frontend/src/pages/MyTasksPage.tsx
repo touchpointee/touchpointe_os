@@ -358,7 +358,7 @@ export const MyTasksPage = () => {
                 </div>
 
                 {/* MAIN CONTENT AREA */}
-                <div className="space-y-4">
+                <div className="px-6 md:px-8 lg:px-10 pb-8 max-w-[1600px] mx-auto space-y-4">
                     <div className="flex items-center justify-between">
                         <h2 className="text-lg font-semibold tracking-tight">
                             {isMentionsView ? 'Recent Mentions' : 'Your Tasks'}
