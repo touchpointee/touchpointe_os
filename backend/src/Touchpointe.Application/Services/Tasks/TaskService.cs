@@ -413,10 +413,13 @@ namespace Touchpointe.Application.Services.Tasks
             // STRICT PERMISSION CHECK REMOVED: Workspace membership is the only requirement.
 
             // Validate Assignee
-             var isMember = await _context.WorkspaceMembers
-                .AnyAsync(wm => wm.WorkspaceId == workspaceId && wm.UserId == request.AssigneeId, cancellationToken);
-            
-            if (!isMember) throw new Exception("Assignee is not a member of this workspace.");
+            if (request.AssigneeId.HasValue)
+            {
+                var isMember = await _context.WorkspaceMembers
+                    .AnyAsync(wm => wm.WorkspaceId == workspaceId && wm.UserId == request.AssigneeId.Value, cancellationToken);
+                
+                if (!isMember) throw new Exception("Assignee is not a member of this workspace.");
+            }
 
             var maxOrder = await _context.Subtasks
                 .Where(s => s.TaskId == taskId)
