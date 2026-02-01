@@ -35,6 +35,7 @@ function getUserColor(name?: string | null) {
 
 // Helper function to detect if message contains only a single emoji
 function isSingleEmoji(text: string): boolean {
+    if (!text) return false;
     const trimmed = text.trim();
     // Regex to match a single emoji (including compound emojis with ZWJ, skin tones, etc.)
     const emojiRegex = /^(\p{Emoji_Presentation}|\p{Emoji}\uFE0F)(\u200D(\p{Emoji_Presentation}|\p{Emoji}\uFE0F))*$/u;

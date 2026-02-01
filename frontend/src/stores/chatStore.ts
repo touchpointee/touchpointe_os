@@ -286,7 +286,7 @@ export const useChatStore = create<ChatState>()((set, get) => ({
             senderId: m.senderId || m.SenderId,
             senderName: m.senderName || m.SenderName,
             senderAvatarUrl: m.senderAvatarUrl || m.SenderAvatarUrl,
-            content: m.content || m.Content,
+            content: m.content || m.Content || "",
             createdAt: m.createdAt || m.CreatedAt,
             isOptimistic: m.isOptimistic,
             replyToMessageId: m.replyToMessageId || m.ReplyToMessageId,

@@ -7,13 +7,14 @@ interface MentionRendererProps {
 }
 
 export function MentionRenderer({ content, className }: MentionRendererProps) {
+    if (!content) return null;
     const { members } = useChatStore();
     // Regex to match <@userId|userName> or <@userId>
     const mentionRegex = /<@([a-zA-Z0-9-]+)(?:\|([^>]+))?>/g;
 
     // Jumbomoji Logic
     let emojiClass = 'inline-block w-5 h-5 align-text-bottom mx-0.5'; // Default
-    const hasMentions = /<@([a-zA-Z0-9-]+)\|([^>]+)/.test(content);
+    const hasMentions = /<@([a-zA-Z0-9-]+)/.test(content);
 
     // Fallback for twemoji.parse being on .default in some environments
     const parseEmoji = (text: string, options?: any) => {
