@@ -152,7 +152,7 @@ export default function PublicFormPage() {
                                     <textarea
                                         required={field.required}
                                         placeholder={field.placeholder}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 text-gray-900 bg-white placeholder:text-gray-400"
                                         rows={3}
                                         style={{ borderRadius: `${parseInt(borderRadius) || 4}px` }}
                                         onChange={(e) => handleInputChange(field.name, e.target.value)}
@@ -160,12 +160,12 @@ export default function PublicFormPage() {
                                 ) : field.type === 'select' ? (
                                     <select
                                         required={field.required}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 text-gray-900 bg-white"
                                         style={{ borderRadius: `${parseInt(borderRadius) || 4}px` }}
                                         onChange={(e) => handleInputChange(field.name, e.target.value)}
                                         defaultValue=""
                                     >
-                                        <option value="" disabled>Select an option</option>
+                                        <option value="" disabled className="text-gray-400">Select an option</option>
                                         {field.options?.map((opt) => (
                                             <option key={opt} value={opt}>{opt}</option>
                                         ))}
@@ -175,7 +175,7 @@ export default function PublicFormPage() {
                                         type={field.type}
                                         required={field.required}
                                         placeholder={field.placeholder}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 transition-shadow"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 transition-shadow text-gray-900 bg-white placeholder:text-gray-400"
                                         style={{ borderRadius: `${parseInt(borderRadius) || 4}px` }}
                                         onChange={(e) => handleInputChange(field.name, e.target.value)}
                                     />
