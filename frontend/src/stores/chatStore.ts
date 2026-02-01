@@ -133,7 +133,11 @@ export const useChatStore = create<ChatState>()((set, get) => ({
         set({ isLoading: true, error: null });
         try {
             const channels = await apiGet<Channel[]>(`/workspaces/${workspaceId}/chat/channels`);
-            set({ channels, isLoading: false });
+            const normalized = channels.map(c => ({
+                ...c,
+                avatarUrl: c.avatarUrl || (c as any).AvatarUrl
+            }));
+            set({ channels: normalized, isLoading: false });
         } catch (e: any) {
             set({ isLoading: false, error: e.message });
         }
@@ -142,7 +146,14 @@ export const useChatStore = create<ChatState>()((set, get) => ({
     fetchDmGroups: async (workspaceId) => {
         try {
             const dmGroups = await apiGet<DmGroup[]>(`/workspaces/${workspaceId}/chat/dm`);
-            set({ dmGroups });
+            const normalized = dmGroups.map(g => ({
+                ...g,
+                members: g.members.map(m => ({
+                    ...m,
+                    avatarUrl: m.avatarUrl || (m as any).AvatarUrl
+                }))
+            }));
+            set({ dmGroups: normalized });
         } catch (e: any) {
             console.error("Failed to fetch DMs", e);
         }
@@ -150,8 +161,12 @@ export const useChatStore = create<ChatState>()((set, get) => ({
 
     fetchWorkspaceMembers: async (workspaceId) => {
         try {
-            const members = await apiGet<UserDto[]>(`/workspaces/${workspaceId}/chat/users`);
-            set({ members });
+            const members = await apiGet<any[]>(`/workspaces/${workspaceId}/chat/users`);
+            const normalized = members.map(m => ({
+                ...m,
+                avatarUrl: m.avatarUrl || m.AvatarUrl
+            }));
+            set({ members: normalized });
         } catch (e: any) {
             console.error("Failed to fetch members", e);
         }
@@ -343,18 +358,35 @@ export const useChatStore = create<ChatState>()((set, get) => ({
         });
     },
 
-    createChannel: async (workspaceId, name, isPrivate, description) => {
-        // ...
+    createChannel: async (workspaceId, name, isPrivate, description, avatarFile?: File | null) => {
+        set({ isLoading: true, error: null });
         try {
-            const newChannel = await apiPost<Channel>(`/workspaces/${workspaceId}/chat/channels`, { name, isPrivate, description });
+            let avatarUrl: string | undefined;
+            if (avatarFile) {
+                const attachment = await get().uploadAttachment(workspaceId, avatarFile);
+                if (attachment) avatarUrl = attachment.fileUrl;
+            }
+
+            const newChannelRes = await apiPost<Channel>(`/workspaces/${workspaceId}/chat/channels`, {
+                name,
+                isPrivate,
+                description,
+                avatarUrl
+            });
+            const newChannel = {
+                ...newChannelRes,
+                avatarUrl: newChannelRes.avatarUrl || (newChannelRes as any).AvatarUrl
+            };
+
             set(state => ({
                 channels: [...state.channels, newChannel],
                 activeChannelId: newChannel.id,
-                activeDmGroupId: null
+                activeDmGroupId: null,
+                isLoading: false
             }));
             return true;
         } catch (e: any) {
-            set({ error: e.message });
+            set({ isLoading: false, error: e.message });
             return false;
         }
     },
@@ -377,7 +409,11 @@ export const useChatStore = create<ChatState>()((set, get) => ({
             const payload: any = { name, isPrivate, description };
             if (avatarUrl) payload.avatarUrl = avatarUrl;
 
-            const updated = await apiPut<Channel>(`/workspaces/${workspaceId}/chat/channels/${channelId}`, payload);
+            const updatedRes = await apiPut<Channel>(`/workspaces/${workspaceId}/chat/channels/${channelId}`, payload);
+            const updated = {
+                ...updatedRes,
+                avatarUrl: updatedRes.avatarUrl || (updatedRes as any).AvatarUrl
+            };
             set(state => ({
                 channels: state.channels.map(c => c.id === channelId ? updated : c)
             }));

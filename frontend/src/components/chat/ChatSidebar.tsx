@@ -46,6 +46,11 @@ export function ChatSidebar() {
     const [editDescription, setEditDescription] = useState('');
     const [editIsPrivate, setEditIsPrivate] = useState(false);
     const [editAvatarPreview, setEditAvatarPreview] = useState<string | null>(null);
+    const [editAvatarFile, setEditAvatarFile] = useState<File | null>(null);
+
+    // Create Form State
+    const [newChannelAvatarFile, setNewChannelAvatarFile] = useState<File | null>(null);
+    const [newChannelAvatarPreview, setNewChannelAvatarPreview] = useState<string | null>(null);
 
     // Actions
     const { updateChannel, deleteChannel } = useChatStore();
@@ -56,14 +61,16 @@ export function ChatSidebar() {
         setEditDescription(channel.description || '');
         setEditIsPrivate(channel.isPrivate);
         setEditAvatarPreview(channel.avatarUrl || null);
+        setEditAvatarFile(null);
     };
 
     const handleUpdateChannel = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!activeWorkspace || !editingChannel || !editName.trim()) return;
 
-        await updateChannel(activeWorkspace.id, editingChannel.id, editName, editIsPrivate, editDescription);
+        await updateChannel(activeWorkspace.id, editingChannel.id, editName, editIsPrivate, editDescription, editAvatarFile);
         setEditingChannel(null);
+        setEditAvatarFile(null);
     };
 
     const handleDeleteChannel = async (id: string) => {
@@ -149,10 +156,12 @@ export function ChatSidebar() {
         e.preventDefault();
         if (!activeWorkspace || !newChannelName.trim()) return;
 
-        await createChannel(activeWorkspace.id, newChannelName, isPrivate, '');
+        await createChannel(activeWorkspace.id, newChannelName, isPrivate, '', newChannelAvatarFile);
         setIsCreatingChannel(false);
         setNewChannelName('');
         setIsPrivate(false);
+        setNewChannelAvatarFile(null);
+        setNewChannelAvatarPreview(null);
     };
 
     const handleCreateDm = async (e: React.FormEvent) => {
@@ -292,7 +301,30 @@ export function ChatSidebar() {
                 {isCreatingChannel && (
                     <div className="p-3 bg-[var(--chat-bg-secondary)] border-b border-[var(--chat-border)] animate-in slide-in-from-top-2">
                         <form onSubmit={handleCreateChannel}>
-                            <h3 className="text-xs font-bold uppercase text-[var(--chat-accent)] mb-2 tracking-wider">New Channel</h3>
+                            <div className="flex justify-center mb-3">
+                                <div className="relative group cursor-pointer" onClick={() => document.getElementById('newChannelAvatarInput')?.click()}>
+                                    <div className="w-12 h-12 rounded-full bg-[var(--chat-bg-tertiary)] flex items-center justify-center border border-[var(--chat-border)] overflow-hidden">
+                                        {newChannelAvatarPreview ? (
+                                            <img src={newChannelAvatarPreview} alt="Preview" className="w-full h-full object-cover" />
+                                        ) : (
+                                            <Camera className="w-5 h-5 text-[var(--chat-text-secondary)]" />
+                                        )}
+                                    </div>
+                                    <input
+                                        type="file"
+                                        id="newChannelAvatarInput"
+                                        className="hidden"
+                                        accept="image/*"
+                                        onChange={(e) => {
+                                            const file = e.target.files?.[0];
+                                            if (file) {
+                                                setNewChannelAvatarFile(file);
+                                                setNewChannelAvatarPreview(URL.createObjectURL(file));
+                                            }
+                                        }}
+                                    />
+                                </div>
+                            </div>
                             <input
                                 className="w-full text-sm bg-[var(--chat-bg-primary)] text-[var(--chat-text-primary)] border border-[var(--chat-border)] mb-2 p-2 rounded focus:outline-none focus:border-[var(--chat-accent)]"
                                 placeholder="Channel name"
@@ -449,6 +481,7 @@ export function ChatSidebar() {
                                             onChange={(e) => {
                                                 const file = e.target.files?.[0];
                                                 if (file) {
+                                                    setEditAvatarFile(file);
                                                     setEditAvatarPreview(URL.createObjectURL(file));
                                                 }
                                             }}
