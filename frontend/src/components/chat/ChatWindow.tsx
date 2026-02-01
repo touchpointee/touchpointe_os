@@ -577,9 +577,17 @@ export function ChatWindow() {
             <div className="h-14 border-b border-border flex items-center px-4 bg-card/10">
                 <div className="flex items-center gap-3 font-semibold">
                     {activeChannel ? (
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-sm font-bold shadow-sm">
-                            {activeChannel.name.replace(/^#/, '').charAt(0).toUpperCase()}
-                        </div>
+                        activeChannel.avatarUrl ? (
+                            <img
+                                src={activeChannel.avatarUrl}
+                                alt={activeChannel.name}
+                                className="w-8 h-8 rounded-full object-cover border border-border"
+                            />
+                        ) : (
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-sm font-bold shadow-sm">
+                                {activeChannel.name.replace(/^#/, '').charAt(0).toUpperCase()}
+                            </div>
+                        )
                     ) : activeDm ? (
                         (() => {
                             const otherMembers = activeDm.members.filter(m => (m.id || (m as any).Id) !== currentUser?.id);
