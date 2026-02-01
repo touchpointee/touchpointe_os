@@ -136,8 +136,8 @@ export default function PublicFormPage() {
         <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
             <div className="max-w-md mx-auto bg-white rounded-lg shadow-sm overflow-hidden">
                 <div className="px-6 py-8">
-                    <h1 className="text-2xl font-bold text-center mb-2">{form.name}</h1>
-                    <p className="text-center text-muted-foreground text-sm mb-8">
+                    <h1 className="text-2xl font-bold text-center mb-2 text-gray-900">{form.name}</h1>
+                    <p className="text-center text-gray-500 text-sm mb-8">
                         Please fill out the form below
                     </p>
 
