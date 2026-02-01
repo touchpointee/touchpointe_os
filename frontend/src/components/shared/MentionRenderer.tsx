@@ -1,4 +1,5 @@
 import twemoji from 'twemoji';
+import { useChatStore } from '@/stores/chatStore';
 
 interface MentionRendererProps {
     content: string;
@@ -6,8 +7,9 @@ interface MentionRendererProps {
 }
 
 export function MentionRenderer({ content, className }: MentionRendererProps) {
-    // Regex to match <@userId|userName>
-    const mentionRegex = /<@([a-zA-Z0-9-]+)\|([^>]+)>/g;
+    const { members } = useChatStore();
+    // Regex to match <@userId|userName> or <@userId>
+    const mentionRegex = /<@([a-zA-Z0-9-]+)(?:\|([^>]+))?>/g;
 
     // Jumbomoji Logic
     let emojiClass = 'inline-block w-5 h-5 align-text-bottom mx-0.5'; // Default
@@ -55,7 +57,8 @@ export function MentionRenderer({ content, className }: MentionRendererProps) {
         }
 
         // Add mention component
-        const userName = match[2];
+        const userId = match[1];
+        const userName = match[2] || members.find(m => m.id === userId)?.fullName || userId;
         parts.push(
             <span key={match.index} className="inline-flex items-center mx-0.5">
                 <span className="font-bold hover:underline cursor-pointer bg-background/20 px-1 rounded text-sm select-none break-all text-[#01d127c8]">

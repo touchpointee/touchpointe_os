@@ -22,7 +22,7 @@ export function ChatSidebar() {
     const { onlineUserIds } = useTeamStore();
     const { activeWorkspace } = useWorkspaces();
     const { user: currentUser } = useUserStore();
-    const { joinChannel, isConnected } = useRealtimeStore();
+    const { joinChannel, isConnected, typingUsers } = useRealtimeStore();
 
     const [searchQuery, setSearchQuery] = useState('');
 
@@ -219,6 +219,15 @@ export function ChatSidebar() {
         });
     }, [dmGroups, searchQuery, currentUser, unreadCounts, messages]);
 
+    const resolveMentions = (content: string) => {
+        if (!content) return content;
+        // Match <@userId|userName> or <@userId>
+        return content.replace(/<@([a-zA-Z0-9-]+)(?:\|([^>]+))?>/g, (_match, userId, userName) => {
+            if (userName) return `@${userName}`;
+            const member = members.find(m => m.id === userId);
+            return member ? `@${member.fullName}` : '@Unknown';
+        });
+    };
 
     return (
         <div className="w-80 border-r border-[var(--chat-border)] h-full flex flex-col bg-[var(--chat-bg-primary)] text-[var(--chat-text-primary)] shrink-0 transform transition-all duration-300 overflow-x-hidden">
@@ -431,8 +440,14 @@ export function ChatSidebar() {
                                                         </span>
                                                     )}
                                                     <p className="text-[14px] text-[var(--chat-text-secondary)] truncate leading-5 text-left w-full">
-                                                        {lastMessage ? (
-                                                            lastMessage.content ? lastMessage.content : <span className="italic flex items-center gap-1 text-[13px]"><Search className="w-3 h-3" /> Attachment</span>
+                                                        {typingUsers[channel.id]?.length > 0 ? (
+                                                            <span className="text-[var(--chat-accent)] font-medium animate-pulse">
+                                                                {typingUsers[channel.id].length === 1
+                                                                    ? `${typingUsers[channel.id][0].userName} is typing...`
+                                                                    : 'Several people are typing...'}
+                                                            </span>
+                                                        ) : lastMessage ? (
+                                                            lastMessage.content ? resolveMentions(lastMessage.content) : <span className="italic flex items-center gap-1 text-[13px]"><Search className="w-3 h-3" /> Attachment</span>
                                                         ) : (
                                                             <span className="opacity-70 text-[13px]">No messages yet</span>
                                                         )}
@@ -634,8 +649,12 @@ export function ChatSidebar() {
                                                     </span>
                                                 )}
                                                 <p className="text-[14px] text-[var(--chat-text-secondary)] truncate leading-5">
-                                                    {lastMessage ? (
-                                                        lastMessage.content ? lastMessage.content : <span className="italic flex items-center gap-1 text-[13px]"><Search className="w-3 h-3" /> Attachment</span>
+                                                    {typingUsers[group.id]?.length > 0 ? (
+                                                        <span className="text-[var(--chat-accent)] font-medium animate-pulse">
+                                                            Typing...
+                                                        </span>
+                                                    ) : lastMessage ? (
+                                                        lastMessage.content ? resolveMentions(lastMessage.content) : <span className="italic flex items-center gap-1 text-[13px]"><Search className="w-3 h-3" /> Attachment</span>
                                                     ) : (
                                                         <span className="opacity-70 text-[13px]">No messages yet</span>
                                                     )}

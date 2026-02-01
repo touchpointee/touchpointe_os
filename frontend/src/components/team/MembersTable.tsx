@@ -50,8 +50,6 @@ export function MembersTable({ members, currentUserId, currentUserRole, onUpdate
                                                 </span>
                                             )}
                                         </div>
-                                        {/* Online Status Dot - Mocked for visual */}
-                                        <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-background rounded-full"></div>
                                     </div>
                                     <div>
                                         <div className="font-semibold text-foreground flex items-center gap-2">
