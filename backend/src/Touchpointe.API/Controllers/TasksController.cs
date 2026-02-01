@@ -36,7 +36,7 @@ namespace Touchpointe.API.Controllers
         }
 
         [HttpGet("list/{listId}")]
-        public async Task<ActionResult<PaginatedList<TaskDto>>> GetTasks(Guid workspaceId, Guid listId, [FromQuery] int page = 1, [FromQuery] int pageSize = 50, CancellationToken cancellationToken = default)
+        public async Task<ActionResult<PaginatedList<TaskDto>>> GetTasks(Guid workspaceId, Guid listId, [FromQuery] int page = 1, [FromQuery] int pageSize = int.MaxValue, CancellationToken cancellationToken = default)
         {
             var tasks = await _taskService.GetTasksByListAsync(workspaceId, listId, page, pageSize, cancellationToken);
             return Ok(tasks);
@@ -104,7 +104,7 @@ namespace Touchpointe.API.Controllers
         }
 
         [HttpGet("my-tasks")]
-        public async Task<ActionResult<PaginatedList<MyTaskDto>>> GetMyTasks(Guid workspaceId, [FromQuery] int page = 1, [FromQuery] int pageSize = 50, CancellationToken cancellationToken = default)
+        public async Task<ActionResult<PaginatedList<MyTaskDto>>> GetMyTasks(Guid workspaceId, [FromQuery] int page = 1, [FromQuery] int pageSize = int.MaxValue, CancellationToken cancellationToken = default)
         {
             var userId = GetUserId();
             var tasks = await _taskService.GetMyTasksAsync(userId, workspaceId, page, pageSize, cancellationToken);

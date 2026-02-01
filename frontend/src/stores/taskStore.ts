@@ -77,7 +77,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
     fetchTasks: async (workspaceId, listId, page = 1) => {
         set({ loading: page === 1, error: null }); // Only full loading on first page
         try {
-            const response = await apiGet<any>(`/workspaces/${workspaceId}/tasks/list/${listId}?page=${page}&pageSize=50`);
+            const response = await apiGet<any>(`/workspaces/${workspaceId}/tasks/list/${listId}?page=${page}&pageSize=100000`);
             // Handle PaginatedList response: { items, pageNumber, totalPages, totalCount, hasNextPage }
 
             set(state => {
