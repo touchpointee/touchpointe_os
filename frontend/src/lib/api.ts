@@ -28,8 +28,8 @@ async function handleResponse(res: Response) {
         try {
             // Try to parse error as JSON if possible to get "error" field
             const errorJson = JSON.parse(errorText);
-            // Support { error: "msg" } or { message: "msg" } or { title: "...", message: "..." }
-            errorMessage = errorJson.message || errorJson.error || errorText;
+            // Support { Error: "msg" } (backend) or { error: "msg" } or { message: "msg" }
+            errorMessage = errorJson.Error || errorJson.error || errorJson.Message || errorJson.message || errorText;
         } catch {
             // Keep errorMessage as raw text if JSON parsing fails
         }
