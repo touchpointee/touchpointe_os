@@ -99,8 +99,8 @@ interface ChatState {
     handleReactionAdded: (reaction: any) => void;
     handleReactionRemoved: (messageId: string, userId: string, emoji: string) => void;
 
-    createChannel: (workspaceId: string, name: string, isPrivate: boolean, description: string) => Promise<boolean>;
-    updateChannel: (workspaceId: string, channelId: string, name: string, isPrivate: boolean, description: string) => Promise<boolean>;
+    createChannel: (workspaceId: string, name: string, isPrivate: boolean, description: string, avatarFile?: File | null) => Promise<boolean>;
+    updateChannel: (workspaceId: string, channelId: string, name: string, isPrivate: boolean, description: string, avatarFile?: File | null) => Promise<boolean>;
     deleteChannel: (workspaceId: string, channelId: string) => Promise<boolean>;
     createDmGroup: (workspaceId: string, userIds: string[]) => Promise<string | null>;
     reset: () => void;

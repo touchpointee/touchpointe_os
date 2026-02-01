@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
-import { X, Copy, MoreHorizontal, Calendar as CalendarIcon, Flag, ChevronDown, Check, Trash2, Plus, Paperclip, User } from 'lucide-react';
+import { X, Calendar as CalendarIcon, Flag, ChevronDown, Check, Trash2, Plus, Paperclip, User } from 'lucide-react';
 import { useTaskStore } from '@/stores/taskStore';
 import { useTagStore } from '@/stores/tagStore';
 import { useWorkspaces, isValidUUID } from '@/stores/workspaceStore';
