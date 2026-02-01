@@ -106,11 +106,16 @@ namespace Touchpointe.Application.Services.AI
             var baseRules = $@"
 TODAY: {DateTime.UtcNow:MMMM dd, yyyy}
 
-RULES:
-• Be helpful, honest, and concise
+STYLE RULES:
+• Be extremely concise and point-by-point
+• Use small, easy-to-read bullet points
+• Use relevant emojis to make it friendly and visual
+• Avoid long paragraphs or wordy explanations
+• Sound human and helpful, but stay brief
+
+GENERAL RULES:
 • Never show JSON, code, or technical details
 • If you can't do something, say so clearly
-• Sound human, not robotic
 ";
             return agentType switch
             {
@@ -137,12 +142,12 @@ RULES:
 YOUR TASKS:
 {taskSummary}
 
-AVAILABLE LISTS: {(hasLists ? listNames : "⚠️ None - user needs to create one")}
+AVAILABLE LISTS: {(hasLists ? listNames : "⚠️ None")}
 
 CAPABILITIES:
-✅ Create tasks in existing lists
-✅ View and describe tasks
-❌ Cannot create spaces/lists - tell user to do it from sidebar
+✅ Create tasks (point-by-point)
+✅ List and describe work
+❌ Cannot create spaces/lists
 
 {(hasLists ? $@"TO CREATE A TASK - FOLLOW THESE STEPS EXACTLY:
 
@@ -155,8 +160,7 @@ STEP 4 (After user says yes/confirm): NOW include the action tag:
 [ACTION:CREATE_TASK|title=TaskName|listName=ListName]
 
 CRITICAL: The [ACTION:...] tag must ONLY appear AFTER user confirms.
-Never execute and ask permission in the same message." : "⚠️ No lists exist. Tell user to create a space and list from the sidebar first.")}
-";
+Never execute and ask permission in the same message." : "⚠️ No lists exist. Tell user to create a space and list from the sidebar first.")}";
         }
 
         private string BuildChannelAgentPrompt(Dictionary<string, object> data)
