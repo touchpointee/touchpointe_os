@@ -40,6 +40,20 @@ export function AddLeadModal({ isOpen, onClose, defaultStatus = 'NEW' }: AddLead
         setIsLoading(true);
         setError(null);
 
+        if (formData.phone) {
+            const phoneRegex = /^[\d\s\+\-\(\)]+$/;
+            if (!phoneRegex.test(formData.phone)) {
+                setError('Invalid phone number format');
+                setIsLoading(false);
+                return;
+            }
+            if (formData.phone.replace(/[^\d]/g, '').length < 7) {
+                setError('Phone number is too short');
+                setIsLoading(false);
+                return;
+            }
+        }
+
         try {
             await createLead(activeWorkspace.id, formData);
             setFormData({
@@ -116,9 +130,13 @@ export function AddLeadModal({ isOpen, onClose, defaultStatus = 'NEW' }: AddLead
                     <div>
                         <label className="block text-sm font-medium mb-1">Phone</label>
                         <input
-                            type="tel"
                             value={formData.phone}
-                            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                            onChange={(e) => {
+                                const value = e.target.value;
+                                const filteredValue = value.replace(/[^\d\s\+\-\(\)]/g, '');
+                                setFormData({ ...formData, phone: filteredValue });
+                            }}
+                            placeholder="+1 (555) 000-0000"
                             className="w-full px-3 py-2 border border-border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary"
                         />
                     </div>
