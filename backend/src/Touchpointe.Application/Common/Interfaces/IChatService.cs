@@ -14,6 +14,7 @@ namespace Touchpointe.Application.Common.Interfaces
         Task DeleteChannelAsync(Guid workspaceId, Guid channelId, Guid userId);
         Task<bool> JoinChannelAsync(Guid workspaceId, Guid channelId, Guid userId);
         Task<bool> LeaveChannelAsync(Guid workspaceId, Guid channelId, Guid userId);
+        Task<ChannelDto> UploadChannelAvatarAsync(Guid workspaceId, Guid channelId, Guid userId, System.IO.Stream fileStream, string fileName, string contentType);
 
         // Messages
         Task<List<MessageDto>> GetChannelMessagesAsync(Guid workspaceId, Guid channelId, Guid userId, int take = 50);

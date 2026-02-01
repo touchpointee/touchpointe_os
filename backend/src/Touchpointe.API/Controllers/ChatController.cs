@@ -59,6 +59,28 @@ namespace Touchpointe.API.Controllers
             }
         }
 
+        [HttpPost("channels/{channelId}/avatar")]
+        public async Task<ActionResult<ChannelDto>> UploadChannelAvatar(Guid workspaceId, Guid channelId, Microsoft.AspNetCore.Http.IFormFile file)
+        {
+            try
+            {
+                if (file == null || file.Length == 0) return BadRequest(new { error = "No file uploaded" });
+
+                using var stream = file.OpenReadStream();
+                var result = await _chatService.UploadChannelAvatarAsync(workspaceId, channelId, GetUserId(), stream, file.FileName, file.ContentType);
+                return Ok(result);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Channel Avatar Upload Error] {ex}");
+                return BadRequest(new { error = $"Upload failed: {ex.Message}" });
+            }
+        }
+
         [HttpDelete("channels/{channelId}")]
         public async Task<ActionResult> DeleteChannel(Guid workspaceId, Guid channelId)
         {

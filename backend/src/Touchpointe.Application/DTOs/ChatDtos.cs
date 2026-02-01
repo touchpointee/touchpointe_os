@@ -3,10 +3,10 @@ using System.Collections.Generic;
 
 namespace Touchpointe.Application.DTOs
 {
-    public record ChannelDto(Guid Id, Guid WorkspaceId, string Name, bool IsPrivate, string Description, int MemberCount);
+    public record ChannelDto(Guid Id, Guid WorkspaceId, string Name, bool IsPrivate, string Description, string? AvatarUrl, int MemberCount);
     
     public record CreateChannelRequest(string Name, bool IsPrivate, string Description);
-    public record UpdateChannelRequest(string Name, string Description, bool IsPrivate);
+    public record UpdateChannelRequest(string Name, string Description, bool IsPrivate, string? AvatarUrl = null);
 
     public record MessageDto(
         Guid Id, 

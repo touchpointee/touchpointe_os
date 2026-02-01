@@ -39,6 +39,7 @@ namespace Touchpointe.Application.Services.Chat
                     c.Name,
                     c.IsPrivate,
                     c.Description,
+                    c.AvatarUrl,
                     c.Members.Count
                 ))
                 .ToListAsync();
@@ -73,7 +74,7 @@ namespace Touchpointe.Application.Services.Chat
 
             await _context.SaveChangesAsync(CancellationToken.None);
 
-            return new ChannelDto(channel.Id, channel.WorkspaceId, channel.Name, channel.IsPrivate, channel.Description, 1);
+            return new ChannelDto(channel.Id, channel.WorkspaceId, channel.Name, channel.IsPrivate, channel.Description, channel.AvatarUrl, 1);
         }
 
         public async Task<ChannelDto> UpdateChannelAsync(Guid workspaceId, Guid channelId, Guid userId, UpdateChannelRequest request)
@@ -95,10 +96,14 @@ namespace Touchpointe.Application.Services.Chat
             channel.Name = request.Name;
             channel.Description = request.Description;
             channel.IsPrivate = request.IsPrivate;
+            if (request.AvatarUrl != null)
+            {
+                channel.AvatarUrl = request.AvatarUrl;
+            }
 
             await _context.SaveChangesAsync(CancellationToken.None);
 
-            return new ChannelDto(channel.Id, channel.WorkspaceId, channel.Name, channel.IsPrivate, channel.Description, channel.Members.Count);
+            return new ChannelDto(channel.Id, channel.WorkspaceId, channel.Name, channel.IsPrivate, channel.Description, channel.AvatarUrl, channel.Members.Count);
         }
 
         public async Task DeleteChannelAsync(Guid workspaceId, Guid channelId, Guid userId)
@@ -161,6 +166,29 @@ namespace Touchpointe.Application.Services.Chat
             _context.ChannelMembers.Remove(member);
             await _context.SaveChangesAsync(CancellationToken.None);
             return true;
+        }
+
+        public async Task<ChannelDto> UploadChannelAvatarAsync(Guid workspaceId, Guid channelId, Guid userId, System.IO.Stream fileStream, string fileName, string contentType)
+        {
+            var channel = await _context.Channels
+                .Include(c => c.Members)
+                .FirstOrDefaultAsync(c => c.Id == channelId && c.WorkspaceId == workspaceId);
+
+            if (channel == null) throw new Exception("Channel not found");
+
+            // Verify membership
+            var isMember = await _context.ChannelMembers.AnyAsync(m => m.ChannelId == channelId && m.UserId == userId);
+            if (!isMember) throw new UnauthorizedAccessException("You must be a member of the channel to update its avatar.");
+
+            // Upload to MinIO
+            var objectName = $"channels/{workspaceId}/{channelId}/avatar_{Guid.NewGuid()}_{fileName}";
+            var url = await _minioService.UploadFileAsync(fileStream, contentType, "touchpointe-core", objectName);
+
+            // Update channel
+            channel.AvatarUrl = url;
+            await _context.SaveChangesAsync(CancellationToken.None);
+
+            return new ChannelDto(channel.Id, channel.WorkspaceId, channel.Name, channel.IsPrivate, channel.Description, channel.AvatarUrl, channel.Members.Count);
         }
 
         // --- Messages ---
