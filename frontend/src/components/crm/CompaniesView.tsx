@@ -123,7 +123,7 @@ export function CompaniesView() {
                                     </button>
 
                                     {menuOpenId === company.id && (
-                                        <div className="absolute right-0 top-full mt-1 w-32 bg-background border border-border rounded-lg shadow-xl z-50 py-1">
+                                        <div className="absolute right-0 bottom-full mb-1 w-32 bg-background border border-border rounded-lg shadow-xl z-50 py-1">
                                             <button
                                                 onClick={(e) => { e.stopPropagation(); handleEdit(company); }}
                                                 className="flex items-center gap-2 w-full px-3 py-2 hover:bg-muted transition-colors text-sm"

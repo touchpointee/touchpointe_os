@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { X, Sparkles, MessageCircle, Users, ListTodo, ClipboardList, Zap, FileText, ChevronDown, ChevronUp, Calendar } from 'lucide-react';
+import { X, MessageCircle, Users, ListTodo, ClipboardList, Zap, FileText, ChevronDown, ChevronUp, Calendar } from 'lucide-react';
 import { useUserStore } from '@/stores/userStore';
 
 const RELEASE_VERSION = '1.0.0';
@@ -157,8 +157,8 @@ function ReleaseNotesModal({ onClose }: ReleaseNotesModalProps) {
                         <X className="w-5 h-5 text-muted-foreground" />
                     </button>
                     <div className="flex items-center gap-3 mb-3">
-                        <div className="p-2.5 rounded-xl bg-primary/20">
-                            <Sparkles className="w-7 h-7 text-primary" />
+                        <div className="p-1 rounded-xl bg-primary/20 overflow-hidden">
+                            <img src="/logo.jpeg" alt="TouchPointe" className="w-10 h-10 object-contain rounded-lg" />
                         </div>
                         <div>
                             <h2 className="text-xl font-bold">TouchPointe v{RELEASE_VERSION}</h2>
