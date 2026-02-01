@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { toast } from '@/contexts/ToastContext';
-import { Plus, Filter } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { TaskViewSwitcher, type TaskViewType } from '@/components/tasks/TaskViewSwitcher';
 import { TaskListView } from '@/components/tasks/TaskListView';

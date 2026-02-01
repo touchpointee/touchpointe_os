@@ -1,6 +1,6 @@
 // ... imports
 import { useEffect, useState, useMemo } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import { useWorkspaces } from '@/stores/workspaceStore';
 import { useTaskStore } from '@/stores/taskStore';
 import { useMentionStore } from '@/stores/mentionStore';
@@ -27,6 +27,7 @@ export const MyTasksPage = () => {
     const [shareTask, setShareTask] = useState<MyTask | null>(null);
 
     const navigate = useNavigate();
+    const location = useLocation();
 
     // Read state from URL
     const filter = (searchParams.get('filter') || 'ALL') as 'ALL' | 'TODAY' | 'OVERDUE' | 'MENTIONS' | 'COMMENT_MENTIONS' | 'CHAT_MENTIONS';
@@ -55,11 +56,23 @@ export const MyTasksPage = () => {
             fetchMentions(activeWorkspace.id);
         }
 
-        // Fetch tasks
+        // Fetch tasks on mount and when navigating to this page
         loadTasks();
 
+        // Refetch tasks when the window regains focus (e.g., user returns from another tab/page)
+        const handleFocus = () => {
+            if (activeWorkspace?.id) {
+                loadTasks();
+            }
+        };
+
+        window.addEventListener('focus', handleFocus);
+
+        return () => {
+            window.removeEventListener('focus', handleFocus);
+        };
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [activeWorkspace?.id]);
+    }, [activeWorkspace?.id, location.key]);
 
     const loadTasks = async () => {
         try {

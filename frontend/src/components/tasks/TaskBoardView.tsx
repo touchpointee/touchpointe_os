@@ -209,7 +209,7 @@ export function TaskBoardView() {
             }
         } catch (error) {
             console.error("Failed to create task", error);
-            toast.error('Error', 'Failed to create task.');
+            // Error toast is already shown by the global API handler
         }
     };
 
