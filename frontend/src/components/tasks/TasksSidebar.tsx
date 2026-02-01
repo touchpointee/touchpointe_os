@@ -559,7 +559,7 @@ function ListItem({ list, workspaceId, canManageStructure }: { list: ListDto, wo
 
                     {/* Context Menu - Restricted to Admins/Owners */}
                     {canManageStructure && (
-                        <div className="opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.preventDefault()}>
+                        <div className="opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
                             <ContextMenu
                                 onRename={() => setIsEditing(true)}
                                 onDelete={handleDelete}

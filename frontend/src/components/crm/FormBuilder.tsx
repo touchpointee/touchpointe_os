@@ -405,15 +405,71 @@ function FieldEditor({ field, onUpdate, onRemove, isCore }: FieldEditorProps) {
                         </div>
                     </div>
 
-                    <div>
-                        <label className="block text-xs font-medium mb-1">Placeholder</label>
-                        <input
-                            type="text"
-                            value={field.placeholder || ''}
-                            onChange={(e) => onUpdate({ placeholder: e.target.value })}
-                            className="w-full px-2 py-1.5 text-sm border border-border rounded bg-background"
-                        />
-                    </div>
+                    {/* Placeholder and Dropdown Options - Two Column Layout for Select */}
+                    {field.type === 'select' ? (
+                        <div className="grid grid-cols-2 gap-3">
+                            <div>
+                                <label className="block text-xs font-medium mb-1">Placeholder</label>
+                                <input
+                                    type="text"
+                                    value={field.placeholder || ''}
+                                    onChange={(e) => onUpdate({ placeholder: e.target.value })}
+                                    className="w-full px-2 py-1.5 text-sm border border-border rounded bg-background"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium mb-1">Dropdown Options</label>
+                                <div className="space-y-2">
+                                    {(field.options || []).map((option, index) => (
+                                        <div key={index} className="flex gap-2">
+                                            <input
+                                                type="text"
+                                                value={option}
+                                                onChange={(e) => {
+                                                    const newOptions = [...(field.options || [])];
+                                                    newOptions[index] = e.target.value;
+                                                    onUpdate({ options: newOptions });
+                                                }}
+                                                placeholder={`Option ${index + 1}`}
+                                                className="flex-1 px-2 py-1.5 text-sm border border-border rounded bg-background"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    const newOptions = (field.options || []).filter((_, i) => i !== index);
+                                                    onUpdate({ options: newOptions });
+                                                }}
+                                                className="p-1.5 text-muted-foreground hover:text-destructive"
+                                                title="Remove option"
+                                            >
+                                                <Trash2 size={14} />
+                                            </button>
+                                        </div>
+                                    ))}
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const newOptions = [...(field.options || []), ''];
+                                            onUpdate({ options: newOptions });
+                                        }}
+                                        className="w-full px-2 py-1.5 text-xs border border-dashed border-border rounded hover:bg-muted transition-colors"
+                                    >
+                                        + Add Option
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    ) : (
+                        <div>
+                            <label className="block text-xs font-medium mb-1">Placeholder</label>
+                            <input
+                                type="text"
+                                value={field.placeholder || ''}
+                                onChange={(e) => onUpdate({ placeholder: e.target.value })}
+                                className="w-full px-2 py-1.5 text-sm border border-border rounded bg-background"
+                            />
+                        </div>
+                    )}
 
                     {!isCore && (
                         <label className="flex items-center gap-2 text-sm">
