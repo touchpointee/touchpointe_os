@@ -252,7 +252,7 @@ export const MyTasksPage = () => {
 
 
     return (
-        <div className="h-full flex flex-col bg-background relative overflow-hidden">
+        <div className="h-full flex flex-col bg-background relative overflow-hidden pl-4">
 
             {/* Background Gradients */}
             <div className="absolute top-0 left-0 w-full h-[300px] bg-gradient-to-b from-primary/5 to-transparent -z-10" />
