@@ -223,7 +223,7 @@ export function TaskDetailPanel() {
                     </div>
                     <div className="flex items-center gap-1">
                         <button className="p-2 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground transition-colors"><Paperclip className="w-4 h-4" /></button>
-                        <button className="p-2 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground transition-colors"><Copy className="w-4 h-4" /></button>
+                        {/* <button className="p-2 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground transition-colors"><Copy className="w-4 h-4" /></button> */}
                         {canEdit && (
                             <button
                                 onClick={() => {
@@ -236,7 +236,7 @@ export function TaskDetailPanel() {
                                 <Trash2 className="w-4 h-4" />
                             </button>
                         )}
-                        <button className="p-2 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground transition-colors"><MoreHorizontal className="w-4 h-4" /></button>
+                        {/* <button className="p-2 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground transition-colors"><MoreHorizontal className="w-4 h-4" /></button> */}
                         <button onClick={closeTaskDetail} className="p-2 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground transition-colors ml-1"><X className="w-5 h-5" /></button>
                     </div>
                 </div>
