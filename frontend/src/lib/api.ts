@@ -24,21 +24,19 @@ async function handleResponse(res: Response) {
     if (!res.ok) {
         const errorText = await res.text();
         let errorMessage = errorText || res.statusText;
+
         try {
             // Try to parse error as JSON if possible to get "error" field
             const errorJson = JSON.parse(errorText);
             // Support { error: "msg" } or { message: "msg" } or { title: "...", message: "..." }
             errorMessage = errorJson.message || errorJson.error || errorText;
-
-            // Trigger Global Error Toast
-            toast.error('Action Failed', errorMessage);
-
-            throw new Error(errorMessage);
         } catch {
-            // Trigger Global Error Toast for non-JSON errors
-            toast.error('System Error', errorMessage);
-            throw new Error(errorMessage);
+            // Keep errorMessage as raw text if JSON parsing fails
         }
+
+        // Trigger Global Error Toast
+        toast.error('Action Failed', errorMessage);
+        throw new Error(errorMessage);
     }
 
     // Check for empty content

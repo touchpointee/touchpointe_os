@@ -60,7 +60,7 @@ namespace Touchpointe.Application.Services.Tasks
             
             if (duplicateExists)
             {
-                throw new Exception($"A task with the name '{request.Title}' already exists in this list.");
+                throw new ArgumentException($"A task with the name '{request.Title}' already exists in this list.");
             }
 
             // 2. Get Max Order
