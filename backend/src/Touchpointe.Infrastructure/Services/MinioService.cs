@@ -40,8 +40,11 @@ namespace Touchpointe.Infrastructure.Services
                     {
                         var mbArgs = new MakeBucketArgs().WithBucket(bucketName);
                         await _minioClient.MakeBucketAsync(mbArgs);
+                    }
 
-                        // Set public policy
+                    // Ensure public policy is set (even if bucket exists)
+                    try 
+                    {
                         var policy = $@"{{
                             ""Version"": ""2012-10-17"",
                             ""Statement"": [
@@ -58,6 +61,10 @@ namespace Touchpointe.Infrastructure.Services
                             .WithBucket(bucketName)
                             .WithPolicy(policy);
                         await _minioClient.SetPolicyAsync(setPolicyArgs);
+                    }
+                    catch (Exception)
+                    {
+                         // Suppress policy errors (e.g. if already set or no permission)
                     }
                 }
                 catch (Exception)
