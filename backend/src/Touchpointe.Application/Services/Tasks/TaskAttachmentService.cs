@@ -60,6 +60,7 @@ namespace Touchpointe.Application.Services.Tasks
             foreach (var att in attachments)
             {
                 var url = await _minioService.GetFileUrlAsync("touchpointe-attachments", att.StoredFileName);
+                if (url == null) url = ""; // Handle missing file gracefully
                 dtos.Add(MapToDto(att, url));
             }
             return dtos;

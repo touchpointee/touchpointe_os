@@ -10,10 +10,12 @@ namespace Touchpointe.Infrastructure.Services
         private readonly IMinioClient _minioClient;
         private readonly bool _useSSL;
         private readonly string _endpoint;
+        private readonly string _publicEndpoint;
 
         public MinioService(IConfiguration configuration)
         {
             _endpoint = configuration["MinioSettings:Endpoint"];
+            _publicEndpoint = configuration["MinioSettings:PublicEndpoint"];
             var accessKey = configuration["MinioSettings:AccessKey"];
             var secretKey = configuration["MinioSettings:SecretKey"];
             _useSSL = configuration.GetValue<bool>("MinioSettings:UseSSL", true);
@@ -61,8 +63,6 @@ namespace Touchpointe.Infrastructure.Services
                 catch (Exception)
                 {
                     // Ignore errors during bucket check/creation (e.g. Access Denied)
-                    // and try to upload anyway. The bucket might already exist 
-                    // and we just don't have permission to check/create.
                 }
 
                 // Upload file
@@ -76,20 +76,9 @@ namespace Touchpointe.Infrastructure.Services
                 await _minioClient.PutObjectAsync(putObjectArgs);
 
                 // Return URL (presigned or public)
-                // For now, let's assume we want a public URL if the bucket policy allows, 
-                // or we can generate a presigned URL. 
-                // Given the requirement to "store dp" and typically DPs are public or long-lived, 
-                // let's try to construct a direct URL if possible, or a presigned one.
-                // However, constructing a direct URL depends on the setup. 
-                // Let's use PresignedGetObjectAsync for now to be safe, or just return the object path 
-                // and let the frontend/controller decide how to serve it? 
-                // Usually Profile Pictures are public. 
-                
-                // Let's return a constructed URL based on endpoint.
                 var protocol = _useSSL ? "https" : "http";
-                // Note: This assumes the endpoint is reachable from the browser (public).
-                // If running in docker, might be different.
-                 return $"{protocol}://{_endpoint}/{bucketName}/{objectName}";
+                var host = !string.IsNullOrEmpty(_publicEndpoint) ? _publicEndpoint : _endpoint;
+                return $"{protocol}://{host}/{bucketName}/{objectName}";
             }
             catch (Exception ex)
             {
@@ -100,13 +89,26 @@ namespace Touchpointe.Infrastructure.Services
         public async Task<string> GetFileUrlAsync(string bucketName, string objectName)
         {
              // Check if object exists
-             var statObjectArgs = new StatObjectArgs()
-                 .WithBucket(bucketName)
-                 .WithObject(objectName);
-             await _minioClient.StatObjectAsync(statObjectArgs);
+             try
+             {
+                 var statObjectArgs = new StatObjectArgs()
+                     .WithBucket(bucketName)
+                     .WithObject(objectName);
+                 await _minioClient.StatObjectAsync(statObjectArgs);
 
-             var protocol = _useSSL ? "https" : "http";
-             return $"{protocol}://{_endpoint}/{bucketName}/{objectName}";
+                 var protocol = _useSSL ? "https" : "http";
+                 var host = !string.IsNullOrEmpty(_publicEndpoint) ? _publicEndpoint : _endpoint;
+                 return $"{protocol}://{host}/{bucketName}/{objectName}";
+             }
+             catch (Minio.Exceptions.ObjectNotFoundException)
+             {
+                 return null; // Or a default "file not found" URL
+             }
+             catch (Exception)
+             {
+                 // Log other errors if possible
+                 return null;
+             }
         }
 
     }
