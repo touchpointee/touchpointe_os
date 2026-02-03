@@ -268,6 +268,34 @@ export function TaskDetailPanel() {
                             </div>
                         </div>
 
+                        {/* Sub Description */}
+                        <div className="space-y-2">
+                            <label className="text-foreground text-[16px] font-regular block pb-0.5">Sub Description</label>
+                            <div className="relative group">
+                                <textarea
+                                    key={`subdesc-${task.id}`}
+                                    defaultValue={task.subDescription || ''}
+                                    onBlur={(e) => {
+                                        if (!canEdit) return;
+                                        if (e.target.value !== task.subDescription) {
+                                            updateTask(workspaceId, task.id, task.listId, { subDescription: e.target.value });
+                                        }
+                                    }}
+                                    rows={1}
+                                    disabled={!canEdit}
+                                    className={cn(
+                                        "w-full text-md md:text-[14px] text-foreground bg-background border border-input rounded-[6px] px-4 py-2.5 outline-none focus:!border-indigo-500 resize-none overflow-hidden transition-all placeholder:text-muted-foreground placeholder:text-[14px]",
+                                        !canEdit && "opacity-60 cursor-not-allowed"
+                                    )}
+                                    placeholder="Add a brief summary or secondary title"
+                                    onInput={(e) => {
+                                        e.currentTarget.style.height = 'auto';
+                                        e.currentTarget.style.height = e.currentTarget.scrollHeight + 'px';
+                                    }}
+                                />
+                            </div>
+                        </div>
+
                         {/* Description Field (formerly Project) */}
                         <div className="space-y-2">
                             <label className="text-foreground text-[16px] font-regular block pb-0.5">Description</label>
