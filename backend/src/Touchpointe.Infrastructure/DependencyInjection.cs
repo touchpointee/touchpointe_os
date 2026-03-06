@@ -64,6 +64,7 @@ namespace Touchpointe.Infrastructure
 
             services.AddScoped<IWorkspaceContext, Touchpointe.Infrastructure.Services.WorkspaceContext>();
             services.AddScoped<IAuditService, Touchpointe.Infrastructure.Services.AuditService>();
+            services.AddScoped<IEmailService, Touchpointe.Infrastructure.Services.SmtpEmailService>();
             services.AddSingleton<IMinioService, Touchpointe.Infrastructure.Services.MinioService>();
             
             services.AddHttpClient();

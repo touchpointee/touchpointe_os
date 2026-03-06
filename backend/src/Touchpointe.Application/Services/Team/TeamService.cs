@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Touchpointe.Application.Common.Interfaces;
 using Touchpointe.Application.DTOs;
 using Touchpointe.Domain.Entities;
@@ -13,10 +14,14 @@ namespace Touchpointe.Application.Services.Team
     public class TeamService : ITeamService
     {
         private readonly IApplicationDbContext _context;
+        private readonly IEmailService _emailService;
+        private readonly IConfiguration _configuration;
 
-        public TeamService(IApplicationDbContext context)
+        public TeamService(IApplicationDbContext context, IEmailService emailService, IConfiguration configuration)
         {
             _context = context;
+            _emailService = emailService;
+            _configuration = configuration;
         }
 
         public async Task<List<TeamMemberDto>> GetMembersAsync(Guid workspaceId, Guid currentUserId)
@@ -91,7 +96,7 @@ namespace Touchpointe.Application.Services.Team
                 WorkspaceId = workspaceId,
                 InviterId = currentUserId,
                 InviteeId = inviteeId,
-                Email = request.EmailOrUsername.Contains("@") ? request.EmailOrUsername : null,
+                Email = invitee?.Email,
                 Username = !request.EmailOrUsername.Contains("@") ? request.EmailOrUsername : null,
                 Role = request.Role,
                 Status = InvitationStatus.PENDING,
@@ -102,7 +107,22 @@ namespace Touchpointe.Application.Services.Team
             _context.WorkspaceInvitations.Add(invitation);
             await _context.SaveChangesAsync(CancellationToken.None);
 
-            // Notification (Logic placeholder as per Non-Goals, no UI push, just DB record if Notifications existed)
+            var workspace = await _context.Workspaces
+                .AsNoTracking()
+                .FirstOrDefaultAsync(w => w.Id == workspaceId);
+
+            var inviterUser = await _context.Users
+                .AsNoTracking()
+                .FirstOrDefaultAsync(u => u.Id == currentUserId);
+
+            var acceptUrl = BuildWorkspaceInviteAcceptUrl(invitation.Token);
+            await _emailService.SendWorkspaceInvitationEmailAsync(
+                invitee!.Email,
+                workspace?.Name ?? "your workspace",
+                inviterUser?.FullName ?? "A team member",
+                acceptUrl,
+                invitation.ExpiresAt,
+                CancellationToken.None);
 
             return true;
         }
@@ -302,11 +322,62 @@ namespace Touchpointe.Application.Services.Team
             invitation.Status = InvitationStatus.PENDING; // Reactivate if expired
             
             await _context.SaveChangesAsync(CancellationToken.None);
-            
-            // Notification (Mock)
-            // Send email logic would go here.
+
+            var targetEmail = invitation.Email;
+            if (string.IsNullOrWhiteSpace(targetEmail) && invitation.InviteeId.HasValue)
+            {
+                targetEmail = await _context.Users
+                    .Where(u => u.Id == invitation.InviteeId.Value)
+                    .Select(u => u.Email)
+                    .FirstOrDefaultAsync();
+            }
+
+            if (string.IsNullOrWhiteSpace(targetEmail))
+            {
+                throw new Exception("Cannot resend invitation because target email is missing.");
+            }
+
+            var workspace = await _context.Workspaces
+                .AsNoTracking()
+                .FirstOrDefaultAsync(w => w.Id == workspaceId);
+
+            var inviterUser = await _context.Users
+                .AsNoTracking()
+                .FirstOrDefaultAsync(u => u.Id == currentUserId);
+
+            var acceptUrl = BuildWorkspaceInviteAcceptUrl(invitation.Token);
+            await _emailService.SendWorkspaceInvitationEmailAsync(
+                targetEmail,
+                workspace?.Name ?? "your workspace",
+                inviterUser?.FullName ?? "A team member",
+                acceptUrl,
+                invitation.ExpiresAt,
+                CancellationToken.None);
             
             return true;
+        }
+
+        private string BuildWorkspaceInviteAcceptUrl(string token)
+        {
+            var configuredFrontendUrl =
+                Environment.GetEnvironmentVariable("FRONTEND_URL")
+                ?? Environment.GetEnvironmentVariable("APP_FRONTEND_URL")
+                ?? _configuration["FrontendUrl"];
+
+            var frontendUrlCandidate = configuredFrontendUrl;
+            if (!string.IsNullOrWhiteSpace(frontendUrlCandidate))
+            {
+                frontendUrlCandidate = frontendUrlCandidate
+                    .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                    .Select(x => x.Trim())
+                    .FirstOrDefault();
+            }
+
+            var frontendUrl = string.IsNullOrWhiteSpace(frontendUrlCandidate)
+                ? "http://localhost:5173"
+                : frontendUrlCandidate.TrimEnd('/');
+
+            return $"{frontendUrl}/invite/accept?token={Uri.EscapeDataString(token)}";
         }
     }
 }
