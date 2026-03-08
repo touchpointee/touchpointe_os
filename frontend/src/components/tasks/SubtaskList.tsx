@@ -72,7 +72,7 @@ export function SubtaskList({ subtasks, onAdd, onToggle, canAdd, currentUserId, 
                                 title={!canToggle ? "You cannot complete this subtask" : "Toggle completion"}
                             >
                                 {subtask.isCompleted
-                                    ? <CheckCircle2 className="w-4 h-4 text-green-600" />
+                                    ? <CheckCircle2 className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
                                     : <Circle className="w-4 h-4" />
                                 }
                             </button>

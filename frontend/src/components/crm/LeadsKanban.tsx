@@ -27,9 +27,9 @@ import { AddLeadModal } from './AddLeadModal';
 import { LeadDetailPanel } from './LeadDetailPanel';
 
 const LEAD_STATUSES = [
-    { id: 'NEW', label: 'New', color: 'bg-blue-500' },
-    { id: 'CONTACTED', label: 'Contacted', color: 'bg-indigo-500' },
-    { id: 'QUALIFIED', label: 'Qualified', color: 'bg-green-500' },
+    { id: 'NEW', label: 'New', color: 'bg-zinc-500' },
+    { id: 'CONTACTED', label: 'Contacted', color: 'bg-zinc-600' },
+    { id: 'QUALIFIED', label: 'Qualified', color: 'bg-zinc-700 dark:bg-zinc-400' },
     { id: 'UNQUALIFIED', label: 'Unqualified', color: 'bg-gray-500' },
     { id: 'CONVERTED', label: 'Converted', color: 'bg-emerald-500' },
 ] as const;
@@ -137,9 +137,9 @@ export function LeadsKanban() {
     };
 
     const getScoreIcon = (score: number) => {
-        if (score >= 60) return <Flame size={14} className="text-orange-500" />;
-        if (score >= 30) return <Sun size={14} className="text-yellow-500" />;
-        return <Snowflake size={14} className="text-blue-400" />;
+        if (score >= 60) return <Flame size={14} className="text-zinc-500" />;
+        if (score >= 30) return <Sun size={14} className="text-zinc-400" />;
+        return <Snowflake size={14} className="text-slate-500" />;
     };
 
     const toggleSort = (column: 'score' | 'createdAt' | 'name') => {
@@ -407,9 +407,9 @@ function LeadsTable({ leads, onLeadClick, getScoreIcon, sortBy, sortOrder, onSor
                             <td className="px-4 py-3">
                                 <span className={cn(
                                     "px-2 py-1 rounded text-xs font-medium w-24 inline-flex justify-center",
-                                    lead.status === 'NEW' && "bg-blue-500/15 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-                                    lead.status === 'CONTACTED' && "bg-indigo-500/15 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400",
-                                    lead.status === 'QUALIFIED' && "bg-green-500/15 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+                                    lead.status === 'NEW' && "bg-zinc-500/15 text-zinc-700 dark:bg-zinc-600/30 dark:text-zinc-300",
+                                    lead.status === 'CONTACTED' && "bg-zinc-600/15 text-zinc-700 dark:bg-zinc-500/30 dark:text-zinc-300",
+                                    lead.status === 'QUALIFIED' && "bg-zinc-700/15 text-zinc-700 dark:bg-zinc-400/30 dark:text-zinc-300",
                                     lead.status === 'UNQUALIFIED' && "bg-gray-500/15 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400",
                                     lead.status === 'CONVERTED' && "bg-emerald-500/15 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
                                 )}>
@@ -419,11 +419,11 @@ function LeadsTable({ leads, onLeadClick, getScoreIcon, sortBy, sortOrder, onSor
                             <td className="px-4 py-3">
                                 <span className={cn(
                                     "px-2 py-0.5 rounded text-xs font-medium w-20 inline-flex justify-center",
-                                    lead.source === 'FACEBOOK' && "bg-blue-100 text-blue-700",
-                                    lead.source === 'GOOGLE' && "bg-red-100 text-red-700",
-                                    lead.source === 'FORM' && "bg-green-100 text-green-700",
+                                    lead.source === 'FACEBOOK' && "bg-zinc-100 text-zinc-700 dark:bg-zinc-700/50 dark:text-zinc-300",
+                                    lead.source === 'GOOGLE' && "bg-zinc-100 text-zinc-700 dark:bg-zinc-700/50 dark:text-zinc-300",
+                                    lead.source === 'FORM' && "bg-zinc-100 text-zinc-700 dark:bg-zinc-700/50 dark:text-zinc-300",
                                     lead.source === 'MANUAL' && "bg-gray-100 text-gray-700",
-                                    lead.source === 'REFERRAL' && "bg-purple-100 text-purple-700"
+                                    lead.source === 'REFERRAL' && "bg-zinc-100 text-zinc-700 dark:bg-zinc-700/50 dark:text-zinc-300"
                                 )}>
                                     {lead.source}
                                 </span>
@@ -493,11 +493,11 @@ function LeadCard({ lead, isOverlay, onClick, scoreIcon }: {
             <div className="flex items-center justify-between mt-2 pt-2 border-t border-border/50 text-[10px] text-muted-foreground">
                 <span className={cn(
                     "px-1.5 py-0.5 rounded text-[10px] font-medium",
-                    lead.source === 'FACEBOOK' && "bg-blue-100 text-blue-700",
-                    lead.source === 'GOOGLE' && "bg-red-100 text-red-700",
-                    lead.source === 'FORM' && "bg-green-100 text-green-700",
+                    lead.source === 'FACEBOOK' && "bg-zinc-100 text-zinc-700 dark:bg-zinc-700/50 dark:text-zinc-300",
+                    lead.source === 'GOOGLE' && "bg-zinc-100 text-zinc-700 dark:bg-zinc-700/50 dark:text-zinc-300",
+                    lead.source === 'FORM' && "bg-zinc-100 text-zinc-700 dark:bg-zinc-700/50 dark:text-zinc-300",
                     lead.source === 'MANUAL' && "bg-gray-100 text-gray-700",
-                    lead.source === 'REFERRAL' && "bg-purple-100 text-purple-700"
+                    lead.source === 'REFERRAL' && "bg-zinc-100 text-zinc-700 dark:bg-zinc-700/50 dark:text-zinc-300"
                 )}>
                     {lead.source}
                 </span>

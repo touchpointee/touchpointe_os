@@ -111,7 +111,7 @@ export function RegisterPage() {
             <div className="w-full max-w-md mx-auto">
                 {/* Logo */}
                 <div className="flex items-center justify-center gap-2 mb-8">
-                    <Sparkles className="w-6 h-6 text-blue-400" />
+                    <Sparkles className="w-6 h-6 text-foreground" />
                     <span className="text-xl font-bold text-white">Touchpointe</span>
                 </div>
 
@@ -136,8 +136,8 @@ export function RegisterPage() {
                                     type="text"
                                     required
                                     className={cn(
-                                        "w-full h-11 rounded-lg border-2 bg-transparent px-4 text-white placeholder:text-slate-500 focus:outline-none focus:border-blue-500 transition-colors",
-                                        fieldErrors.fullName ? "border-red-500" : "border-blue-500/30"
+                                        "w-full h-11 rounded-lg border-2 bg-transparent px-4 text-white placeholder:text-slate-500 focus:outline-none focus:border-ring transition-colors",
+                                        fieldErrors.fullName ? "border-destructive" : "border-ring/30"
                                     )}
                                     placeholder="John Doe"
                                     value={formData.fullName}
@@ -156,8 +156,8 @@ export function RegisterPage() {
                                     type="text"
                                     required
                                     className={cn(
-                                        "w-full h-11 rounded-lg border-2 bg-transparent px-4 text-white placeholder:text-slate-500 focus:outline-none focus:border-blue-500 transition-colors",
-                                        fieldErrors.username ? "border-red-500" : "border-blue-500/30"
+                                        "w-full h-11 rounded-lg border-2 bg-transparent px-4 text-white placeholder:text-slate-500 focus:outline-none focus:border-ring transition-colors",
+                                        fieldErrors.username ? "border-destructive" : "border-ring/30"
                                     )}
                                     placeholder="johndoe"
                                     value={formData.username}
@@ -177,8 +177,8 @@ export function RegisterPage() {
                                 type="email"
                                 required
                                 className={cn(
-                                    "w-full h-11 rounded-lg border-2 bg-transparent px-4 text-white placeholder:text-slate-500 focus:outline-none focus:border-blue-500 transition-colors",
-                                    fieldErrors.email ? "border-red-500" : "border-blue-500/30"
+                                    "w-full h-11 rounded-lg border-2 bg-transparent px-4 text-white placeholder:text-slate-500 focus:outline-none focus:border-ring transition-colors",
+                                    fieldErrors.email ? "border-destructive" : "border-ring/30"
                                 )}
                                 placeholder="name@company.com"
                                 value={formData.email}
@@ -200,8 +200,8 @@ export function RegisterPage() {
                                         type={showPassword ? "text" : "password"}
                                         required
                                         className={cn(
-                                            "w-full h-11 rounded-lg border-2 bg-transparent px-4 pr-12 text-white placeholder:text-slate-500 focus:outline-none focus:border-blue-500 transition-colors",
-                                            fieldErrors.password ? "border-red-500" : "border-blue-500/30"
+                                            "w-full h-11 rounded-lg border-2 bg-transparent px-4 pr-12 text-white placeholder:text-slate-500 focus:outline-none focus:border-ring transition-colors",
+                                            fieldErrors.password ? "border-destructive" : "border-ring/30"
                                         )}
                                         placeholder="••••••••"
                                         value={formData.password}
@@ -229,8 +229,8 @@ export function RegisterPage() {
                                         type={showConfirmPassword ? "text" : "password"}
                                         required
                                         className={cn(
-                                            "w-full h-11 rounded-lg border-2 bg-transparent px-4 pr-12 text-white placeholder:text-slate-500 focus:outline-none focus:border-blue-500 transition-colors",
-                                            fieldErrors.confirmPassword ? "border-red-500" : "border-blue-500/30"
+                                            "w-full h-11 rounded-lg border-2 bg-transparent px-4 pr-12 text-white placeholder:text-slate-500 focus:outline-none focus:border-ring transition-colors",
+                                            fieldErrors.confirmPassword ? "border-destructive" : "border-ring/30"
                                         )}
                                         placeholder="••••••••"
                                         value={formData.confirmPassword}
@@ -250,7 +250,7 @@ export function RegisterPage() {
 
                         {/* Error Message */}
                         {error && (
-                            <div className="text-sm text-red-400 bg-red-500/10 border border-red-500/20 p-3 rounded-lg">
+                            <div className="text-sm text-destructive bg-destructive/10 border border-destructive/20 p-3 rounded-lg">
                                 {error}
                             </div>
                         )}
@@ -259,7 +259,7 @@ export function RegisterPage() {
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className="w-full h-12 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/50 disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+                            className="w-full h-12 bg-primary hover:opacity-90 text-primary-foreground font-semibold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed mt-2"
                         >
                             {isLoading ? (
                                 <>
@@ -303,7 +303,7 @@ export function RegisterPage() {
                         {/* Sign In Link */}
                         <div className="text-center text-sm pt-2">
                             <span className="text-slate-400">Already have an account? </span>
-                            <Link to="/login" className="text-blue-400 hover:text-blue-300 font-medium transition-colors">
+                            <Link to="/login" className="text-foreground hover:underline font-medium transition-colors">
                                 Sign in
                             </Link>
                         </div>

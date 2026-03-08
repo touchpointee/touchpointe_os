@@ -57,7 +57,7 @@ export function AiAssistant() {
                     <div>
                         <h3 className="font-semibold text-sm">Touchpointe AI</h3>
                         <p className="text-xs text-muted-foreground flex items-center gap-1">
-                            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                            <span className="w-2 h-2 rounded-full bg-muted-foreground animate-pulse"></span>
                             Online
                         </p>
                     </div>

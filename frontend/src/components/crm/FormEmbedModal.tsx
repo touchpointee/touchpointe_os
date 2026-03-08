@@ -133,7 +133,7 @@ export function FormEmbedModal({ form, onClose }: FormEmbedModalProps) {
                                                 className={cn(
                                                     "absolute top-2 right-2 px-3 py-1.5 text-xs font-medium rounded-md flex items-center gap-1 transition-all shadow-sm z-10",
                                                     copiedType === 'embed'
-                                                        ? "bg-green-500 text-white"
+                                                        ? "bg-primary text-primary-foreground"
                                                         : "bg-background border border-border text-foreground hover:bg-muted opacity-80 group-hover:opacity-100"
                                                 )}
                                                 title="Copy to clipboard"
@@ -185,7 +185,7 @@ export function FormEmbedModal({ form, onClose }: FormEmbedModalProps) {
                                                 className={cn(
                                                     "px-4 py-2 text-sm font-medium rounded-md flex items-center gap-1 transition-colors",
                                                     copiedType === 'url'
-                                                        ? "bg-green-500 text-white"
+                                                        ? "bg-primary text-primary-foreground"
                                                         : "bg-primary text-primary-foreground hover:opacity-90"
                                                 )}
                                             >
@@ -252,8 +252,8 @@ export function FormEmbedModal({ form, onClose }: FormEmbedModalProps) {
                                     <span className={cn(
                                         "px-2 py-0.5 rounded text-xs font-medium",
                                         form.isActive
-                                            ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                                            : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                                            ? "bg-muted text-muted-foreground"
+                                            : "bg-destructive/10 text-destructive"
                                     )}>
                                         {form.isActive ? 'Active' : 'Inactive'}
                                     </span>

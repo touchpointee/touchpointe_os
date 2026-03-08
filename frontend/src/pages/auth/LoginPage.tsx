@@ -111,8 +111,8 @@ export function LoginPage() {
                                 type="email"
                                 required
                                 className={cn(
-                                    "w-full h-12 rounded-lg border bg-[#050505] px-4 text-white placeholder:text-slate-500 focus:outline-none focus:border-blue-500/50 transition-all",
-                                    error ? "border-red-500/50" : "border-white/10"
+                                    "w-full h-12 rounded-lg border bg-[#050505] px-4 text-white placeholder:text-slate-500 focus:outline-none focus:border-ring transition-all",
+                                    error ? "border-destructive/50" : "border-white/10"
                                 )}
                                 placeholder=""
                                 value={formData.email}
@@ -131,8 +131,8 @@ export function LoginPage() {
                                     type={showPassword ? "text" : "password"}
                                     required
                                     className={cn(
-                                        "w-full h-12 rounded-lg border bg-[#050505] px-4 pr-12 text-white placeholder:text-slate-500 focus:outline-none focus:border-blue-500/50 transition-all",
-                                        error ? "border-red-500/50" : "border-white/10"
+                                        "w-full h-12 rounded-lg border bg-[#050505] px-4 pr-12 text-white placeholder:text-slate-500 focus:outline-none focus:border-ring transition-all",
+                                        error ? "border-destructive/50" : "border-white/10"
                                     )}
                                     placeholder=""
                                     value={formData.password}
@@ -150,7 +150,7 @@ export function LoginPage() {
 
                         {/* Error Message */}
                         {error && (
-                            <div className="text-sm text-red-400 bg-red-500/10 border border-red-500/20 p-3 rounded-lg">
+                            <div className="text-sm text-destructive bg-destructive/10 border border-destructive/20 p-3 rounded-lg">
                                 {error}
                             </div>
                         )}
@@ -160,7 +160,7 @@ export function LoginPage() {
                             <input
                                 type="checkbox"
                                 id="remember"
-                                className="h-4 w-4 rounded border-slate-600 bg-transparent text-blue-500 focus:ring-blue-500/20 transition-all cursor-pointer accent-blue-500"
+                                className="h-4 w-4 rounded border-slate-600 bg-transparent text-primary focus:ring-ring transition-all cursor-pointer accent-primary"
                                 checked={formData.rememberMe}
                                 onChange={(e) => setFormData({ ...formData, rememberMe: e.target.checked })}
                             />
@@ -176,7 +176,7 @@ export function LoginPage() {
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className="w-full h-12 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/50 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full h-12 bg-primary hover:opacity-90 text-primary-foreground font-semibold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {isLoading ? (
                                 <>
@@ -208,7 +208,7 @@ export function LoginPage() {
                         {/* Create Account Link */}
                         <div className="text-center text-sm pt-2">
                             <span className="text-slate-400">Don't have an account? </span>
-                            <Link to="/register" className="text-blue-400 hover:text-blue-300 font-medium transition-colors">
+                            <Link to="/register" className="text-foreground hover:underline font-medium transition-colors">
                                 Create account
                             </Link>
                         </div>

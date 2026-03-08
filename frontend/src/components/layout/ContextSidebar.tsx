@@ -130,7 +130,7 @@ export function ContextSidebar({ className }: { className?: string }) {
 
     if (currentModule === 'chat') {
         return (
-            <aside className={cn(className || "hidden lg:block fixed left-[72px] top-14 bottom-0", "z-10 bg-[#101114]")}>
+            <aside className={cn(className || "hidden lg:block fixed left-[72px] top-14 bottom-0", "z-10 bg-card border-r border-border/50")}>
                 <ChatSidebar />
             </aside>
         );
@@ -170,7 +170,7 @@ export function ContextSidebar({ className }: { className?: string }) {
                     ))}
 
                     {currentModule === 'crm' && !activeWorkspace && (
-                        <div className="px-3 py-2 text-sm text-amber-600 bg-amber-50 rounded-md">
+                        <div className="px-3 py-2 text-sm text-muted-foreground bg-muted rounded-md">
                             Select a workspace to view CRM
                         </div>
                     )}
@@ -217,10 +217,9 @@ function SidebarItemComponent({ item }: { item: SidebarItem }) {
                             className={cn(
                                 "block px-3 py-1.5 text-xs rounded-md transition-colors cursor-pointer",
                                 location.pathname.includes(child.path)
-                                    ? "text-white font-medium shadow-sm"
+                                    ? "bg-primary text-primary-foreground font-medium shadow-sm"
                                     : "text-muted-foreground hover:text-foreground hover:bg-accent"
                             )}
-                            style={location.pathname.includes(child.path) ? { background: 'linear-gradient(94.03deg, #925FF8 -8.9%, #4175E4 100%)' } : undefined}
                         >
                             {child.label}
                         </a>
@@ -237,10 +236,9 @@ function SidebarItemComponent({ item }: { item: SidebarItem }) {
             className={cn(
                 'flex items-center gap-2 px-3 py-2 text-sm rounded-md transition-colors cursor-pointer',
                 isActive
-                    ? 'text-white font-medium shadow-sm'
+                    ? 'bg-primary text-primary-foreground font-medium shadow-sm'
                     : 'text-muted-foreground hover:text-foreground hover:bg-accent'
             )}
-            style={isActive ? { background: 'linear-gradient(94.03deg, #925FF8 -8.9%, #4175E4 100%)' } : undefined}
         >
             <Icon className="w-4 h-4" />
             <span>{item.label}</span>

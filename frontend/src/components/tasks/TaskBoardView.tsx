@@ -24,16 +24,19 @@ import { CreateTaskModal } from './CreateTaskModal';
 import { toast } from '@/contexts/ToastContext';
 import type { CreateTaskRequest } from '@/types/task';
 
-const PRESET_COLORS = [
-    '#6B7280', // Gray
-    '#2563EB', // Blue
-    '#3EA751', // Green
-    '#D5A300', // Yellow
-    '#DC2626', // Red
-    '#7C3AED', // Violet
-    '#DB2777', // Pink
-    '#0891B2', // Cyan
-];
+const DEFAULT_COLUMN_COLOR = '#2563eb';
+
+/** Normalize to #rrggbb for native color input; invalid values return default. */
+function toHexColor(value: string | undefined): string {
+    if (!value) return DEFAULT_COLUMN_COLOR;
+    const trimmed = value.trim();
+    if (/^#[0-9A-Fa-f]{6}$/.test(trimmed)) return trimmed.toLowerCase();
+    if (/^#[0-9A-Fa-f]{3}$/.test(trimmed)) {
+        const r = trimmed[1] + trimmed[1], g = trimmed[2] + trimmed[2], b = trimmed[3] + trimmed[3];
+        return `#${r}${g}${b}`.toLowerCase();
+    }
+    return DEFAULT_COLUMN_COLOR;
+}
 
 export function TaskBoardView() {
     const { listId } = useParams<{ listId: string }>();
@@ -124,7 +127,7 @@ export function TaskBoardView() {
         try {
             await createStatus(workspaceId, currentList.id, {
                 name: newGroupName,
-                color: '#6B7280',
+                color: '#71717a',
                 category: 'Active'
             });
             setIsAddingGroup(false);
@@ -291,7 +294,14 @@ export function TaskBoardView() {
 
                 </div>
                 <DragOverlay>
-                    {activeTask ? <TaskCard task={activeTask} isOverlay subtitle={currentList?.name} /> : null}
+                    {activeTask ? (
+                        <TaskCard
+                            task={activeTask}
+                            isOverlay
+                            subtitle={currentList?.name}
+                            statusColor={statusDefs.find(s => s.id === activeTask.customStatus)?.color}
+                        />
+                    ) : null}
                 </DragOverlay>
             </DndContext>
 
@@ -326,11 +336,17 @@ function BoardColumn({ statusDef, tasks, onTaskClick, onAddTask, onUpdateStatus,
     const [isEditingName, setIsEditingName] = useState(false);
     const [editName, setEditName] = useState(statusDef.name);
     const [showMenu, setShowMenu] = useState(false);
+    const [hexInput, setHexInput] = useState('');
 
     // Sync state when prop changes
     useEffect(() => {
         setEditName(statusDef.name);
     }, [statusDef.name]);
+
+    // When color menu opens, sync hex input from current color
+    useEffect(() => {
+        if (showMenu) setHexInput(toHexColor(statusDef.color).replace(/^#/, ''));
+    }, [showMenu, statusDef.color]);
 
     const handleSaveName = () => {
         if (editName.trim() && editName !== statusDef.name) {
@@ -348,8 +364,8 @@ function BoardColumn({ statusDef, tasks, onTaskClick, onAddTask, onUpdateStatus,
                 isOver && "ring-1 ring-primary/10"
             )}
         >
-            {/* Header Pill */}
-            <div className="mb-4 flex items-center justify-between bg-task-card border border-task-card-border p-1.5 rounded-[6px] shrink-0 group/header relative z-10 h-[51px] shadow-sm dark:shadow-[inset_0px_0px_25px_0px_#75757540] w-[300px]">
+            {/* Header Pill - primary accent */}
+            <div className="mb-3 flex items-center justify-between bg-task-card border border-task-card-border border-primary/20 p-1.5 rounded-lg shrink-0 group/header relative z-10 h-11 shadow-[var(--task-card-shadow)] w-[300px]">
                 <div className="flex items-center gap-3">
                     {/* Count Badge */}
                     <div
@@ -412,7 +428,7 @@ function BoardColumn({ statusDef, tasks, onTaskClick, onAddTask, onUpdateStatus,
                                     className="fixed inset-0 z-40"
                                     onClick={() => setShowMenu(false)}
                                 />
-                                <div className="absolute top-full right-0 mt-1 w-48 bg-[#18181B] border border-white/10 shadow-xl rounded-lg py-1 z-50 text-gray-200">
+                                <div className="absolute top-full right-0 mt-1 w-48 bg-popover border border-border shadow-xl rounded-lg py-1 z-50 text-popover-foreground">
                                     <button
                                         onClick={() => { setShowMenu(false); setIsEditingName(true); }}
                                         className="flex items-center gap-2 w-full px-3 py-2 text-xs hover:bg-white/5 transition-colors"
@@ -420,32 +436,47 @@ function BoardColumn({ statusDef, tasks, onTaskClick, onAddTask, onUpdateStatus,
                                         <Edit2 className="w-3.5 h-3.5" /> Rename
                                     </button>
 
-                                    <div className="px-3 py-2 border-t border-white/5 bg-black/20">
+                                    <div className="px-3 py-2 border-t border-border bg-muted">
                                         <div className="flex items-center gap-2 mb-2 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
                                             <Palette className="w-3 h-3" /> Color
                                         </div>
-                                        <div className="grid grid-cols-4 gap-1.5">
-                                            {PRESET_COLORS.map(c => (
-                                                <button
-                                                    key={c}
-                                                    onClick={() => {
-                                                        onUpdateStatus({ color: c });
-                                                        setShowMenu(false);
+                                        <div className="flex flex-col gap-2">
+                                            <div className="flex items-center gap-2">
+                                                <input
+                                                    type="color"
+                                                    value={toHexColor(statusDef.color)}
+                                                    onChange={(e) => {
+                                                        const hex = e.target.value;
+                                                        onUpdateStatus({ color: hex });
+                                                        setHexInput(hex.replace(/^#/, ''));
                                                     }}
-                                                    className={cn(
-                                                        "w-6 h-6 rounded-md border border-white/10 hover:scale-110 transition-transform shadow-sm",
-                                                        statusDef.color === c && "ring-2 ring-white ring-offset-1 ring-offset-[#18181B]"
-                                                    )}
-                                                    style={{ backgroundColor: c }}
+                                                    className="w-9 h-9 rounded-md border border-border cursor-pointer bg-transparent shrink-0"
+                                                    title="Pick color"
                                                 />
-                                            ))}
+                                                <input
+                                                    type="text"
+                                                    value={hexInput}
+                                                    onChange={(e) => {
+                                                        const v = e.target.value.replace(/[^0-9A-Fa-f]/g, '').slice(0, 6);
+                                                        setHexInput(v);
+                                                        if (v.length === 6) onUpdateStatus({ color: '#' + v });
+                                                    }}
+                                                    onBlur={() => {
+                                                        if (hexInput.length === 6) onUpdateStatus({ color: '#' + hexInput });
+                                                        else setHexInput(toHexColor(statusDef.color).replace(/^#/, ''));
+                                                    }}
+                                                    placeholder="Hex"
+                                                    className="flex-1 min-w-0 h-9 px-2 text-xs font-mono rounded-md border border-border bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                                                />
+                                            </div>
+                                            <p className="text-[10px] text-muted-foreground">Pick any color or enter hex (e.g. #ff5500)</p>
                                         </div>
                                     </div>
 
                                     <div className="border-t border-white/10 mt-1 pt-1">
                                         <button
                                             onClick={() => { setShowMenu(false); onDeleteStatus(); }}
-                                            className="flex items-center gap-2 w-full px-3 py-2 text-xs text-red-400 hover:bg-red-500/10 transition-colors"
+                                            className="flex items-center gap-2 w-full px-3 py-2 text-xs text-destructive hover:bg-destructive/10 transition-colors"
                                         >
                                             <Trash2 className="w-3.5 h-3.5" /> Delete
                                         </button>
@@ -458,7 +489,7 @@ function BoardColumn({ statusDef, tasks, onTaskClick, onAddTask, onUpdateStatus,
             </div>
 
             {/* Task List */}
-            <div className="flex-1 overflow-y-scroll px-0 pr-0 pb-2 flex flex-col gap-2.5 min-h-0 task-board-scrollbar">
+            <div className="flex-1 overflow-y-scroll px-0 pr-0 pb-2 flex flex-col gap-2 min-h-0 task-board-scrollbar">
                 <SortableContext items={tasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
                     {tasks.map(task => (
                         <SortableTaskItem
@@ -467,13 +498,14 @@ function BoardColumn({ statusDef, tasks, onTaskClick, onAddTask, onUpdateStatus,
                             onClick={() => onTaskClick(task.id)}
                             subtitle={subtitle}
                             onShare={onShare}
+                            statusColor={statusDef.color}
                         />
                     ))}
                 </SortableContext>
 
                 <button
                     onClick={onAddTask}
-                    className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors mt-1 opacity-60 hover:opacity-100 w-full text-left hover:bg-white/5 text-muted-foreground"
+                    className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors mt-1 opacity-60 hover:opacity-100 w-full text-left hover:bg-accent text-muted-foreground"
                 >
                     <Plus className="w-4 h-4" />
                     <span>Create</span>
@@ -483,7 +515,7 @@ function BoardColumn({ statusDef, tasks, onTaskClick, onAddTask, onUpdateStatus,
     );
 }
 
-function SortableTaskItem({ task, onClick, subtitle, onShare }: { task: TaskDto; onClick?: () => void; subtitle?: string; onShare?: (task: TaskDto) => void }) {
+function SortableTaskItem({ task, onClick, subtitle, onShare, statusColor }: { task: TaskDto; onClick?: () => void; subtitle?: string; onShare?: (task: TaskDto) => void; statusColor?: string }) {
     const {
         attributes,
         listeners,
@@ -506,17 +538,17 @@ function SortableTaskItem({ task, onClick, subtitle, onShare }: { task: TaskDto;
             {...listeners}
             className={cn(isDragging && "opacity-50 z-50 transform-gpu")}
         >
-            <TaskCard task={task} subtitle={subtitle} onOpenDetail={onClick} onShare={onShare} />
+            <TaskCard task={task} subtitle={subtitle} onOpenDetail={onClick} onShare={onShare} statusColor={statusColor} />
         </div>
     );
 }
 
-function TaskCard({ task, isOverlay, subtitle, onOpenDetail, onShare }: { task: TaskDto; isOverlay?: boolean; subtitle?: string; onOpenDetail?: () => void; onShare?: (task: TaskDto) => void }) {
+function TaskCard({ task, isOverlay, subtitle, onOpenDetail, onShare, statusColor }: { task: TaskDto; isOverlay?: boolean; subtitle?: string; onOpenDetail?: () => void; onShare?: (task: TaskDto) => void; statusColor?: string }) {
     const priorityColors: Record<string, string> = {
-        URGENT: 'text-[#F97316] bg-[#F97316]/10 border-[#F97316]/20',
-        HIGH: 'text-[#F59E0B] bg-[#F59E0B]/10 border-[#F59E0B]/20',
-        MEDIUM: 'text-[#2563EB] bg-[#2563EB]/10 border-[#2563EB]/20',
-        LOW: 'text-[#6B7280] bg-[#6B7280]/10 border-[#6B7280]/20',
+        URGENT: 'text-destructive bg-destructive/10 border-destructive/20',
+        HIGH: 'text-primary bg-primary/10 border-primary/20',
+        MEDIUM: 'text-muted-foreground bg-muted border-border',
+        LOW: 'text-muted-foreground bg-muted/80 border-border',
         NONE: 'text-muted-foreground',
     };
 
@@ -566,27 +598,33 @@ function TaskCard({ task, isOverlay, subtitle, onOpenDetail, onShare }: { task: 
         }
     };
 
+    const borderColor = statusColor || 'hsl(var(--primary) / 0.6)';
+    const bgStyle = statusColor
+        ? { background: `linear-gradient(135deg, ${statusColor}22 0%, ${statusColor}08 100%), var(--task-card-bg)`, borderLeftColor: borderColor }
+        : { borderLeftColor: borderColor };
+
     return (
         <div
             className={cn(
-                "bg-task-card p-2 h-[167px] flex flex-col rounded-xl border border-task-card-border select-none transition-all group hover:border-task-card-hover-border shadow-[inset_0px_0px_25px_0px_#75757540]",
+                "bg-task-card flex flex-col rounded-lg border border-task-card-border border-l-4 select-none transition-all group hover:border-primary/40 hover:shadow-md shadow-[var(--task-card-shadow)]",
                 "cursor-grab active:cursor-grabbing",
-                isOverlay ? "shadow-2xl ring-2 ring-primary rotate-1 scale-105" : "hover:shadow-md"
+                isOverlay ? "shadow-2xl ring-2 ring-primary rotate-1 scale-105" : ""
             )}
+            style={bgStyle}
         >
             {/* Top Section: Title + Priority + Info - CLICKABLE FOR DETAILS */}
             <div
-                className="h-[122px] px-2 py-1 flex flex-col cursor-pointer"
+                className="px-2.5 pt-2 pb-1.5 flex flex-col cursor-pointer min-h-0"
                 onClick={onOpenDetail}
             >
                 {/* Top Row: Title + Priority */}
-                <div className="flex justify-between items-start gap-2 mb-1">
-                    <div className="text-[14px] font-medium text-task-card-foreground leading-snug line-clamp-2">
+                <div className="flex justify-between items-start gap-2">
+                    <div className="text-[13px] font-medium text-task-card-foreground leading-snug line-clamp-2 flex-1 min-w-0">
                         {task.title}
                     </div>
                     {task.priority !== 'NONE' && (
                         <div className={cn(
-                            "text-[10px] font-medium w-[64px] h-[19px] rounded-[25px] shrink-0 flex items-center justify-center",
+                            "text-[10px] font-medium px-2 py-0.5 rounded-full shrink-0 flex items-center justify-center border",
                             priorityColors[task.priority] || priorityColors.NONE
                         )}>
                             {task.priority.charAt(0) + task.priority.slice(1).toLowerCase()}
@@ -596,49 +634,44 @@ function TaskCard({ task, isOverlay, subtitle, onOpenDetail, onShare }: { task: 
 
                 {/* Subtitle - Near Title */}
                 {subtitle && (
-                    <div className="text-[12px] text-task-card-muted font-normal truncate mb-2 text-[#747474]">
+                    <div className="text-[11px] text-task-card-muted font-normal truncate mt-0.5">
                         {subtitle}
                     </div>
                 )}
 
-                {/* Date - At Bottom */}
-                <div className="flex flex-col mt-auto pb-1">
-                    {task.dueDate && (
-                        <div className="flex items-center gap-1.5 transition-colors">
-                            <span className="font-['Inter'] font-normal text-[10px] leading-none tracking-normal text-[#747474]">Due Date</span>
-                            <span className="font-['Inter'] font-normal text-[11px] leading-none tracking-normal text-task-card-foreground">
-                                {new Date(task.dueDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                {/* Date / Estimate - Compact row */}
+                {(task.dueDate || task.estimate) && (
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1.5">
+                        {task.dueDate && (
+                            <span className="font-['Inter'] text-[10px] text-task-card-muted">
+                                Due {new Date(task.dueDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
                             </span>
-                        </div>
-                    )}
-                    {task.estimate && (
-                        <div className="flex items-center gap-1.5 transition-colors mt-0.5">
-                            <span className="font-['Inter'] font-normal text-[10px] leading-none tracking-normal text-[#747474]">Estimates</span>
-                            <span className="font-['Inter'] font-normal text-[11px] leading-none tracking-normal text-task-card-foreground">{task.estimate}h</span>
-                        </div>
-                    )}
-                </div>
+                        )}
+                        {task.estimate && (
+                            <span className="font-['Inter'] text-[10px] text-task-card-muted">{task.estimate}h</span>
+                        )}
+                    </div>
+                )}
             </div>
 
-            {/* Bottom Row: Icons + Assignee - NOT CLICKABLE FOR DETAILS */}
-            <div className="h-[45px] px-3 border-t border-task-card-border flex items-center justify-between cursor-default">
-                <div className="flex items-center gap-3 text-task-card-muted">
-                    {/* Timer Stats */}
+            {/* Bottom Row: Icons + Assignee - compact */}
+            <div className="px-2.5 py-1.5 border-t border-task-card-border flex items-center justify-between cursor-default">
+                <div className="flex items-center gap-1.5 text-task-card-muted">
                     <button
                         onClick={toggleTimer}
                         onPointerDown={(e) => e.stopPropagation()}
                         onMouseDown={(e) => e.stopPropagation()}
                         className={cn(
-                            "flex items-center gap-1 text-[10px] font-medium transition-colors hover:bg-task-card-border rounded p-1.5 -ml-1",
-                            (isRunning || seconds > 0) ? "text-blue-500" : "hover:text-task-card-foreground"
+                            "flex items-center gap-1 text-[10px] font-medium transition-colors hover:bg-primary/10 hover:text-primary rounded p-1 -ml-0.5",
+                            (isRunning || seconds > 0) ? "text-primary" : "hover:text-task-card-foreground"
                         )}
                     >
                         {isRunning ? (
-                            <Pause className="w-4.5 h-4.5" />
+                            <Pause className="w-3.5 h-3.5" />
                         ) : seconds > 0 ? (
-                            <Play className="w-4.5 h-4.5" />
+                            <Play className="w-3.5 h-3.5" />
                         ) : (
-                            <Timer className="w-4.5 h-4.5" />
+                            <Timer className="w-3.5 h-3.5" />
                         )}
                         {(isRunning || seconds > 0) && <span>{formatTime(seconds)}</span>}
                     </button>
@@ -646,17 +679,17 @@ function TaskCard({ task, isOverlay, subtitle, onOpenDetail, onShare }: { task: 
                         onClick={handleMessageClick}
                         onPointerDown={(e) => e.stopPropagation()}
                         onMouseDown={(e) => e.stopPropagation()}
-                        className="flex items-center gap-1 text-[10px] font-medium hover:text-task-card-foreground transition-colors"
+                        className="flex items-center gap-1 text-[10px] font-medium hover:bg-primary/10 hover:text-primary rounded p-1 transition-colors"
                         title="Share to Channel"
                     >
-                        <MessageSquare className="w-4.5 h-4.5" />
+                        <MessageSquare className="w-3.5 h-3.5" />
                     </button>
                 </div>
 
                 <div className={cn(
-                    "w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 shadow-inner ring-1 ring-task-card-border overflow-hidden",
-                    task.assigneeId && !task.assigneeAvatarUrl ? "bg-primary/20 text-primary" : "bg-muted/10 text-muted-foreground",
-                    task.assigneeAvatarUrl && "bg-transparent text-transparent"
+                    "w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold shrink-0 ring-1 ring-border overflow-hidden",
+                    task.assigneeId && !task.assigneeAvatarUrl ? "bg-primary/20 text-primary ring-primary/30" : "bg-muted/50 text-muted-foreground",
+                    task.assigneeAvatarUrl && "bg-transparent text-transparent ring-transparent"
                 )}>
                     {task.assigneeAvatarUrl ? (
                         <img

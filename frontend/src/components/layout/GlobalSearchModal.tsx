@@ -30,13 +30,13 @@ export function GlobalSearchResults() {
 
     const getIcon = (type: SearchResult['type']) => {
         switch (type) {
-            case 'Task': return <CheckCircle2 className="w-4 h-4 text-blue-500" />;
-            case 'Lead': return <UserPlus className="w-4 h-4 text-orange-500" />;
-            case 'Contact': return <Users className="w-4 h-4 text-green-500" />;
-            case 'Company': return <Building2 className="w-4 h-4 text-purple-500" />;
-            case 'Deal': return <DollarSign className="w-4 h-4 text-yellow-500" />;
-            case 'Channel': return <Hash className="w-4 h-4 text-pink-500" />;
-            default: return <Search className="w-4 h-4 text-gray-500" />;
+            case 'Task': return <CheckCircle2 className="w-4 h-4 text-muted-foreground" />;
+            case 'Lead': return <UserPlus className="w-4 h-4 text-muted-foreground" />;
+            case 'Contact': return <Users className="w-4 h-4 text-muted-foreground" />;
+            case 'Company': return <Building2 className="w-4 h-4 text-muted-foreground" />;
+            case 'Deal': return <DollarSign className="w-4 h-4 text-muted-foreground" />;
+            case 'Channel': return <Hash className="w-4 h-4 text-muted-foreground" />;
+            default: return <Search className="w-4 h-4 text-muted-foreground" />;
         }
     };
 

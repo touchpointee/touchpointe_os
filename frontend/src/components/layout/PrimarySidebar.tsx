@@ -36,20 +36,9 @@ export function PrimarySidebar() {
                 `}
             </style>
 
-            {/* SVG Gradient Definition */}
-            <svg width="0" height="0" className="absolute">
-                <defs>
-                    <linearGradient id="agent-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stopColor="#477df7" />
-                        <stop offset="50%" stopColor="#a157fa" />
-                        <stop offset="100%" stopColor="#f74787" />
-                    </linearGradient>
-                </defs>
-            </svg>
-
             {/* Logo */}
             <div className="relative w-10 h-10 mb-8 flex items-center justify-center shrink-0">
-                <div className="absolute inset-0 bg-gradient-to-br from-[#477df7] to-[#a157fa] rounded-xl blur-[6px] opacity-60" />
+                <div className="absolute inset-0 bg-zinc-500/40 rounded-xl blur-[6px]" />
                 <div className="relative w-full h-full rounded-xl overflow-hidden bg-black shadow-lg z-10 ring-1 ring-white/10">
                     <img src="/logo.jpeg" alt="TouchPointe" className="w-full h-full object-cover" />
                 </div>
@@ -81,25 +70,20 @@ function NavItem({ icon: Icon, label, path, isAgent }: { icon: any, label: strin
                 cn(
                     'group relative flex items-center justify-center w-10 h-10 md:w-full md:h-12 rounded-xl transition-all duration-300',
                     isActive
-                        ? 'shadow-[0_0_15px_-3px_rgba(var(--primary),0.3)]'
+                        ? 'nav-item-selected'
                         : 'text-[hsl(var(--sidebar-muted))] hover:text-[hsl(var(--sidebar-fg))] hover:bg-[hsl(var(--sidebar-accent))] hover:scale-105 active:scale-95'
                 )
             }
-            style={({ isActive }) => isActive ? {
-                background: 'linear-gradient(94.03deg, #925FF8 -8.9%, #4175E4 100%)',
-                color: 'white'
-            } : undefined}
         >
             {({ isActive }) => (
                 <>
-                    {/* Agent Background Shade */}
+                    {/* Agent Background Shade - neutral */}
                     {isAgent && !isActive && (
-                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 bg-gradient-to-br from-[#477df7] via-[#a157fa] to-[#f74787] rounded-lg blur-[8px] opacity-40 pointer-events-none agent-blink-bg" />
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 bg-zinc-500/30 rounded-lg blur-[8px] pointer-events-none agent-blink-bg" />
                     )}
 
                     <Icon
                         className={cn("w-[22px] h-[22px] relative z-10 transition-transform duration-300 group-hover:rotate-3", isAgent && "agent-blink-icon")}
-                        style={isAgent && !isActive ? { stroke: 'url(#agent-gradient)' } : undefined}
                     />
 
                     {/* Tooltip */}

@@ -54,7 +54,7 @@ export function AiFeed() {
             {/* Feed Header / Context */}
             <div className="h-14 flex items-center justify-between px-8 bg-background/50 backdrop-blur-md border-b border-border/40 z-10">
                 <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg overflow-hidden shadow-lg shadow-purple-500/20">
+                    <div className="w-8 h-8 rounded-lg overflow-hidden shadow-lg shadow-black/10 dark:shadow-white/5">
                         <img src="/hattie.png" alt="Hattie AI" className="w-full h-full object-cover" />
                     </div>
                     <div>
@@ -62,7 +62,7 @@ export function AiFeed() {
                             Hattie AI
                         </span>
                         <div className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider flex items-center gap-1.5">
-                            <span className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <span className="w-1 h-1 rounded-full bg-muted-foreground animate-pulse"></span>
                             {activeAgent === 'workspace' ? 'Workspace Overview' : `${activeAgent.charAt(0).toUpperCase() + activeAgent.slice(1)} Agent`}
                         </div>
                     </div>
@@ -72,7 +72,7 @@ export function AiFeed() {
             <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 md:px-0">
                 {isLoadingHistory && (
                     <div className="flex justify-center p-8 mt-20">
-                        <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
+                        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
                     </div>
                 )}
 
@@ -82,7 +82,7 @@ export function AiFeed() {
                             <div className="w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl ring-1 ring-white/20 overflow-hidden bg-background">
                                 <img src="/hattie.png" alt="Hattie AI" className="w-full h-full object-cover" />
                             </div>
-                            <h2 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-blue-600 dark:from-purple-400 dark:to-blue-400">
+                            <h2 className="text-3xl font-bold bg-clip-text text-transparent text-foreground">
                                 How can I help with your {activeAgent === 'workspace' ? 'workspace' : activeAgent}?
                             </h2>
                             <p className="text-muted-foreground max-w-md mx-auto text-base">
@@ -95,13 +95,13 @@ export function AiFeed() {
                                 <button
                                     key={action.label}
                                     onClick={() => sendMessage(action.label)}
-                                    className="group flex items-center gap-4 p-4 rounded-xl bg-card/50 hover:bg-card border border-border/40 hover:border-purple-500/30 hover:shadow-lg hover:shadow-purple-500/5 transition-all duration-300 text-left"
+                                    className="group flex items-center gap-4 p-4 rounded-xl bg-card/50 hover:bg-card border border-border/40 hover:border-border hover:shadow-lg transition-all duration-300 text-left"
                                 >
-                                    <div className="p-2.5 rounded-lg bg-background/80 group-hover:bg-purple-100 dark:group-hover:bg-purple-900/30 transition-colors text-muted-foreground group-hover:text-purple-600 dark:group-hover:text-purple-400 shrink-0">
+                                    <div className="p-2.5 rounded-lg bg-background/80 group-hover:bg-accent transition-colors text-muted-foreground group-hover:text-foreground shrink-0">
                                         <action.icon className="w-5 h-5" />
                                     </div>
                                     <div>
-                                        <div className="font-medium text-sm text-foreground group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+                                        <div className="font-medium text-sm text-foreground group-hover:text-foreground transition-colors">
                                             {action.label}
                                         </div>
                                         <div className="text-xs text-muted-foreground mt-0.5">
@@ -119,7 +119,7 @@ export function AiFeed() {
                         {messages.map((card) => (
                             <div key={card.id} className={`flex gap-4 ${card.role === 'user' ? 'flex-row-reverse' : ''} max-w-4xl mx-auto w-full animate-in fade-in slide-in-from-bottom-4 duration-500`}>
                                 {/* Avatar */}
-                                <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 overflow-hidden ${card.role === 'assistant' ? 'bg-purple-600 shadow-lg shadow-purple-900/20' : 'bg-muted border border-border'}`}>
+                                <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 overflow-hidden ${card.role === 'assistant' ? 'bg-primary shadow-lg' : 'bg-muted border border-border'}`}>
                                     {card.role === 'assistant' ? <img src="/hattie.png" alt="Hattie" className="w-full h-full object-cover" /> : <User className="w-5 h-5 text-muted-foreground" />}
                                 </div>
 
@@ -136,7 +136,7 @@ export function AiFeed() {
                                             </span>
                                         </div>
                                         {card.role === 'assistant' && (
-                                            <span className="text-[10px] text-purple-600 dark:text-purple-400 font-medium uppercase tracking-wide">
+                                            <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wide">
                                                 {activeAgent === 'workspace' ? 'Main Brain' : `${activeAgent.charAt(0).toUpperCase() + activeAgent.slice(1)} Assistant`}
                                             </span>
                                         )}
@@ -238,7 +238,7 @@ export function AiFeed() {
                                                                     <div className="text-[10px] text-muted-foreground uppercase">Deals</div>
                                                                 </div>
                                                                 <div className="text-center">
-                                                                    <div className="text-lg font-bold text-blue-500">{card.relatedData.stats.TeamSize}</div>
+                                                                    <div className="text-lg font-bold text-foreground">{card.relatedData.stats.TeamSize}</div>
                                                                     <div className="text-[10px] text-muted-foreground uppercase">Members</div>
                                                                 </div>
                                                             </div>
@@ -257,7 +257,7 @@ export function AiFeed() {
 
             <div className="p-6">
                 <div className="max-w-4xl mx-auto relative group">
-                    <div className="absolute inset-0 bg-purple-500/20 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="absolute inset-0 bg-muted blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
                     <div className="relative flex gap-2 bg-card border border-input rounded-full p-2 shadow-lg ring-1 ring-black/5 dark:ring-white/10 items-center">
 
                         {/* Agent Selector */}
@@ -271,7 +271,7 @@ export function AiFeed() {
                                     const Icon = current.icon;
                                     return (
                                         <>
-                                            <Icon className="w-3.5 h-3.5 text-purple-600" />
+                                            <Icon className="w-3.5 h-3.5 text-foreground" />
                                             <span>{current.label}</span>
                                             <ChevronDown className="w-3 h-3 text-muted-foreground" />
                                         </>
@@ -291,7 +291,7 @@ export function AiFeed() {
                                                     setShowAgentMenu(false);
                                                 }}
                                                 className={`w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium rounded-lg transition-colors ${activeAgent === agent.id
-                                                    ? 'bg-purple-600 text-white'
+                                                    ? 'bg-primary text-primary-foreground'
                                                     : 'hover:bg-muted text-foreground'
                                                     }`}
                                             >
@@ -315,7 +315,7 @@ export function AiFeed() {
                                 }
                             }}
                         />
-                        <button className="p-2 bg-secondary hover:bg-purple-600 hover:text-white text-foreground rounded-full transition-colors shrink-0">
+                        <button className="p-2 bg-secondary hover:bg-primary hover:text-primary-foreground text-foreground rounded-full transition-colors shrink-0">
                             <Bot className="w-4 h-4" />
                         </button>
                     </div>

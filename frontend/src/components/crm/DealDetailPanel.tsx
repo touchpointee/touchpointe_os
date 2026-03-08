@@ -11,12 +11,12 @@ import { DealComments } from './DealComments';
 import { DealAttachments } from './DealAttachments';
 
 const DEAL_STAGES = [
-    { id: 'NEW', label: 'New', color: 'bg-blue-500' },
-    { id: 'DISCOVERY', label: 'Discovery', color: 'bg-indigo-500' },
-    { id: 'PROPOSAL', label: 'Proposal', color: 'bg-yellow-500' },
-    { id: 'NEGOTIATION', label: 'Negotiation', color: 'bg-orange-500' },
-    { id: 'CLOSED_WON', label: 'Won', color: 'bg-green-500' },
-    { id: 'CLOSED_LOST', label: 'Lost', color: 'bg-red-500' },
+    { id: 'NEW', label: 'New', color: 'bg-zinc-500' },
+    { id: 'DISCOVERY', label: 'Discovery', color: 'bg-zinc-600' },
+    { id: 'PROPOSAL', label: 'Proposal', color: 'bg-zinc-400' },
+    { id: 'NEGOTIATION', label: 'Negotiation', color: 'bg-slate-500' },
+    { id: 'CLOSED_WON', label: 'Won', color: 'bg-zinc-700 dark:bg-zinc-400' },
+    { id: 'CLOSED_LOST', label: 'Lost', color: 'bg-zinc-800 dark:bg-zinc-500' },
 ] as const;
 
 export function DealDetailPanel() {

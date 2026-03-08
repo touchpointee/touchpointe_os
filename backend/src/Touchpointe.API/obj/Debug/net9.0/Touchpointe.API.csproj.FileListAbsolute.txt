@@ -340,3 +340,4 @@ C:\Users\ajmal\Desktop\kravino Innovations\touchpointe\touchpointe_os\backend\sr
 C:\Users\ajmal\Desktop\kravino Innovations\touchpointe\touchpointe_os\backend\src\Touchpointe.API\bin\Debug\net9.0\Minio.dll
 C:\Users\ajmal\Desktop\kravino Innovations\touchpointe\touchpointe_os\backend\src\Touchpointe.API\bin\Debug\net9.0\System.IO.Hashing.dll
 C:\Users\ajmal\Desktop\kravino Innovations\touchpointe\touchpointe_os\backend\src\Touchpointe.API\bin\Debug\net9.0\System.Reactive.dll
+C:\Users\ajmal\Desktop\touchpointe\touchpointe_os\backend\src\touchpointe.api\obj\Debug\net9.0\swae.build.ex.cache

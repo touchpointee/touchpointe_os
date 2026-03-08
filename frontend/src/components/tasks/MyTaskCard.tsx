@@ -72,11 +72,11 @@ export const MyTaskCard: React.FC<TaskCardProps> = ({ task, onClick, onStatusCha
     const getPriorityPill = (p: string) => {
         switch (p) {
             case 'URGENT':
-                return 'bg-red-500/15 text-red-400';
+                return 'bg-destructive/15 text-destructive';
             case 'HIGH':
                 return 'bg-orange-500/15 text-orange-400';
             case 'MEDIUM':
-                return 'bg-blue-500/15 text-blue-400';
+                return 'bg-slate-500/15 text-slate-500 dark:text-slate-400';
             case 'LOW':
                 return 'bg-gray-500/15 text-gray-400';
             default:
@@ -172,7 +172,7 @@ export const MyTaskCard: React.FC<TaskCardProps> = ({ task, onClick, onStatusCha
                         onMouseDown={(e) => e.stopPropagation()}
                         className={cn(
                             "flex items-center gap-1 text-[10px] font-medium transition-colors hover:bg-white/5 rounded p-1.5 -ml-1",
-                            (isRunning || seconds > 0) ? "text-blue-400" : "hover:text-gray-400"
+                            (isRunning || seconds > 0) ? "text-foreground" : "hover:text-gray-400"
                         )}
                     >
                         {isRunning ? (
@@ -198,7 +198,7 @@ export const MyTaskCard: React.FC<TaskCardProps> = ({ task, onClick, onStatusCha
                 </div>
 
                 <div
-                    className={`flex items-center gap-2 text-xs font-medium cursor-pointer transition-colors ${isDone ? 'text-green-500 hover:text-green-400' : 'text-task-card-muted hover:text-task-card-foreground'
+                    className={`flex items-center gap-2 text-xs font-medium cursor-pointer transition-colors ${isDone ? 'text-zinc-500 hover:text-zinc-400 dark:text-zinc-400' : 'text-task-card-muted hover:text-task-card-foreground'
                         }`}
                     onClick={(e) => {
                         e.stopPropagation();

@@ -206,7 +206,7 @@ export function TaskComments({ taskId, workspaceId }: TaskCommentsProps) {
                             return (
                                 <div key={comment.id} className="flex gap-3 group">
                                     {/* Avatar */}
-                                    <div className="w-8 h-8 rounded-full bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-xs font-bold shrink-0 text-indigo-500 mt-0.5 overflow-hidden">
+                                    <div className="w-8 h-8 rounded-full bg-muted border border-border flex items-center justify-center text-xs font-bold shrink-0 text-foreground mt-0.5 overflow-hidden">
                                         {avatarUrl ? (
                                             <img src={avatarUrl} alt={comment.userName} className="w-full h-full object-cover" />
                                         ) : (
@@ -243,7 +243,7 @@ export function TaskComments({ taskId, workspaceId }: TaskCommentsProps) {
                 )}
 
                 <div className="flex gap-2">
-                    <div className="relative flex-1 bg-background rounded-lg border border-border focus-within:ring-1 focus-within:ring-indigo-500/50 focus-within:border-indigo-500 transition-all shadow-sm">
+                    <div className="relative flex-1 bg-background rounded-lg border border-border focus-within:ring-1 focus-within:ring-ring focus-within:border-ring transition-all shadow-sm">
                         {!hasContent && (
                             <div className="absolute top-3 left-3 text-muted-foreground text-sm pointer-events-none select-none">
                                 Write a comment... (Type @ to mention)
@@ -265,7 +265,7 @@ export function TaskComments({ taskId, workspaceId }: TaskCommentsProps) {
                                 className={cn(
                                     "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all",
                                     hasContent && !isSending
-                                        ? "bg-indigo-600 text-white hover:bg-indigo-500 shadow-sm"
+                                        ? "bg-primary text-primary-foreground hover:opacity-90 shadow-sm"
                                         : "bg-muted text-muted-foreground cursor-not-allowed"
                                 )}
                             >

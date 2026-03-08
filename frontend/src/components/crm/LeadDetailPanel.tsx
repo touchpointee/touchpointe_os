@@ -36,9 +36,9 @@ export function LeadDetailPanel() {
     if (!isDetailPanelOpen || !lead) return null;
 
     const getScoreIndicator = (score: number) => {
-        if (score >= 60) return { icon: <Flame size={16} />, label: 'Hot', color: 'text-orange-500 bg-orange-100' };
-        if (score >= 30) return { icon: <Sun size={16} />, label: 'Warm', color: 'text-yellow-600 bg-yellow-100' };
-        return { icon: <Snowflake size={16} />, label: 'Cold', color: 'text-blue-500 bg-blue-100' };
+        if (score >= 60) return { icon: <Flame size={16} />, label: 'Hot', color: 'text-zinc-700 bg-zinc-200 dark:text-zinc-300 dark:bg-zinc-600/50' };
+        if (score >= 30) return { icon: <Sun size={16} />, label: 'Warm', color: 'text-zinc-600 bg-zinc-100 dark:text-zinc-400 dark:bg-zinc-700/50' };
+        return { icon: <Snowflake size={16} />, label: 'Cold', color: 'text-slate-600 bg-slate-100 dark:text-slate-400 dark:bg-slate-700/50' };
     };
 
     const scoreInfo = getScoreIndicator(lead.score);
@@ -131,11 +131,11 @@ export function LeadDetailPanel() {
                         <div className="flex items-center gap-2">
                             <span className={cn(
                                 "px-2 py-1 rounded text-xs font-medium",
-                                lead.source === 'FACEBOOK' && "bg-blue-100 text-blue-700",
-                                lead.source === 'GOOGLE' && "bg-red-100 text-red-700",
-                                lead.source === 'FORM' && "bg-green-100 text-green-700",
+                                lead.source === 'FACEBOOK' && "bg-zinc-100 text-zinc-700 dark:bg-zinc-700/50 dark:text-zinc-300",
+                                lead.source === 'GOOGLE' && "bg-zinc-100 text-zinc-700 dark:bg-zinc-700/50 dark:text-zinc-300",
+                                lead.source === 'FORM' && "bg-zinc-100 text-zinc-700 dark:bg-zinc-700/50 dark:text-zinc-300",
                                 lead.source === 'MANUAL' && "bg-gray-100 text-gray-700",
-                                lead.source === 'REFERRAL' && "bg-purple-100 text-purple-700"
+                                lead.source === 'REFERRAL' && "bg-zinc-100 text-zinc-700 dark:bg-zinc-700/50 dark:text-zinc-300"
                             )}>
                                 {lead.source}
                             </span>
@@ -174,7 +174,7 @@ export function LeadDetailPanel() {
                                                 {activity.scoreChange && (
                                                     <span className={cn(
                                                         "ml-2",
-                                                        activity.scoreChange > 0 ? "text-green-600" : "text-red-600"
+                                                        activity.scoreChange > 0 ? "text-zinc-600 dark:text-zinc-400" : "text-destructive"
                                                     )}>
                                                         {activity.scoreChange > 0 ? '+' : ''}{activity.scoreChange} pts
                                                     </span>

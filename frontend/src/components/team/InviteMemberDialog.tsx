@@ -50,7 +50,7 @@ export function InviteMemberDialog({ open, onOpenChange, onInvite }: InviteMembe
                         <input
                             id="email"
                             type="text"
-                            className="w-full px-3 py-2 border rounded-md dark:bg-zinc-800 dark:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full px-3 py-2 border rounded-md dark:bg-zinc-800 dark:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-ring"
                             placeholder="colleague@example.com"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
@@ -63,7 +63,7 @@ export function InviteMemberDialog({ open, onOpenChange, onInvite }: InviteMembe
                         </label>
                         <select
                             id="role"
-                            className="w-full px-3 py-2 border rounded-md dark:bg-zinc-800 dark:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full px-3 py-2 border rounded-md dark:bg-zinc-800 dark:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-ring"
                             value={role}
                             onChange={(e) => setRole(e.target.value)}
                         >
@@ -87,7 +87,7 @@ export function InviteMemberDialog({ open, onOpenChange, onInvite }: InviteMembe
                         <button
                             type="submit"
                             disabled={loading}
-                            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md disabled:opacity-50"
+                            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary-foreground bg-primary hover:opacity-90 rounded-md disabled:opacity-50"
                         >
                             {loading && <Loader2 className="w-4 h-4 animate-spin" />}
                             Send Invitation

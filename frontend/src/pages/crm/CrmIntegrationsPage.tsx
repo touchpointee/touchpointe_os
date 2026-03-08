@@ -223,7 +223,7 @@ export function CrmIntegrationsPage() {
                 <div className="border border-border rounded-xl p-6 bg-card shadow-sm">
                     <div className="flex items-start justify-between mb-4">
                         <div className="flex items-center gap-3">
-                            <div className="p-2 bg-blue-600 rounded-lg text-white">
+                            <div className="p-2 bg-primary rounded-lg text-primary-foreground">
                                 <Facebook size={24} />
                             </div>
                             <div>
@@ -232,7 +232,7 @@ export function CrmIntegrationsPage() {
                             </div>
                         </div>
                         {integration && (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground">
                                 <CheckCircle size={12} /> Connected
                             </span>
                         )}
@@ -250,7 +250,7 @@ export function CrmIntegrationsPage() {
                                     <div className="flex gap-2">
                                         <button
                                             onClick={handleOpenImport}
-                                            className="px-3 py-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-md text-sm font-medium"
+                                            className="px-3 py-1.5 bg-muted text-foreground hover:bg-accent rounded-md text-sm font-medium"
                                         >
                                             Import Existing Leads
                                         </button>
@@ -305,7 +305,7 @@ export function CrmIntegrationsPage() {
                         <button
                             onClick={handleConnectClick}
                             disabled={isConnecting}
-                            className="w-full sm:w-auto px-4 py-2 bg-[#1877F2] hover:bg-[#166fe5] text-white rounded-md font-medium flex items-center justify-center gap-2 transition-colors disabled:opacity-70"
+                            className="w-full sm:w-auto px-4 py-2 bg-primary hover:opacity-90 text-primary-foreground rounded-md font-medium flex items-center justify-center gap-2 transition-colors disabled:opacity-70"
                         >
                             {isConnecting ? <Loader2 className="animate-spin w-4 h-4" /> : <Facebook size={18} />}
                             Connect with Facebook
@@ -342,7 +342,7 @@ export function CrmIntegrationsPage() {
                                 </div>
                             ) : (
                                 <div>
-                                    <button onClick={() => setSelectedForm("")} className="mb-4 text-sm text-blue-600 hover:underline">← Back to Forms</button>
+                                    <button onClick={() => setSelectedForm("")} className="mb-4 text-sm text-foreground hover:underline">← Back to Forms</button>
 
                                     <div className="border rounded-md overflow-hidden">
                                         <table className="w-full text-sm text-left">

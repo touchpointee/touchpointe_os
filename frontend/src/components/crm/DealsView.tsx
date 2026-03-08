@@ -30,12 +30,12 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 
 const DEAL_STAGES = [
-    { id: 'NEW', label: 'New', color: 'bg-blue-500' },
-    { id: 'DISCOVERY', label: 'Discovery', color: 'bg-indigo-500' },
-    { id: 'PROPOSAL', label: 'Proposal', color: 'bg-yellow-500' },
-    { id: 'NEGOTIATION', label: 'Negotiation', color: 'bg-orange-500' },
-    { id: 'CLOSED_WON', label: 'Won', color: 'bg-green-500' },
-    { id: 'CLOSED_LOST', label: 'Lost', color: 'bg-red-500' },
+    { id: 'NEW', label: 'New', color: 'bg-zinc-500' },
+    { id: 'DISCOVERY', label: 'Discovery', color: 'bg-zinc-600' },
+    { id: 'PROPOSAL', label: 'Proposal', color: 'bg-zinc-400' },
+    { id: 'NEGOTIATION', label: 'Negotiation', color: 'bg-slate-500' },
+    { id: 'CLOSED_WON', label: 'Won', color: 'bg-zinc-700 dark:bg-zinc-400' },
+    { id: 'CLOSED_LOST', label: 'Lost', color: 'bg-zinc-800 dark:bg-zinc-500' },
 ] as const;
 
 type ViewMode = 'kanban' | 'table';
@@ -455,12 +455,12 @@ function DealsTable({ deals, onDealClick, sortBy, sortOrder, onSort }: DealsTabl
                             <td className="px-4 py-3">
                                 <span className={cn(
                                     "px-2 py-1 rounded text-xs font-medium",
-                                    deal.stage === 'NEW' && "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-                                    deal.stage === 'DISCOVERY' && "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400",
-                                    deal.stage === 'PROPOSAL' && "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
-                                    deal.stage === 'NEGOTIATION' && "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
-                                    deal.stage === 'CLOSED_WON' && "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
-                                    deal.stage === 'CLOSED_LOST' && "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                                    deal.stage === 'NEW' && "bg-zinc-100 text-zinc-700 dark:bg-zinc-600/30 dark:text-zinc-300",
+                                    deal.stage === 'DISCOVERY' && "bg-zinc-100 text-zinc-700 dark:bg-zinc-500/30 dark:text-zinc-300",
+                                    deal.stage === 'PROPOSAL' && "bg-zinc-100 text-zinc-600 dark:bg-zinc-500/30 dark:text-zinc-300",
+                                    deal.stage === 'NEGOTIATION' && "bg-slate-100 text-slate-700 dark:bg-slate-600/30 dark:text-slate-300",
+                                    deal.stage === 'CLOSED_WON' && "bg-zinc-200 text-zinc-700 dark:bg-zinc-400/30 dark:text-zinc-300",
+                                    deal.stage === 'CLOSED_LOST' && "bg-zinc-100 text-zinc-600 dark:bg-zinc-600/30 dark:text-zinc-400"
                                 )}>
                                     {DEAL_STAGES.find(s => s.id === deal.stage)?.label || deal.stage}
                                 </span>

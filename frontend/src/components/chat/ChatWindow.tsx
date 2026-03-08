@@ -16,8 +16,8 @@ import { ReactionDetailsModal } from './ReactionDetailsModal';
 import { MediaPreviewModal } from './MediaPreviewModal';
 
 const USER_COLORS = [
-    '#a13ee7ff', '#ff9b04ff', '#fd543adb',
-    '#ee32ffff', '#d6be00', '#178d7d94', '#6d65dbff',
+    '#71717a', '#52525b', '#3f3f46', '#a1a1aa',
+    '#64748b', '#475569', '#334155',
 ];
 
 function getUserColor(name?: string) {
@@ -559,7 +559,7 @@ export function ChatWindow() {
     }
 
     if (error) {
-        return <div className="p-4 text-red-500">Error: {error}</div>;
+        return <div className="p-4 text-destructive">Error: {error}</div>;
     }
 
     return (
@@ -584,7 +584,7 @@ export function ChatWindow() {
                                 className="w-8 h-8 rounded-full object-cover border border-border"
                             />
                         ) : (
-                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-sm font-bold shadow-sm">
+                            <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-foreground text-sm font-bold shadow-sm border border-border">
                                 {activeChannel.name.replace(/^#/, '').charAt(0).toUpperCase()}
                             </div>
                         )
@@ -736,9 +736,9 @@ export function ChatWindow() {
                                 </svg>
                                 Search
                             </button>
-                            <div className="h-px bg-[#2a3942] my-1" />
+                            <div className="h-px bg-[var(--chat-border)] my-1" />
                             <button
-                                className="w-full px-4 py-3 text-left text-sm text-[#ea4335] hover:bg-[#2a3942] transition-colors flex items-center gap-3"
+                                className="w-full px-4 py-3 text-left text-sm text-destructive hover:bg-[var(--chat-bg-hover)] transition-colors flex items-center gap-3"
                                 onClick={() => {
                                     setShowMoreMenu(false);
                                     console.log('Clear chat');
@@ -793,7 +793,7 @@ export function ChatWindow() {
                             <div key={msg.id} className={`flex flex-col ${showHeader ? 'mt-4' : 'mt-[2px]'}`}>
                                 {dateSeparator && (
                                     <div className="flex items-center justify-center my-4">
-                                        <div className="bg-[#202c33] text-xs text-[#e9edef] px-3 py-1 rounded-md shadow-sm">{dateLabel}</div>
+                                        <div className="bg-[var(--chat-bg-secondary)] text-xs text-[var(--chat-text-primary)] px-3 py-1 rounded-md shadow-sm">{dateLabel}</div>
                                     </div>
                                 )}
 
@@ -850,7 +850,7 @@ export function ChatWindow() {
 
                 {/* Reply Banner */}
                 {replyingTo && (
-                    <div className="flex items-center justify-between bg-[#1f2c34] p-2 mb-2 rounded-lg border-l-[4px] relative"
+                    <div className="flex items-center justify-between bg-[var(--chat-bg-tertiary)] p-2 mb-2 rounded-lg border-l-[4px] relative"
                         style={{ borderLeftColor: getUserColor(replyingTo.senderName) }}
                     >
                         <div className="flex flex-col ml-2 overflow-hidden">
@@ -860,12 +860,12 @@ export function ChatWindow() {
                             >
                                 Replying to {replyingTo.senderName}
                             </span>
-                            <span className="text-[12px] text-[#8696a0] truncate">
+                            <span className="text-[12px] text-[var(--chat-text-muted)] truncate">
                                 {replyingTo.content}
                             </span>
                         </div>
                         <button onClick={() => setReplyingTo(null)} className="p-1 hover:bg-white/10 rounded-full self-start mt-1">
-                            <X className="w-4 h-4 text-[#8696a0]" />
+                            <X className="w-4 h-4 text-[var(--chat-text-muted)]" />
                         </button>
                     </div>
                 )}
@@ -875,7 +875,7 @@ export function ChatWindow() {
                         {localAttachments.map(att => (
                             <div
                                 key={att.id}
-                                className={`relative group bg-[#2a3942] rounded-lg p-2 flex items-center gap-2 min-w-[200px] ${att.previewUrl ? 'cursor-pointer hover:bg-[#2a3942]/80' : ''}`}
+                                className={`relative group bg-[var(--chat-bg-tertiary)] rounded-lg p-2 flex items-center gap-2 min-w-[200px] ${att.previewUrl ? 'cursor-pointer hover:opacity-90' : ''}`}
                                 onClick={() => {
                                     if (att.previewUrl) {
                                         setPreviewMedia({
@@ -892,13 +892,13 @@ export function ChatWindow() {
                                         <img src={att.previewUrl} alt="Preview" className="w-full h-full object-cover" />
                                     </div>
                                 ) : (
-                                    <div className="bg-[#202c33] p-2 rounded">
-                                        <FileIcon className="w-5 h-5 text-[#8696a0]" />
+                                    <div className="bg-[var(--chat-bg-secondary)] p-2 rounded">
+                                        <FileIcon className="w-5 h-5 text-[var(--chat-text-muted)]" />
                                     </div>
                                 )}
                                 <div className="flex-1 min-w-0">
                                     <div className="text-sm text-[#e9edef] truncate">{att.file.name}</div>
-                                    <div className="text-xs text-[#8696a0]">
+                                    <div className="text-xs text-[var(--chat-text-muted)]">
                                         {att.uploading ? 'Uploading...' : att.error ? 'Failed' : `${(att.file.size / 1024).toFixed(1)} KB`}
                                     </div>
                                 </div>
@@ -919,7 +919,7 @@ export function ChatWindow() {
                 <div className="flex items-end gap-2 bg-[var(--chat-bg-secondary)] rounded-[24px] p-1 border border-[var(--chat-border)] relative">
                     {isRecording ? (
                         <div className="flex-1 flex items-center justify-between px-3 h-[40px]">
-                            <div className="flex items-center gap-3 text-red-500 animate-pulse">
+                            <div className="flex items-center gap-3 text-destructive animate-pulse">
                                 <Mic className="w-5 h-5 fill-current" />
                                 <span className="font-mono text-sm">{formatDuration(recordingDuration)}</span>
                             </div>
@@ -929,7 +929,7 @@ export function ChatWindow() {
                             <div className="flex items-center gap-2">
                                 <button
                                     onClick={cancelRecording}
-                                    className="p-2 text-red-500 hover:bg-red-500/10 rounded-full transition-colors"
+                                    className="p-2 text-destructive hover:bg-destructive/10 rounded-full transition-colors"
                                     title="Cancel recording"
                                 >
                                     <Trash2 className="w-5 h-5" />
@@ -946,7 +946,7 @@ export function ChatWindow() {
                     ) : (
                         <>
                             {showEmojiPicker && (
-                                <div ref={emojiPickerRef} className="absolute bottom-full left-0 mb-2 z-50 bg-[#202c33] border border-[#2a3942] rounded-[16px] shadow-2xl flex flex-col overflow-hidden w-[430px]">
+                                <div ref={emojiPickerRef} className="absolute bottom-full left-0 mb-2 z-50 bg-[var(--chat-bg-secondary)] border border-[var(--chat-border)] rounded-[16px] shadow-2xl flex flex-col overflow-hidden w-[430px]">
                                     <div className="flex-1 bg-[#111b21] emoji-picker-custom">
                                         <style>{`
                                             .emoji-picker-custom aside.EmojiPickerReact {
@@ -1036,7 +1036,7 @@ export function ChatWindow() {
                             />
                             <button
                                 onClick={() => fileInputRef.current?.click()}
-                                className="p-1.5 text-[#8696a0] hover:text-[#e9edef] transition-colors shrink-0 rounded-full hover:bg-white/5 pb-1.5"
+                                className="p-1.5 text-[var(--chat-text-muted)] hover:text-[var(--chat-text-primary)] transition-colors shrink-0 rounded-full hover:bg-white/5 pb-1.5"
                             >
                                 <Plus className="w-6 h-6" />
                             </button>
@@ -1044,7 +1044,7 @@ export function ChatWindow() {
                             <button
                                 ref={emojiButtonRef}
                                 onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                                className={`p-1.5 transition-colors shrink-0 rounded-full hover:bg-white/5 pb-1.5 -ml-1 ${showEmojiPicker ? 'text-[#00a884]' : 'text-[#8696a0] hover:text-[#e9edef]'}`}
+                                className={`p-1.5 transition-colors shrink-0 rounded-full hover:bg-white/5 pb-1.5 -ml-1 ${showEmojiPicker ? 'text-[var(--chat-accent)]' : 'text-[var(--chat-text-muted)] hover:text-[var(--chat-text-primary)]'}`}
                             >
                                 <Smile className="w-6 h-6" />
                             </button>

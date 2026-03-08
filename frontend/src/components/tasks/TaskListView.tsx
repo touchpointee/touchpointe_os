@@ -154,7 +154,7 @@ function TaskRow({
                     <div
                         className="text-muted-foreground transition-colors cursor-default"
                     >
-                        {task.status === 'DONE' ? <CheckCircle2 className="w-5 h-5 md:w-4 md:h-4 text-green-600" /> : <Circle className="w-5 h-5 md:w-4 md:h-4" />}
+                        {task.status === 'DONE' ? <CheckCircle2 className="w-5 h-5 md:w-4 md:h-4 text-zinc-500 dark:text-zinc-400" /> : <Circle className="w-5 h-5 md:w-4 md:h-4" />}
                     </div>
                 </div>
 

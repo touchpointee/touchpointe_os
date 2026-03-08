@@ -43,9 +43,9 @@ export function ActivityFeed({ activities, isLoading }: ActivityFeedProps) {
                         </div>
                         {/* Icon Badge */}
                         <div className="absolute -bottom-1 -right-1 bg-background rounded-full p-0.5 border border-border">
-                            {activity.type === 'Task' && <CheckSquare className="w-3 h-3 text-blue-500" />}
-                            {activity.type === 'Deal' && <Briefcase className="w-3 h-3 text-green-500" />}
-                            {activity.type === 'Comment' && <MessageSquare className="w-3 h-3 text-yellow-500" />}
+                            {activity.type === 'Task' && <CheckSquare className="w-3 h-3 text-muted-foreground" />}
+                            {activity.type === 'Deal' && <Briefcase className="w-3 h-3 text-muted-foreground" />}
+                            {activity.type === 'Comment' && <MessageSquare className="w-3 h-3 text-muted-foreground" />}
                         </div>
                     </div>
 

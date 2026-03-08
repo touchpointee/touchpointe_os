@@ -240,7 +240,7 @@ function FormCard({
                     <div className="flex items-center gap-1.5">
                         <span className={cn(
                             "w-2 h-2 rounded-full",
-                            form.isActive ? "bg-green-500" : "bg-gray-400"
+                            form.isActive ? "bg-zinc-500" : "bg-zinc-400"
                         )} />
                         <span className="text-xs text-muted-foreground">
                             {form.isActive ? 'Active' : 'Inactive'}

@@ -308,7 +308,7 @@ export function GlobalHeader({ workspaceName = 'My Workspace', userName = 'User'
                             </button>
                             <button
                                 onClick={handleLogout}
-                                className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
+                                className="w-full flex items-center gap-3 px-4 py-2 text-sm text-destructive hover:bg-destructive/10 transition-colors"
                             >
                                 <LogOut className="w-4 h-4" />
                                 Logout

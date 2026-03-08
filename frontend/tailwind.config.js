@@ -28,8 +28,7 @@ export default {
 					foreground: 'hsl(var(--popover-foreground))'
 				},
 				primary: {
-					DEFAULT: '#60a5fa',
-					dark: '#2563eb',
+					DEFAULT: 'hsl(var(--primary))',
 					foreground: 'hsl(var(--primary-foreground))'
 				},
 				secondary: {
@@ -43,7 +42,7 @@ export default {
 				accent: {
 					DEFAULT: 'hsl(var(--accent))',
 					foreground: 'hsl(var(--accent-foreground))',
-					glow: '#3b82f6',
+					glow: 'hsl(var(--muted-foreground))',
 				},
 				destructive: {
 					DEFAULT: 'hsl(var(--destructive))',
@@ -111,14 +110,16 @@ export default {
 					'100%': { backgroundPosition: '200% center' },
 				},
 				glow: {
-					'0%, 100%': { filter: 'brightness(1) drop-shadow(0 0 10px rgba(96, 165, 250, 0.5))' },
-					'50%': { filter: 'brightness(1.2) drop-shadow(0 0 20px rgba(96, 165, 250, 0.8))' },
+					'0%, 100%': { filter: 'brightness(1) drop-shadow(0 0 10px rgba(128, 128, 128, 0.25))' },
+					'50%': { filter: 'brightness(1.1) drop-shadow(0 0 20px rgba(128, 128, 128, 0.35))' },
 				},
 			},
 			boxShadow: {
 			},
 			backgroundImage: {
-				'grid-pattern': 'linear-gradient(to right, #3b82f610 1px, transparent 1px), linear-gradient(to bottom, #3b82f610 1px, transparent 1px)',
+				'grid-pattern': 'linear-gradient(to right, rgb(0 0 0 / 0.06) 1px, transparent 1px), linear-gradient(to bottom, rgb(0 0 0 / 0.06) 1px, transparent 1px)',
+				'grid-pattern-dark': 'linear-gradient(to right, rgb(255 255 255 / 0.03) 1px, transparent 1px), linear-gradient(to bottom, rgb(255 255 255 / 0.03) 1px, transparent 1px)',
+				'grid-pattern-light': 'linear-gradient(to right, rgb(0 0 0 / 0.04) 1px, transparent 1px), linear-gradient(to bottom, rgb(0 0 0 / 0.04) 1px, transparent 1px)',
 			},
 			animation: {
 				'pulse-slow': 'pulse-slow 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',

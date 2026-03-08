@@ -87,7 +87,7 @@ export function ContactModal({ isOpen, onClose, contact }: ContactModalProps) {
                 <form onSubmit={handleSubmit} className="p-4 space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <label className="text-sm font-medium">First Name <span className="text-red-500">*</span></label>
+                            <label className="text-sm font-medium">First Name <span className="text-destructive">*</span></label>
                             <input
                                 type="text"
                                 required
@@ -99,7 +99,7 @@ export function ContactModal({ isOpen, onClose, contact }: ContactModalProps) {
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-sm font-medium">Last Name <span className="text-red-500">*</span></label>
+                            <label className="text-sm font-medium">Last Name <span className="text-destructive">*</span></label>
                             <input
                                 type="text"
                                 required
@@ -112,7 +112,7 @@ export function ContactModal({ isOpen, onClose, contact }: ContactModalProps) {
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-sm font-medium">Email <span className="text-red-500">*</span></label>
+                        <label className="text-sm font-medium">Email <span className="text-destructive">*</span></label>
                         <input
                             type="email"
                             required

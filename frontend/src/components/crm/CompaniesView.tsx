@@ -132,7 +132,7 @@ export function CompaniesView() {
                                             </button>
                                             <button
                                                 onClick={(e) => { e.stopPropagation(); handleDelete(company.id); }}
-                                                className="flex items-center gap-2 w-full px-3 py-2 hover:bg-red-50 text-red-600 transition-colors text-sm"
+                                                className="flex items-center gap-2 w-full px-3 py-2 hover:bg-destructive/10 text-destructive transition-colors text-sm"
                                             >
                                                 <Trash size={14} /> Delete
                                             </button>

@@ -61,7 +61,7 @@ export function CrmDashboardPage() {
                         title="Total Leads"
                         value={dashboardSummary?.totalLeads ?? 0}
                         icon={<Users size={20} />}
-                        color="bg-blue-500"
+                        color="bg-zinc-500"
                         onClick={() => navigateToLeads()}
                     />
                     <SummaryCard
@@ -75,7 +75,7 @@ export function CrmDashboardPage() {
                         title="Qualified"
                         value={dashboardSummary?.qualifiedLeads ?? 0}
                         icon={<Target size={20} />}
-                        color="bg-indigo-500"
+                        color="bg-zinc-600"
                         onClick={() => navigateToLeads({ status: 'QUALIFIED' })}
                     />
                     <SummaryCard
@@ -90,14 +90,14 @@ export function CrmDashboardPage() {
                         title="Converted"
                         value={dashboardSummary?.convertedLeads ?? 0}
                         icon={<TrendingUp size={20} />}
-                        color="bg-emerald-500"
+                        color="bg-zinc-600"
                         onClick={() => navigateToLeads({ status: 'CONVERTED' })}
                     />
                     <SummaryCard
                         title="Pipeline"
                         value={`₹${(dashboardSummary?.totalPipelineValue ?? 0).toLocaleString('en-IN')}`}
                         icon={<DollarSign size={20} />}
-                        color="bg-purple-500"
+                        color="bg-zinc-700 dark:bg-zinc-400"
                         isLarge
                         onClick={navigateToDeals}
                     />
@@ -116,14 +116,14 @@ export function CrmDashboardPage() {
                                     label="New"
                                     value={conversionFunnel.new}
                                     max={Math.max(conversionFunnel.new, 1)}
-                                    color="bg-blue-500"
+                                    color="bg-zinc-500"
                                     onClick={() => navigateToLeads({ status: 'NEW' })}
                                 />
                                 <FunnelBar
                                     label="Contacted"
                                     value={conversionFunnel.contacted}
                                     max={Math.max(conversionFunnel.new, 1)}
-                                    color="bg-indigo-500"
+                                    color="bg-zinc-600"
                                     onClick={() => navigateToLeads({ status: 'CONTACTED' })}
                                 />
                                 <FunnelBar
@@ -137,7 +137,7 @@ export function CrmDashboardPage() {
                                     label="Converted"
                                     value={conversionFunnel.converted}
                                     max={Math.max(conversionFunnel.new, 1)}
-                                    color="bg-emerald-500"
+                                    color="bg-zinc-600"
                                     onClick={() => navigateToLeads({ status: 'CONVERTED' })}
                                 />
                             </div>
@@ -167,12 +167,12 @@ export function CrmDashboardPage() {
                                         <div className="flex items-center gap-3">
                                             <span className={cn(
                                                 "w-3 h-3 rounded-full",
-                                                item.source === 'FACEBOOK' && "bg-blue-500",
-                                                item.source === 'GOOGLE' && "bg-red-500",
-                                                item.source === 'FORM' && "bg-green-500",
-                                                item.source === 'MANUAL' && "bg-gray-500",
-                                                item.source === 'REFERRAL' && "bg-purple-500",
-                                                item.source === 'ZAPIER' && "bg-orange-500"
+                                                item.source === 'FACEBOOK' && "bg-zinc-500",
+                                                item.source === 'GOOGLE' && "bg-zinc-600",
+                                                item.source === 'FORM' && "bg-zinc-400",
+                                                item.source === 'MANUAL' && "bg-zinc-500",
+                                                item.source === 'REFERRAL' && "bg-zinc-600",
+                                                item.source === 'ZAPIER' && "bg-slate-500"
                                             )} />
                                             <span className="text-sm font-medium">{item.source}</span>
                                         </div>
@@ -294,7 +294,7 @@ function QuickActionButton({ label, onClick, variant }: {
                 "px-4 py-3 rounded-md text-sm font-medium transition-colors text-left",
                 variant === 'primary' && "bg-primary text-primary-foreground hover:opacity-90",
                 variant === 'secondary' && "bg-muted hover:bg-muted/80 text-foreground",
-                variant === 'fire' && "bg-gradient-to-r from-orange-500 to-red-500 text-white hover:opacity-90"
+                variant === 'fire' && "bg-zinc-600 text-white hover:opacity-90 dark:bg-zinc-500"
             )}
         >
             {label}

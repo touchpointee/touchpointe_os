@@ -22,11 +22,11 @@ interface StatusOption {
 }
 
 const priorityOptions: { value: TaskPriority; label: string; color: string }[] = [
-    { value: 'NONE', label: 'None', color: 'text-zinc-400' },
-    { value: 'LOW', label: 'Low', color: 'text-zinc-600' },
-    { value: 'MEDIUM', label: 'Medium', color: 'text-blue-500' },
-    { value: 'HIGH', label: 'High', color: 'text-orange-500' },
-    { value: 'URGENT', label: 'Urgent', color: 'text-red-500' },
+    { value: 'NONE', label: 'None', color: 'text-muted-foreground' },
+    { value: 'LOW', label: 'Low', color: 'text-zinc-500' },
+    { value: 'MEDIUM', label: 'Medium', color: 'text-slate-500' },
+    { value: 'HIGH', label: 'High', color: 'text-zinc-600' },
+    { value: 'URGENT', label: 'Urgent', color: 'text-zinc-700 dark:text-zinc-400' },
 ];
 
 export function TaskDetailPanel() {
@@ -231,7 +231,7 @@ export function TaskDetailPanel() {
                                         deleteTask(workspaceId, task.id);
                                     }
                                 }}
-                                className="p-2 hover:bg-red-500/10 rounded-lg text-red-500 transition-colors"
+                                className="p-2 hover:bg-destructive/10 rounded-lg text-destructive transition-colors"
                             >
                                 <Trash2 className="w-4 h-4" />
                             </button>
@@ -256,7 +256,7 @@ export function TaskDetailPanel() {
                                     rows={1}
                                     disabled={!canEdit}
                                     className={cn(
-                                        "w-full text-lg md:text-[14px] text-foreground bg-background border border-input rounded-[6px] px-4 py-2.5 outline-none focus:!border-indigo-500 resize-none overflow-hidden transition-all placeholder:text-muted-foreground placeholder:text-[14px]",
+                                        "w-full text-lg md:text-[14px] text-foreground bg-background border border-input rounded-[6px] px-4 py-2.5 outline-none focus:!border-ring focus-within:!border-ring resize-none overflow-hidden transition-all placeholder:text-muted-foreground placeholder:text-[14px]",
                                         !canEdit && "opacity-60 cursor-not-allowed"
                                     )}
                                     placeholder="Enter task title"
@@ -284,7 +284,7 @@ export function TaskDetailPanel() {
                                     rows={1}
                                     disabled={!canEdit}
                                     className={cn(
-                                        "w-full text-md md:text-[14px] text-foreground bg-background border border-input rounded-[6px] px-4 py-2.5 outline-none focus:!border-indigo-500 resize-none overflow-hidden transition-all placeholder:text-muted-foreground placeholder:text-[14px]",
+                                        "w-full text-md md:text-[14px] text-foreground bg-background border border-input rounded-[6px] px-4 py-2.5 outline-none focus:!border-ring focus-within:!border-ring resize-none overflow-hidden transition-all placeholder:text-muted-foreground placeholder:text-[14px]",
                                         !canEdit && "opacity-60 cursor-not-allowed"
                                     )}
                                     placeholder="Add a brief summary or secondary title"
@@ -299,7 +299,7 @@ export function TaskDetailPanel() {
                         {/* Description Field (formerly Project) */}
                         <div className="space-y-2">
                             <label className="text-foreground text-[16px] font-regular block pb-0.5">Description</label>
-                            <div className="w-full bg-background border border-input rounded-[6px] px-4 py-2.5 text-foreground bg-transparent outline-none transition-colors hover:border-zinc-500 focus-within:!border-indigo-500 min-h-[100px]">
+                            <div className="w-full bg-background border border-input rounded-[6px] px-4 py-2.5 text-foreground bg-transparent outline-none transition-colors hover:border-zinc-500 focus-within:!border-ring min-h-[100px]">
                                 <textarea
                                     key={`desc-${task.id}`}
                                     defaultValue={task.description || ''}
@@ -330,7 +330,7 @@ export function TaskDetailPanel() {
                                         if (!canEdit) return;
                                         e.stopPropagation(); setStatusOpen(!statusOpen); setPriorityOpen(false); setAssigneeOpen(false);
                                     }}
-                                    className="w-full bg-background border border-input rounded-[6px] px-4 py-2.5 flex items-center justify-between hover:border-zinc-500 focus:!border-indigo-500 transition-colors"
+                                    className="w-full bg-background border border-input rounded-[6px] px-4 py-2.5 flex items-center justify-between hover:border-zinc-500 focus:!border-ring focus-within:!border-ring transition-colors"
                                 >
                                     <div className="flex items-center gap-3">
                                         <div className="w-2.5 h-2.5 rounded-full ring-2 ring-foreground/10" style={{ backgroundColor: currentStatusOption?.color || '#999' }} />
@@ -349,7 +349,7 @@ export function TaskDetailPanel() {
                                             >
                                                 <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: opt.color }} />
                                                 <span className="flex-1 text-left text-[14px] text-foreground">{opt.label}</span>
-                                                {currentStatusOption?.value === opt.value && <Check className="w-4 h-4 text-indigo-500" />}
+                                                {currentStatusOption?.value === opt.value && <Check className="w-4 h-4 text-foreground" />}
                                             </button>
                                         ))}
                                     </div>
@@ -364,7 +364,7 @@ export function TaskDetailPanel() {
                                         if (!canEdit) return;
                                         e.stopPropagation(); setAssigneeOpen(!assigneeOpen); setStatusOpen(false); setPriorityOpen(false);
                                     }}
-                                    className="w-full bg-background border border-input rounded-[6px] px-4 py-2.5 flex items-center justify-between hover:border-zinc-500 focus:!border-indigo-500 transition-colors"
+                                    className="w-full bg-background border border-input rounded-[6px] px-4 py-2.5 flex items-center justify-between hover:border-zinc-500 focus:!border-ring focus-within:!border-ring transition-colors"
                                 >
                                     <div className="flex items-center gap-3">
                                         {task.assigneeId ? (
@@ -379,7 +379,7 @@ export function TaskDetailPanel() {
                                                                 className="w-6 h-6 rounded-full object-cover border border-border"
                                                             />
                                                         ) : (
-                                                            <div className="w-6 h-6 rounded-full bg-indigo-500/20 flex items-center justify-center text-[14px] font-bold text-indigo-400 border border-indigo-500/30">
+                                                            <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-[14px] font-bold text-foreground border border-border">
                                                                 {task.assigneeName?.charAt(0) || '?'}
                                                             </div>
                                                         )}
@@ -415,12 +415,12 @@ export function TaskDetailPanel() {
                                                             className="w-6 h-6 rounded-full object-cover border border-border"
                                                         />
                                                     ) : (
-                                                        <div className="w-6 h-6 rounded-full bg-indigo-500/20 flex items-center justify-center text-[14px] font-bold text-indigo-400 border border-indigo-500/30">
+                                                        <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-[14px] font-bold text-foreground border border-border">
                                                             {member.fullName?.charAt(0) || '?'}
                                                         </div>
                                                     )}
                                                     <span className="flex-1 text-left text-[14px] text-foreground">{member.fullName}</span>
-                                                    {task.assigneeId === member.userId && <Check className="w-4 h-4 text-indigo-500" />}
+                                                    {task.assigneeId === member.userId && <Check className="w-4 h-4 text-foreground" />}
                                                 </button>
                                             ))}
                                         </div>
@@ -436,7 +436,7 @@ export function TaskDetailPanel() {
                                         if (!canEdit) return;
                                         e.stopPropagation(); setPriorityOpen(!priorityOpen); setStatusOpen(false); setAssigneeOpen(false);
                                     }}
-                                    className="w-full bg-background border border-input rounded-[6px] px-4 py-2.5 flex items-center justify-between hover:border-zinc-500 focus:!border-indigo-500 transition-colors"
+                                    className="w-full bg-background border border-input rounded-[6px] px-4 py-2.5 flex items-center justify-between hover:border-zinc-500 focus:!border-ring focus-within:!border-ring transition-colors"
                                 >
                                     <div className="flex items-center gap-3">
                                         <Flag className={cn("w-4 h-4", priorityOptions.find(p => p.value === task.priority)?.color)} />
@@ -457,7 +457,7 @@ export function TaskDetailPanel() {
                                             >
                                                 <Flag className={cn("w-4 h-4", opt.color)} />
                                                 <span className={cn("flex-1 text-left text-sm", opt.color)}>{opt.label}</span>
-                                                {task.priority === opt.value && <Check className="w-4 h-4 text-indigo-500" />}
+                                                {task.priority === opt.value && <Check className="w-4 h-4 text-foreground" />}
                                             </button>
                                         ))}
                                     </div>
@@ -468,7 +468,7 @@ export function TaskDetailPanel() {
                             <div className="space-y-2 relative">
                                 <label className="text-foreground text-[16px] font-regular block pb-0.5">Due Date</label>
                                 <div className={cn(
-                                    "w-full bg-background border border-input rounded-[6px] px-4 py-2.5 flex items-center gap-3 hover:border-zinc-500 focus-within:!border-indigo-500 transition-colors",
+                                    "w-full bg-background border border-input rounded-[6px] px-4 py-2.5 flex items-center gap-3 hover:border-zinc-500 focus-within:!border-ring transition-colors",
                                     !canEdit && "opacity-60"
                                 )}>
                                     <CalendarIcon className="w-4 h-4 text-muted-foreground" />
@@ -496,7 +496,7 @@ export function TaskDetailPanel() {
                         {/* TAGS */}
                         <div className="space-y-2">
                             <label className="text-foreground text-[16px] font-regular block pb-0.5">Tags</label>
-                            <div className="w-full bg-background border border-input rounded-[6px] p-4 min-h-[60px] focus-within:!border-indigo-500 transition-colors">
+                            <div className="w-full bg-background border border-input rounded-[6px] p-4 min-h-[60px] focus-within:!border-ring transition-colors">
                                 <div className="flex flex-wrap gap-2 items-center">
                                     {task.tags.map(tag => (
                                         <span
@@ -529,7 +529,7 @@ export function TaskDetailPanel() {
                                                     value={tagSearch}
                                                     onChange={e => setTagSearch(e.target.value)}
                                                     onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleCreateTag())}
-                                                    className="w-full bg-muted border border-transparent rounded-lg px-3 py-2 text-[14px] text-foreground mb-3 outline-none focus:border-indigo-500/50 transition-colors"
+                                                    className="w-full bg-muted border border-transparent rounded-lg px-3 py-2 text-[14px] text-foreground mb-3 outline-none focus:border-ring transition-colors"
                                                     autoFocus
                                                 />
                                                 <div className="max-h-40 overflow-y-auto space-y-1 pr-1 custom-scrollbar">
@@ -541,13 +541,13 @@ export function TaskDetailPanel() {
                                                         >
                                                             <div className="w-2 h-2 rounded-full" style={{ backgroundColor: t.color }} />
                                                             <span className="flex-1 text-left font-medium text-foreground">{t.name}</span>
-                                                            {task.tags.some(xt => xt.id === t.id) && <Check size={12} className="text-indigo-500" />}
+                                                            {task.tags.some(xt => xt.id === t.id) && <Check size={12} className="text-foreground" />}
                                                         </button>
                                                     ))}
                                                     {tagSearch && !(tags[workspaceId] || []).some(t => t.name.toLowerCase() === tagSearch.toLowerCase()) && (
                                                         <button
                                                             onClick={(e) => { e.stopPropagation(); handleCreateTag(); }}
-                                                            className="w-full flex items-center gap-2 px-2 py-1.5 rounded hover:bg-indigo-500/10 text-indigo-400 text-[14px] transition-all font-bold border border-dashed border-indigo-500/20"
+                                                            className="w-full flex items-center gap-2 px-2 py-1.5 rounded hover:bg-accent text-foreground text-[14px] transition-all font-bold border border-dashed border-border"
                                                         >
                                                             <Plus size={12} /> Create "{tagSearch}"
                                                         </button>

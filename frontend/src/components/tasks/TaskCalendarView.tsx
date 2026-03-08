@@ -9,9 +9,9 @@ import type { TaskStatus } from '@/types/task';
 // Reuse config for consistency
 const statusColors: Record<TaskStatus, string> = {
     TODO: 'bg-zinc-200 text-zinc-700',
-    IN_PROGRESS: 'bg-blue-200 text-blue-800',
-    IN_REVIEW: 'bg-yellow-200 text-yellow-800',
-    DONE: 'bg-green-200 text-green-800',
+    IN_PROGRESS: 'bg-slate-200 text-slate-700 dark:bg-slate-600/30 dark:text-slate-300',
+    IN_REVIEW: 'bg-zinc-300/80 text-zinc-700 dark:bg-zinc-500/30 dark:text-zinc-300',
+    DONE: 'bg-zinc-200 text-zinc-700 dark:bg-zinc-600/30 dark:text-zinc-300',
 };
 
 export function TaskCalendarView() {

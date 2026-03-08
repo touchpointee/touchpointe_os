@@ -16,9 +16,9 @@ interface CreateTaskModalProps {
 const priorities: { value: TaskPriority; label: string; color: string }[] = [
     { value: 'NONE', label: 'None', color: 'text-zinc-400' },
     { value: 'LOW', label: 'Low', color: 'text-zinc-600' },
-    { value: 'MEDIUM', label: 'Medium', color: 'text-blue-600' },
-    { value: 'HIGH', label: 'High', color: 'text-orange-600' },
-    { value: 'URGENT', label: 'Urgent', color: 'text-red-600' },
+    { value: 'MEDIUM', label: 'Medium', color: 'text-slate-600' },
+    { value: 'HIGH', label: 'High', color: 'text-zinc-600' },
+    { value: 'URGENT', label: 'Urgent', color: 'text-zinc-700 dark:text-zinc-400' },
 ];
 
 export function CreateTaskModal({ isOpen, onClose, onSubmit, workspaceId }: CreateTaskModalProps) {
@@ -154,7 +154,7 @@ export function CreateTaskModal({ isOpen, onClose, onSubmit, workspaceId }: Crea
                     )}
 
                     {/* Errors */}
-                    {error && <div className="text-xs text-red-500 bg-red-500/10 p-2 rounded-lg border border-red-500/20">{error}</div>}
+                    {error && <div className="text-xs text-destructive bg-destructive/10 p-2 rounded-lg border border-destructive/20">{error}</div>}
 
                     {/* Advanced Controls Row */}
                     <div className="flex items-center gap-2 pt-4 border-t border-border/50 px-1 relative">
@@ -243,7 +243,7 @@ export function CreateTaskModal({ isOpen, onClose, onSubmit, workspaceId }: Crea
                             <button
                                 type="button"
                                 onClick={() => setActivePicker(activePicker === 'priority' ? null : 'priority')}
-                                className={cn("p-2 rounded-lg transition-all border border-transparent", priority !== 'NONE' ? "bg-red-500/10 border-red-500/20 text-red-500" : "hover:bg-muted text-muted-foreground")}
+                                className={cn("p-2 rounded-lg transition-all border border-transparent", priority !== 'NONE' ? "bg-destructive/10 border-destructive/20 text-destructive" : "hover:bg-muted text-muted-foreground")}
                                 title="Set priority"
                             >
                                 <Flag size={18} />
@@ -276,7 +276,7 @@ export function CreateTaskModal({ isOpen, onClose, onSubmit, workspaceId }: Crea
                             <button
                                 type="button"
                                 onClick={() => setActivePicker(activePicker === 'tags' ? null : 'tags')}
-                                className={cn("p-2 rounded-lg transition-all border border-transparent", selectedTagIds.length > 0 ? "bg-indigo-500/10 border-indigo-500/20 text-indigo-500" : "hover:bg-muted text-muted-foreground")}
+                                className={cn("p-2 rounded-lg transition-all border border-transparent", selectedTagIds.length > 0 ? "bg-accent border-border text-foreground" : "hover:bg-muted text-muted-foreground")}
                                 title="Add tags"
                             >
                                 <Palette size={18} />

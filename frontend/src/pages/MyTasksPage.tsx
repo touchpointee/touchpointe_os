@@ -147,10 +147,10 @@ export const MyTasksPage = () => {
 
     const getBgColor = (type: string) => {
         switch (type) {
-            case 'TASK': return 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400';
-            case 'COMMENT': return 'bg-yellow-100 text-yellow-600 dark:bg-yellow-900/30 dark:text-yellow-400';
-            case 'CHAT': return 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400';
-            default: return 'bg-zinc-100 text-zinc-600';
+            case 'TASK': return 'bg-zinc-100 text-zinc-700 dark:bg-zinc-700/30 dark:text-zinc-300';
+            case 'COMMENT': return 'bg-zinc-100 text-zinc-600 dark:bg-zinc-600/30 dark:text-zinc-400';
+            case 'CHAT': return 'bg-slate-100 text-slate-700 dark:bg-slate-700/30 dark:text-slate-300';
+            default: return 'bg-zinc-100 text-zinc-600 dark:bg-zinc-600/30 dark:text-zinc-400';
         }
     };
 
@@ -256,7 +256,7 @@ export const MyTasksPage = () => {
 
             {/* Background Gradients */}
             <div className="absolute top-0 left-0 w-full h-[300px] bg-gradient-to-b from-primary/5 to-transparent -z-10" />
-            <div className="absolute top-[-100px] right-[-100px] w-[400px] h-[400px] bg-blue-500/10 rounded-full blur-[100px] -z-10" />
+            <div className="absolute top-[-100px] right-[-100px] w-[400px] h-[400px] bg-muted/50 rounded-full blur-[100px] -z-10" />
 
             <div className="flex-1 overflow-y-auto no-scrollbar">
                 <div className="py-8 px-6 md:px-8 lg:px-10 max-w-[1600px] mx-auto space-y-8">
@@ -290,7 +290,7 @@ export const MyTasksPage = () => {
                                 if (stats.overdue > 0) {
                                     return (
                                         <>
-                                            You have <span className="font-semibold text-red-500">{stats.overdue} overdue tasks</span>.
+                                            You have <span className="font-semibold text-destructive">{stats.overdue} overdue tasks</span>.
                                             <span className="block text-sm mt-1 text-muted-foreground/80">
                                                 It happens to the best of us! Let our <span className="text-primary font-medium">AI Assistant</span> help you re-plan and get back on track.
                                             </span>
@@ -302,7 +302,7 @@ export const MyTasksPage = () => {
                                 if (totalDue > 3) {
                                     return (
                                         <>
-                                            You have <span className="font-semibold text-orange-500">{totalDue} tasks</span> due today.
+                                            You have <span className="font-semibold text-foreground">{totalDue} tasks</span> due today.
                                             <span className="block text-sm mt-1 text-muted-foreground/80">
                                                 Don't worry! Use our <span className="text-primary font-medium">AI Assistant</span> to prioritize and plan your work efficiently.
                                             </span>
@@ -331,8 +331,8 @@ export const MyTasksPage = () => {
                             icon={LayoutList}
                             label="Due Today"
                             value={stats.dueToday}
-                            color="text-orange-500"
-                            bg="bg-orange-500/10"
+                            color="text-foreground"
+                            bg="bg-muted"
                             onClick={() => setSearchParams({ filter: 'TODAY' })}
                             active={filter === 'TODAY'}
                         />
@@ -340,8 +340,8 @@ export const MyTasksPage = () => {
                             icon={AlertCircle}
                             label="Overdue"
                             value={stats.overdue}
-                            color="text-red-500"
-                            bg="bg-red-500/10"
+                            color="text-destructive"
+                            bg="bg-destructive/10"
                             onClick={() => setSearchParams({ filter: 'OVERDUE' })}
                             active={filter === 'OVERDUE'}
                         />
@@ -349,8 +349,8 @@ export const MyTasksPage = () => {
                             icon={Bell}
                             label="Mentions"
                             value={stats.totalMentions}
-                            color="text-purple-500"
-                            bg="bg-purple-500/10"
+                            color="text-muted-foreground"
+                            bg="bg-muted"
                             onClick={() => setSearchParams({ filter: 'MENTIONS' })}
                             active={isMentionsView}
                         />

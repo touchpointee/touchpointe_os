@@ -1,114 +1,145 @@
 @layer base {
     :root {
-        /* Premium Light Mode - Layered whites, soft neutrals */
-        --background: 0 0% 98%;
-        --foreground: 240 10% 15%;
-        /* #222326 */
-        --card: 0 0% 100%;
-        --card-foreground: 240 10% 15%;
-        --popover: 0 0% 100%;
-        --popover-foreground: 240 10% 15%;
-        --primary: 240 5% 15%;
-        /* Almost black */
-        --primary-foreground: 0 0% 98%;
-        --secondary: 240 4% 96%;
-        --secondary-foreground: 240 5% 15%;
-        --muted: 240 4% 96%;
-        --muted-foreground: 240 3% 46%;
-        /* #71727a */
-        --accent: 240 4% 94%;
-        --accent-foreground: 240 5% 15%;
-        --destructive: 0 84% 60%;
+        /* Corporate Light Mode - Blue-slate neutrals, primary blue */
+        --background: 214 20% 97%;
+        --foreground: 218 25% 18%;
+        --card: 214 20% 99%;
+        --card-foreground: 218 25% 18%;
+        --popover: 214 20% 99%;
+        --popover-foreground: 218 25% 18%;
+        --primary: 217 70% 45%;
+        --primary-foreground: 0 0% 100%;
+        --secondary: 214 18% 94%;
+        --secondary-foreground: 218 25% 18%;
+        --muted: 214 16% 93%;
+        --muted-foreground: 218 12% 42%;
+        --accent: 214 18% 91%;
+        --accent-foreground: 218 25% 18%;
+        --destructive: 0 55% 42%;
         --destructive-foreground: 0 0% 98%;
-        --border: 240 5% 90%;
-        /* #e4e4e7 */
-        --input: 240 5% 90%;
-        --ring: 240 5% 15%;
+        --border: 214 14% 88%;
+        --input: 214 14% 88%;
+        --ring: 217 70% 45%;
         --radius: 0.5rem;
 
-        /* Sidebar colors - PREMIUM LIGHT MODE (White/Gray) */
-        --sidebar-bg: 0 0% 98%;
-        /* Match background or slightly different */
-        --sidebar-fg: 240 10% 15%;
-        --sidebar-muted: 240 3% 46%;
-        --sidebar-accent: 240 4% 92%;
-        --sidebar-accent-fg: 240 5% 15%;
-        --sidebar-border: 240 5% 90%;
-        /* Task Card - Light Mode */
+        /* Chart colors - corporate palette */
+        --chart-1: 217 70% 45%;
+        --chart-2: 173 58% 39%;
+        --chart-3: 239 84% 57%;
+        --chart-4: 218 25% 35%;
+        --chart-5: 38 92% 50%;
+
+        /* Elevation / shadows - Light */
+        --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.06);
+        --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.06), 0 2px 4px -2px rgb(0 0 0 / 0.04);
+        --surface-raised: 214 20% 99%;
+        --surface-overlay: 214 20% 99%;
+
+        /* Sidebar - Light (blue-slate family) */
+        --sidebar-bg: 214 20% 97%;
+        --sidebar-fg: 218 25% 18%;
+        --sidebar-muted: 218 12% 42%;
+        --sidebar-accent: 214 18% 91%;
+        --sidebar-accent-fg: 218 25% 18%;
+        --sidebar-border: 214 14% 88%;
+        --sidebar-context-bg: 214 20% 99%;
+
+        /* Task Card - Light */
         --task-card-bg: #ffffff;
-        --task-card-border: hsl(240 5% 90%);
-        --task-card-hover-border: hsl(240 5% 80%);
-        --task-card-shadow: inset 0px 0px 25px 0px #75757540;
-        --task-card-text: hsl(240 10% 15%);
-        --task-card-text-muted: hsl(240 3% 46%);
+        --task-card-border: hsl(214 14% 88%);
+        --task-card-hover-border: hsl(214 14% 78%);
+        --task-card-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.06);
+        --task-card-text: hsl(218 25% 18%);
+        --task-card-text-muted: hsl(218 12% 42%);
 
-
-        /* Sidebar Selected State */
-        --sidebar-selected-bg: #000000;
+        /* Sidebar Selected State - primary blue */
+        --sidebar-selected-bg: hsl(217 70% 45%);
         --sidebar-selected-fg: #ffffff;
 
-        /* Chat-specific colors - Light Mode */
-        --chat-bg-primary: #f8fafc;
-        --chat-bg-secondary: #e2e9f1;
-        --chat-bg-tertiary: #e2e8f0;
-        --chat-bg-hover: #e9f1f9;
+        /* Chat - Light (blue-slate) */
+        --chat-bg-primary: #f1f5f9;
+        --chat-bg-secondary: #e2e8f0;
+        --chat-bg-tertiary: #cbd5e1;
+        --chat-bg-hover: #e2e8f0;
         --chat-text-primary: #0f172a;
         --chat-text-secondary: #475569;
-        --chat-text-muted: #94a3b8;
-        --chat-border: #e2e8f0;
+        --chat-text-muted: #64748b;
+        --chat-border: #cbd5e1;
         --chat-accent: #2563eb;
         --chat-accent-hover: #1d4ed8;
+        --scrollbar-thumb: 214 14% 75%;
+        --scrollbar-thumb-border: 214 14% 90%;
     }
 
     .dark {
-        /* Premium Dark Mode - Pure Black */
-        --background: 0 0% 0%;
-        --foreground: 0 0% 95%;
-        --card: 0 0% 3%;
-        --card-foreground: 0 0% 95%;
-        --popover: 0 0% 3%;
-        --popover-foreground: 0 0% 95%;
-        --primary: 0 0% 95%;
-        --primary-foreground: 0 0% 0%;
-        --secondary: 0 0% 10%;
-        --secondary-foreground: 0 0% 95%;
-        --muted: 0 0% 10%;
-        --muted-foreground: 0 0% 60%;
-        --accent: 0 0% 12%;
-        --accent-foreground: 0 0% 95%;
-        --destructive: 0 62% 30%;
+        /* Corporate Dark Mode - Dark blue-slate base, not pure black */
+        --background: 222 25% 9%;
+        --foreground: 210 20% 92%;
+        --card: 222 20% 12%;
+        --card-foreground: 210 20% 92%;
+        --popover: 222 20% 12%;
+        --popover-foreground: 210 20% 92%;
+        --primary: 213 94% 68%;
+        --primary-foreground: 222 30% 10%;
+        --secondary: 222 18% 14%;
+        --secondary-foreground: 210 20% 92%;
+        --muted: 222 12% 18%;
+        --muted-foreground: 215 15% 55%;
+        --accent: 222 15% 20%;
+        --accent-foreground: 210 20% 92%;
+        --destructive: 0 45% 42%;
         --destructive-foreground: 0 0% 95%;
-        --border: 0 0% 12%;
-        --input: 0 0% 12%;
-        --ring: 0 0% 83%;
+        --border: 222 15% 18%;
+        --input: 222 15% 18%;
+        --ring: 213 94% 68%;
 
-        /* Sidebar colors - Pure Black */
-        --sidebar-bg: 0 0% 0%;
-        --sidebar-fg: 0 0% 90%;
-        --sidebar-muted: 0 0% 60%;
-        --sidebar-accent: 0 0% 12%;
-        --sidebar-accent-fg: 0 0% 95%;
-        --sidebar-border: 0 0% 12%;
+        /* Chart colors - corporate dark */
+        --chart-1: 213 94% 68%;
+        --chart-2: 173 58% 45%;
+        --chart-3: 239 84% 67%;
+        --chart-4: 215 20% 55%;
+        --chart-5: 38 92% 55%;
 
-        /* Task Card - Dark Mode (Extracted from UI) */
-        --task-card-bg: #131313;
-        --task-card-border: rgba(255, 255, 255, 0.05);
-        --task-card-hover-border: rgba(255, 255, 255, 0.15);
-        --task-card-shadow: inset 0px 0px 25px 0px #75757540;
-        --task-card-text: #ffffff;
-        --task-card-text-muted: #747474;
+        /* Elevation / shadows - Dark */
+        --shadow-sm: 0 1px 0 0 rgb(255 255 255 / 0.04);
+        --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.3), 0 1px 0 0 rgb(255 255 255 / 0.03);
+        --surface-raised: 222 20% 12%;
+        --surface-overlay: 222 18% 15%;
 
-        /* Chat-specific colors - Dark Mode */
-        --chat-bg-primary: #0a0a0a;
-        --chat-bg-secondary: #1e202b;
-        --chat-bg-tertiary: #2a2929;
-        --chat-bg-hover: #1e202b;
-        --chat-text-primary: #e9edef;
-        --chat-text-secondary: #8a96a0;
-        --chat-text-muted: #71727a;
-        --chat-border: #2f3b43;
-        --chat-accent: #2563eb;
-        --chat-accent-hover: #316beb;
+        /* Sidebar - Dark (blue-slate family) */
+        --sidebar-bg: 222 25% 9%;
+        --sidebar-fg: 210 20% 92%;
+        --sidebar-muted: 215 15% 55%;
+        --sidebar-accent: 222 15% 20%;
+        --sidebar-accent-fg: 210 20% 92%;
+        --sidebar-border: 222 15% 18%;
+        --sidebar-context-bg: 222 20% 12%;
+
+        /* Task Card - Dark */
+        --task-card-bg: #1e293b;
+        --task-card-border: rgba(255, 255, 255, 0.08);
+        --task-card-hover-border: rgba(255, 255, 255, 0.14);
+        --task-card-shadow: 0 1px 0 0 rgb(255 255 255 / 0.04);
+        --task-card-text: #e2e8f0;
+        --task-card-text-muted: #94a3b8;
+
+        /* Sidebar Selected State - primary blue */
+        --sidebar-selected-bg: hsl(213 94% 68%);
+        --sidebar-selected-fg: #0f172a;
+
+        /* Chat - Dark (blue-slate) */
+        --chat-bg-primary: #0f172a;
+        --chat-bg-secondary: #1e293b;
+        --chat-bg-tertiary: #334155;
+        --chat-bg-hover: #1e293b;
+        --chat-text-primary: #e2e8f0;
+        --chat-text-secondary: #94a3b8;
+        --chat-text-muted: #64748b;
+        --chat-border: #334155;
+        --chat-accent: #60a5fa;
+        --chat-accent-hover: #93c5fd;
+        --scrollbar-thumb: 222 15% 28%;
+        --scrollbar-thumb-border: 222 15% 18%;
     }
 }
 
@@ -221,10 +252,14 @@
     background-color: rgba(24, 24, 27, 0.8);
 }
 
-/* Premium surface layers */
+/* Premium surface layers - use theme shadows */
 .surface-elevated {
     background-color: hsl(var(--card));
-    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+    box-shadow: var(--shadow-sm);
+}
+
+.dark .surface-elevated {
+    box-shadow: var(--shadow-sm);
 }
 
 /* Sidebar-specific colors */
@@ -240,29 +275,15 @@
     background-color: hsl(var(--accent));
 }
 
-/* === Sidebar Selected State Override === 
-   Forces specific colors for selected sidebar items in Light and Dark modes.
-   Uses !important to ensure it overrides any utility classes.
-*/
+/* === Sidebar Selected State Override === */
 .nav-item-selected {
     background-color: var(--sidebar-selected-bg) !important;
 }
 
-/* Force ALL children (text, icons, etc.) to match the contrast color */
 .nav-item-selected,
 .nav-item-selected * {
     color: var(--sidebar-selected-fg) !important;
 }
-
-/* Dark Mode Overrides - Removed to unify theme */
-/* .dark .nav-item-selected {
-    background-color: white !important;
-}
-
-.dark .nav-item-selected,
-.dark .nav-item-selected * {
-    color: black !important;
-} */
 
 /* Tooltip Styling matching selected state */
 .nav-tooltip {

@@ -100,7 +100,7 @@ export function TasksSidebar({ workspaceId }: TasksSidebarProps) {
                         placeholder="Search by Project, Task"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full bg-white dark:bg-white/5 shadow-sm border border-transparent rounded-md text-xs py-1.5 pl-3 pr-8 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/20 focus:bg-background transition-all"
+                        className="w-full bg-muted shadow-sm border border-transparent rounded-md text-xs py-1.5 pl-3 pr-8 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/20 focus:bg-background transition-all"
                     />
                     <Search className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
                 </div>
@@ -243,20 +243,19 @@ function SpaceItem({ space, workspaceId, isExpanded, expandedFolders, onToggle, 
             <div
                 className={cn(
                     "group flex items-center gap-2 px-2 py-1.5 rounded-md transition-all duration-200 relative cursor-pointer select-none",
-                    shouldHighlight ? "text-white font-medium shadow-sm" : "hover:bg-accent text-foreground"
+                    shouldHighlight ? "bg-primary text-primary-foreground font-medium shadow-sm" : "hover:bg-accent text-foreground"
                 )}
-                style={shouldHighlight ? { background: 'linear-gradient(94.03deg, #925FF8 -8.9%, #4175E4 100%)' } : undefined}
                 onClick={onToggle}
             >
                 {/* Active Indicator */}
                 {shouldHighlight && (
-                    <div className="absolute left-0 top-1.5 bottom-1.5 w-0.5 bg-primary/40 rounded-full" />
+                    <div className="absolute left-0 top-1.5 bottom-1.5 w-0.5 bg-primary-foreground/40 rounded-full" />
                 )}
 
                 {/* Icon */}
                 <div className={cn(
                     "flex items-center justify-center w-5 h-5 rounded bg-primary/5 text-primary group-hover:bg-primary/10 transition-colors mr-2",
-                    shouldHighlight && "bg-transparent dark:bg-transparent text-white"
+                    shouldHighlight && "bg-transparent text-primary-foreground"
                 )}>
                     <Layers className="w-3.5 h-3.5" />
                 </div>
@@ -288,7 +287,7 @@ function SpaceItem({ space, workspaceId, isExpanded, expandedFolders, onToggle, 
                     ) : (
                         <span className={cn(
                             "text-sm tracking-tight truncate block transition-colors font-semibold",
-                            shouldHighlight ? "text-white" : (isExpanded ? "text-foreground" : "text-muted-foreground group-hover:text-foreground")
+                            shouldHighlight ? "text-primary-foreground" : (isExpanded ? "text-foreground" : "text-muted-foreground group-hover:text-foreground")
                         )}>
                             {space.name}
                         </span>
